@@ -1,0 +1,144 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>sfx.js — level and behaviour test</title>
+<!-- Renders every voice through an OfflineAudioContext and measures what
+     actually comes out, because the reference's mix levels are the point of
+     the file and "I set a gain value" is not evidence that the output sits
+     where it should. Open this after editing sfx.js. -->
+<style>
+  body{margin:0;padding:28px;background:#171614;color:#C6BDAB;
+       font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+  h1{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#8A8377;
+     font-weight:400;margin:0 0 18px}
+  table{border-collapse:collapse;margin-bottom:22px}
+  th,td{text-align:left;padding:3px 18px 3px 0;border-bottom:1px solid #2A2724}
+  th{color:#6E675C;font-weight:400;font-size:11px;letter-spacing:.08em;
+     text-transform:uppercase}
+  .ok{color:#8FA96B}.bad{color:#C4442E}
+  #summary{margin-top:8px;font-size:14px}
+  p.note{color:#5E584E;max-width:70ch;margin:0 0 20px}
+</style>
+<h1>sfx.js — level and behaviour test</h1>
+<p class="note">Voices are rendered offline at a requested −14 dBFS. Peak must
+land inside the reference SFX window (−20 to −10 dBFS) and must not clip.
+Behaviour tests cover the one-accent rule, level clamping and deterministic
+variation.</p>
+<div id="out">running…</div>
+<script>
+/* Headless note: Chrome screenshots at load, and --virtual-time-budget
+   fast-forwards past OfflineAudioContext rendering because that completes on a
+   real thread. So results are cached and shown on the next load — run the page
+   twice with the same --user-data-dir and screenshot the second run. In a real
+   browser the results simply appear a moment after load. */
+try {
+  const cached = localStorage.getItem('sfx-results');
+  if (cached) document.getElementById('out').innerHTML = cached;
+} catch (e) {}
+</script>
+<script src="sfx.js"></script>
+<script>
+const RANGE = [-20, -10];
+/* +/-1 dB: voice parameters are randomised per play (filter centre, Q,
+   duration), so the peak of any single render varies a little around its
+   calibrated target. A tighter assertion would fail intermittently. */
+const TOL = 1.0;
+const rows = [], checks = [];
+
+function dbfs(x){ return 20 * Math.log10(Math.max(x, 1e-9)); }
+
+function measure(buf){
+  const d = buf.getChannelData(0);
+  let peak = 0, sum = 0, nonZero = 0;
+  for (let i = 0; i < d.length; i++){
+    const a = Math.abs(d[i]);
+    if (a > peak) peak = a;
+    sum += d[i] * d[i];
+    if (a > 1e-4) nonZero++;
+  }
+  return { peak: dbfs(peak), rms: dbfs(Math.sqrt(sum / d.length)),
+           dur: nonZero / buf.sampleRate };
+}
+
+window.onerror=(m,s,l,c,e)=>{document.getElementById('out').textContent='ERROR: '+m+' @'+l+':'+c;};
+(async () => {
+ try {
+  const sfx = AnalogSFX();
+
+  for (const name of sfx.voices){
+    const buf = await sfx.render(name, -14, 1);
+    const m = measure(buf);
+    const inRange = m.peak >= RANGE[0] - TOL && m.peak <= RANGE[1] + TOL;
+    const audible = m.dur > 0.005;
+    rows.push({ name, peak: m.peak, rms: m.rms, dur: m.dur,
+                pass: inRange && audible });
+    checks.push({ what: `${name} peak in window`, pass: inRange,
+                  detail: `${m.peak.toFixed(1)} dBFS` });
+    checks.push({ what: `${name} produces audio`, pass: audible,
+                  detail: `${(m.dur*1000).toFixed(0)} ms` });
+  }
+
+  // Level clamping: asking for something absurd must be pulled into the window.
+  const loud = measure(await sfx.render('impact', +12, 1));
+  checks.push({ what: 'clamp: +12 dB request is capped',
+                pass: loud.peak <= RANGE[1] + TOL,
+                detail: `${loud.peak.toFixed(1)} dBFS` });
+  const quiet = measure(await sfx.render('impact', -60, 1));
+  checks.push({ what: 'clamp: −60 dB request is floored',
+                pass: quiet.peak >= RANGE[0] - TOL,
+                detail: `${quiet.peak.toFixed(1)} dBFS` });
+
+  // Determinism: same seed must render identically, or a preview and a
+  // rendered video would not match.
+  const a = await AnalogSFX({seed: 7}).render('whoosh', -14, 1);
+  const b = await AnalogSFX({seed: 7}).render('whoosh', -14, 1);
+  const c = await AnalogSFX({seed: 8}).render('whoosh', -14, 1);
+  const same = (x, y) => {
+    const dx = x.getChannelData(0), dy = y.getChannelData(0);
+    for (let i = 0; i < dx.length; i += 97) if (dx[i] !== dy[i]) return false;
+    return true;
+  };
+  checks.push({ what: 'same seed renders identically', pass: same(a, b),
+                detail: 'seed 7 twice' });
+  checks.push({ what: 'different seed varies', pass: !same(a, c),
+                detail: 'seed 7 vs 8' });
+
+  // The one-accent rule is enforced, not documented.
+  const silent = AnalogSFX({ muted: true });
+  const warns = silent.scene([
+    { at: 0,   sound: 'impact', accent: true },
+    { at: 400, sound: 'impact', accent: true },
+    { at: 800, sound: 'tick' },
+  ]);
+  checks.push({ what: 'second accent in a scene is demoted',
+                pass: warns.length === 1,
+                detail: warns[0] || 'no warning raised' });
+
+  // Muted by default — nothing may sound before an explicit enable().
+  checks.push({ what: 'muted by default', pass: AnalogSFX().muted === true,
+                detail: 'AnalogSFX().muted' });
+  checks.push({ what: 'play() is a no-op while muted',
+                pass: AnalogSFX().play('impact') === false,
+                detail: 'returns false' });
+
+  const failed = checks.filter(c => !c.pass);
+  document.getElementById('out').innerHTML = `
+    <table><tr><th>voice</th><th>peak</th><th>rms</th><th>length</th><th></th></tr>
+    ${rows.map(r => `<tr><td>${r.name}</td>
+      <td>${r.peak.toFixed(1)} dBFS</td><td>${r.rms.toFixed(1)} dBFS</td>
+      <td>${(r.dur*1000).toFixed(0)} ms</td>
+      <td class="${r.pass?'ok':'bad'}">${r.pass?'ok':'FAIL'}</td></tr>`).join('')}
+    </table>
+    <table><tr><th>check</th><th>value</th><th></th></tr>
+    ${checks.map(c => `<tr><td>${c.what}</td><td>${c.detail}</td>
+      <td class="${c.pass?'ok':'bad'}">${c.pass?'ok':'FAIL'}</td></tr>`).join('')}
+    </table>
+    <div id="summary" class="${failed.length?'bad':'ok'}">
+      ${failed.length ? failed.length + ' CHECK(S) FAILED'
+                      : 'ALL ' + checks.length + ' CHECKS PASSED'}</div>`;
+  try { localStorage.setItem('sfx-results',
+        document.getElementById('out').innerHTML); } catch (e) {}
+} catch(err){
+   document.getElementById('out').textContent='THROWN: '+(err&&err.stack||err);
+ }
+})();
+</script>

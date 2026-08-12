@@ -1,0 +1,153 @@
+<!-- ============================================================
+     filters.svg — SVG filter defs for analog.css
+
+     Paste this block as the FIRST child of <body>. It renders nothing;
+     it only defines filters that analog.css references by id.
+
+     WHERE FILTERS ARE THE WRONG TOOL
+     feDisplacementMap displaces pixels after rasterisation, so on thin
+     strokes it reads as pixelation rather than roughness — diagnosed in
+     sources.md §13 on a filter-based underline. Rule of thumb, and it is
+     not optional:
+       under ~3px   jitter the geometry, or mask with the grain plate
+                    (see .an-rule in analog.css)
+       3px and up   these filters are correct
+       best of all  a scanned mark
+     ============================================================ -->
+
+<svg width="0" height="0" aria-hidden="true" focusable="false"
+     style="position:absolute">
+  <defs>
+
+    <!-- ---------- Roughen: large shapes only ----------
+         The AE equivalent is Roughen Edges at border 2-3 for a light pass.
+         baseFrequency is edge *size*, scale is edge *amount*. -->
+    <filter id="an-roughen" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.62"
+                    numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="1.8"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="an-roughen-lg" x="-14%" y="-14%" width="128%" height="128%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.22"
+                    numOctaves="3" seed="5" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- ---------- Boil: three genuinely different states ----------
+         Cycled with steps(1, end), never tweened. The reference keeps a
+         hand-drawn mark boiling for its whole life — it is never static
+         after the draw-on. Three seeds, not one seed animated. -->
+    <filter id="an-boil-1" x="-12%" y="-12%" width="124%" height="124%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045"
+                    numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="an-boil-2" x="-12%" y="-12%" width="124%" height="124%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.048"
+                    numOctaves="2" seed="27" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.6"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="an-boil-3" x="-12%" y="-12%" width="124%" height="124%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.042"
+                    numOctaves="2" seed="43" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.9"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- ---------- Letterpress ----------
+         Blotchy ink coverage. An alternative to the CSS paper matte for SVG
+         and shape content, where mask-image against the paper is awkward.
+         Subtracts a little noise luminance from the source alpha, so the ink
+         is never one flat value. -->
+    <filter id="an-letterpress" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.45"
+                    numOctaves="3" seed="7" result="n"/>
+      <feColorMatrix in="n" type="luminanceToAlpha" result="nl"/>
+      <feComposite in="SourceGraphic" in2="nl" operator="arithmetic"
+                   k1="0" k2="1" k3="-0.28" k4="0"/>
+    </filter>
+
+    <!-- ---------- Ink flecks ----------
+         Printing-press error: stray specks thrown off the edge of the mark.
+         Erode first to break the outline, then displace the fragments. -->
+    <filter id="an-flecks" x="-15%" y="-15%" width="130%" height="130%">
+      <feMorphology in="SourceGraphic" operator="erode" radius="0.4"
+                    result="e"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.9"
+                    numOctaves="2" seed="19" result="n"/>
+      <feDisplacementMap in="e" in2="n" scale="2.6"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- ---------- Chromatic fringe ----------
+         Four strengths, because the reference scales it by register rather
+         than picking one value: type .5, graphics .8, screens 1.2,
+         archival 2.0. Channels are separated, the red and blue shifted in
+         opposite directions, then recombined with screen.
+
+         color-interpolation-filters="sRGB" is required — the default
+         linearRGB washes the fringe out to near-invisibility. -->
+
+    <filter id="an-fringe-type" x="-5%" y="-5%" width="110%" height="110%"
+            color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" result="r" type="matrix"
+        values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feOffset in="r" dx="-0.5" dy="0" result="ro"/>
+      <feColorMatrix in="SourceGraphic" result="g" type="matrix"
+        values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feColorMatrix in="SourceGraphic" result="b" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+      <feOffset in="b" dx="0.5" dy="0" result="bo"/>
+      <feBlend in="ro" in2="g" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="bo" mode="screen"/>
+    </filter>
+
+    <filter id="an-fringe-graphic" x="-5%" y="-5%" width="110%" height="110%"
+            color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" result="r" type="matrix"
+        values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feOffset in="r" dx="-0.8" dy="0" result="ro"/>
+      <feColorMatrix in="SourceGraphic" result="g" type="matrix"
+        values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feColorMatrix in="SourceGraphic" result="b" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+      <feOffset in="b" dx="0.8" dy="0" result="bo"/>
+      <feBlend in="ro" in2="g" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="bo" mode="screen"/>
+    </filter>
+
+    <filter id="an-fringe-screen" x="-6%" y="-6%" width="112%" height="112%"
+            color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" result="r" type="matrix"
+        values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feOffset in="r" dx="-1.2" dy="0" result="ro"/>
+      <feColorMatrix in="SourceGraphic" result="g" type="matrix"
+        values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feColorMatrix in="SourceGraphic" result="b" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+      <feOffset in="b" dx="1.2" dy="0" result="bo"/>
+      <feBlend in="ro" in2="g" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="bo" mode="screen"/>
+    </filter>
+
+    <filter id="an-fringe-archival" x="-8%" y="-8%" width="116%" height="116%"
+            color-interpolation-filters="sRGB">
+      <feColorMatrix in="SourceGraphic" result="r" type="matrix"
+        values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feOffset in="r" dx="-2" dy="0" result="ro"/>
+      <feColorMatrix in="SourceGraphic" result="g" type="matrix"
+        values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+      <feColorMatrix in="SourceGraphic" result="b" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+      <feOffset in="b" dx="2" dy="0" result="bo"/>
+      <feBlend in="ro" in2="g" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="bo" mode="screen"/>
+    </filter>
+
+  </defs>
+</svg>

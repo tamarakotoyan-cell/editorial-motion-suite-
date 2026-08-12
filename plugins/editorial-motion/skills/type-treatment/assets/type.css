@@ -1,0 +1,146 @@
+/* ============================================================
+   type.css — drop-in type-treatment primitives
+   Paste into any artifact's <style>. Pair with motion.css for
+   the easing/timing tokens (--ease-*, --beat, --snap, --hold).
+   Colours here are placeholders — replace from the brand system.
+   ============================================================ */
+
+:root {
+  /* Ink and paper. NEVER #000 / #FFF — carry the surface's hue.
+     Sample these from the actual image you are printing onto. */
+  --ink:    #23201C;
+  --paper:  #F2EEE6;
+  --brand:  #E2491A;   /* placeholder — replace */
+
+  /* Per-CHARACTER stagger. Much tighter than the 70ms sibling
+     stagger in motion.css; at 70ms a word types itself out. */
+  --char-stagger: 26ms;
+  /* Per-WORD stagger — the house value. */
+  --word-stagger: 200ms;
+
+  /* Hand-drawn boil: 3 frames per cycle. 0.27s ≈ 11fps.
+     Working range is 8–12fps → 0.25s to 0.375s. */
+  --boil-cycle: 0.27s;
+}
+
+/* ---------- Register: In — printing type into a surface ---------- */
+
+/* The wrapper. `isolation` is REQUIRED — without it the blend
+   leaks through to whatever sits behind the section. */
+.tt-plate { position: relative; isolation: isolate; }
+
+/* Dark ink on a light ground. */
+.tt-ink       { color: var(--ink);   mix-blend-mode: multiply; }
+/* Light ink on a dark ground. */
+.tt-ink--rev  { color: var(--paper); mix-blend-mode: screen; }
+
+/* The texture plate itself — overlay/soft-light belong HERE,
+   not on the type (run through type they wash the ink out). */
+.tt-grain {
+  position: absolute; inset: 0; pointer-events: none;
+  background: var(--grain-src) center / 420px repeat;
+  mix-blend-mode: overlay;
+}
+
+/* Edge erosion. Keep it uneven — an even 20% everywhere just
+   reads as a faded layer. Soften a high-contrast mask asset
+   with filter: contrast(.6) brightness(1.25) before use. */
+.tt-eroded {
+  -webkit-mask-image: var(--mask-src);  mask-image: var(--mask-src);
+  -webkit-mask-size: 300px;             mask-size: 300px;
+  -webkit-mask-mode: luminance;         mask-mode: luminance;
+}
+
+/* ---------- Register: Through — image inside the letterforms ---------- */
+
+.tt-knockout {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);                 /* fallback if clipping fails */
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .tt-knockout {
+    background-image: var(--photo-src);
+    background-size: cover;
+    background-position: 50% 38%;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+}
+
+/* ---------- Register: On — plates that aren't lazy ---------- */
+
+/* Local directional grade in the IMAGE's dark tone, not black.
+   Sits under the type only, never over the whole frame. */
+.tt-scrim::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, var(--scrim-tone, rgba(20,18,16,.72)), transparent 62%);
+}
+
+/* ---------- Motion: per-character reveal ---------- */
+/* Put aria-label on the parent and aria-hidden on the spans,
+   or splitting destroys the text for screen readers. */
+
+.tt-by-char > span {
+  display: inline-block;
+  animation: tt-rise var(--beat, .5s) var(--ease-out, cubic-bezier(.16,1,.3,1)) both;
+  animation-delay: calc(var(--i) * var(--char-stagger));
+}
+@keyframes tt-rise { from { opacity: 0; transform: translateY(14px); }
+                     to   { opacity: 1; transform: none; } }
+
+/* ---------- Motion: fill sweep (brand arrives, ink reads) ---------- */
+/* Needs data-text="…" mirroring the element's text. */
+
+.tt-fill { position: relative; color: var(--ink); }
+.tt-fill::after {
+  content: attr(data-text);
+  position: absolute; inset: 0;
+  color: var(--brand);
+  clip-path: inset(0 100% 0 0);
+  animation: tt-fill-sweep  var(--beat, .5s) var(--ease-vox, cubic-bezier(.1,.9,.2,1)) both,
+             tt-fill-settle 400ms var(--ease-out, cubic-bezier(.16,1,.3,1)) 1.1s both;
+}
+@keyframes tt-fill-sweep  { to { clip-path: inset(0 0 0 0); } }
+@keyframes tt-fill-settle { to { opacity: 0; } }
+
+/* ---------- Motion: digit roll — HERO FIGURE ONLY ---------- */
+
+.tt-odo { display: inline-flex; height: 1em; overflow: hidden; line-height: 1; }
+.tt-odo ul {
+  margin: 0; padding: 0; list-style: none;
+  animation: tt-roll 900ms var(--ease-vox, cubic-bezier(.1,.9,.2,1)) both;
+  animation-delay: calc(var(--i) * 70ms);   /* lands left to right */
+}
+.tt-odo li { height: 1em; }
+@keyframes tt-roll { from { transform: translateY(-9em); }
+                     to   { transform: translateY(0); } }
+
+/* ---------- Motion: hand-drawn boil ---------- */
+/* Three genuinely different variants cycled — NOT one variant
+   with a smooth transform loop. steps(), never easing. */
+
+.tt-boil { position: relative; display: inline-block; }
+.tt-boil > * { animation: tt-boil-flick var(--boil-cycle) steps(1, end) infinite; }
+.tt-boil > * + * { position: absolute; left: 0; top: 0; }
+.tt-boil > *:nth-child(2) { animation-delay: calc(var(--boil-cycle) / 3); }
+.tt-boil > *:nth-child(3) { animation-delay: calc(var(--boil-cycle) / 3 * 2); }
+@keyframes tt-boil-flick { 0%, 33.32% { opacity: 1; } 33.33%, 100% { opacity: 0; } }
+
+/* ---------- Non-negotiable ---------- */
+/* Preserves end states: text still arrives, it just arrives now.
+   Boil stops on its first frame rather than disappearing. */
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-by-char > span, .tt-odo ul {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+  }
+  /* Brand overlay drops out; the ink underneath still reads. */
+  .tt-fill::after { animation: none !important; opacity: 0 !important; }
+  /* Boil freezes on its first variant — never on a hidden frame,
+     which would make the word vanish. */
+  .tt-boil > *     { animation: none !important; opacity: 1 !important; }
+  .tt-boil > * + * { display: none !important; }
+}

@@ -1,0 +1,318 @@
+/* ============================================================
+   analog.css — Surface / Ink / Life
+   Drop-in analog treatment primitives. Paste into any artifact's
+   <style>, alongside motion.css.
+
+   The three pillars come from Flat Pack FX, "The Psychological
+   Secret of the Vox Look" — see SKILL.md. Order matters and is
+   the whole method:
+     SURFACE  the ground. Never white, never flat.
+     INK      the marks, blended INTO the surface's fibres.
+     LIFE     temporal instability. Stepping, boil, flicker.
+
+   Textures are generated, not sourced — assets/make-paper.py
+   and assets/make-grain.py. Replace the {{IMG_*}} hooks below with
+   base64 data URIs; artifact CSP blocks external hosts.
+   ============================================================ */
+
+:root {
+  /* ---------- Surface ---------- */
+  /* Measured off the colour picker in Chris Moran's "How VOX breaks the
+     Digital Feel" at 2:00 — H 41deg S 6% B 99%. Paper absorbs the colour
+     temperature of the room it sits in, so an untinted ground reads as
+     synthetic. NEVER #fff. */
+  --paper:       #FDFAF3;
+  --paper-warm:  #FBF6EA;
+  --paper-cool:  #F6F7F4;
+  --paper-news:  #F2EFE6;
+
+  /* Ink is never #000 either — printed black sits around 12-15% lightness. */
+  --ink:         #1F1C18;
+  --ink-soft:    #2B2723;
+
+  /* Recorded four separate times across the reference set: overlays work at
+     far lower strengths than instinct suggests. 5% is the house value. */
+  --tex-strength:   .05;
+  --grain-strength: .06;
+
+  /* ---------- Life ---------- */
+  --step-fps:    12;    /* posterize time — 8 for collage, 4 for a hero move */
+  --boil-cycle:  .25s;  /* 3 states at ~12fps */
+
+  /* ---------- Chromatic aberration ----------
+     Strength scales with how degraded the object is meant to feel. This is
+     the rule; the numbers are the reference's own. Chris Moran, on going
+     past it: "dialing it too much can look amateur." */
+  --ca-type:     .5px;   /* delicate type on paper */
+  --ca-graphic:  .8px;   /* native graphics */
+  --ca-screen:  1.2px;   /* emulated screens */
+  --ca-archival:  2px;   /* archival footage */
+
+  /* ---------- Asset hooks ---------- */
+  --tex-paper: url("{{IMG_PAPER}}");
+  --tex-matte: url("{{IMG_MATTE}}");   /* companion matte, SAME seed as paper */
+  --tex-grain: url("{{IMG_GRAIN}}");
+  --tile: 512px;   /* must match the generated tile size */
+}
+
+/* ============================================================
+   1. SURFACE
+   ============================================================ */
+
+.an-surface {
+  position: relative;
+  background-color: var(--paper);
+  background-image: var(--tex-paper);
+  background-size: var(--tile);
+  background-repeat: repeat;
+}
+
+.an-surface--warm { background-color: var(--paper-warm); }
+.an-surface--cool { background-color: var(--paper-cool); }
+.an-surface--news { background-color: var(--paper-news); }
+
+/* Vignette. Deliberately CSS rather than baked into the texture: a centred
+   falloff cannot tile, and here it adapts to the element instead of the tile. */
+.an-surface--vignette::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse at center,
+              transparent 45%, rgba(31, 28, 24, .16) 100%);
+}
+
+/* ============================================================
+   2. INK
+   The gap this file exists to close. Generated design lays texture
+   OVER content; the reference lays content INTO texture.
+   ============================================================ */
+
+/* mask-size MUST equal the surface's background-size, or the ink is masked
+   against a different part of the paper than it is sitting on and the effect
+   silently stops working.
+
+   Expect `multiply` on its own to look like it is doing nothing when the ink is
+   near-black on near-white paper — multiplying ~#1F1C18 into ~#FDFAF3 returns
+   almost exactly the ink. It is not broken. Multiply earns its place on
+   coloured ink, on aged or newsprint grounds, and wherever marks overlap; the
+   mask below is what does the visible work on a plain black-on-cream setting. */
+.an-ink {
+  color: var(--ink-soft);
+  mix-blend-mode: multiply;
+  -webkit-mask-image: var(--tex-matte);
+          mask-image: var(--tex-matte);
+  -webkit-mask-size: var(--tile);
+          mask-size: var(--tile);
+}
+
+/* Ink bleed — porous stock wicks ink outward from the stroke.
+   Reference values are AE pixels on one comp size (blur 2.5, three drop
+   shadows at distance 0, opacity 50/30/15). Expressed here in em so they
+   hold at any type size: as absolute px they read as a drop shadow on
+   anything under ~100px. */
+.an-ink--bleed {
+  text-shadow:
+    0 0 .02em rgba(31, 28, 24, .45),
+    0 0 .05em rgba(31, 28, 24, .25),
+    0 0 .10em rgba(31, 28, 24, .12);
+}
+
+/* Heavier stock, more absorbent — newsprint rather than cartridge. */
+.an-ink--wet {
+  text-shadow:
+    0 0 .03em rgba(31, 28, 24, .5),
+    0 0 .08em rgba(31, 28, 24, .3),
+    0 0 .16em rgba(31, 28, 24, .15);
+}
+
+/* Roughened hairlines and rules. The reference fix for "background lines are a
+   little too sharp and clean ... they look pretty computerized" is Roughen
+   Edges at border 2-3.
+
+   Done with a MASK, not the #an-roughen filter, and deliberately so.
+   sources.md §13 already diagnosed this failure: feDisplacementMap displaces
+   pixels after rasterisation, so on a 1px stroke it produces visible
+   pixelation rather than roughness. The recorded fix is to jitter geometry for
+   small strokes and reserve filters for large shapes. Masking the rule with
+   the grain plate breaks it up irregularly with no rasterisation step at all,
+   and reuses an asset already loaded. */
+.an-rule {
+  border: 0;
+  height: 1.5px;
+  background: var(--ink);
+  opacity: .55;
+  -webkit-mask-image: var(--tex-grain);
+          mask-image: var(--tex-grain);
+  -webkit-mask-size: 256px;
+          mask-size: 256px;
+}
+
+/* ============================================================
+   3. LIFE
+   ============================================================ */
+
+/* Posterize time. steps() counts are duration x fps, so they are tied to the
+   house timing kit in motion.css rather than being freely composable:
+   beat .5s -> 6, settle 1.2s -> 14, drift 10s -> 120. */
+.an-step-beat   { animation-duration: var(--beat, .5s);
+                  animation-timing-function: steps(6, end); }
+.an-step-settle { animation-duration: var(--settle, 1.2s);
+                  animation-timing-function: steps(14, end); }
+.an-step-drift  { animation-duration: var(--drift, 10s);
+                  animation-timing-function: steps(120, end); }
+
+/* Grain plate. Sits above content, below nothing. */
+.an-grain { position: relative; }
+.an-grain::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+  background-image: var(--tex-grain);
+  background-size: 256px;
+  mix-blend-mode: overlay;
+  opacity: var(--grain-strength);
+}
+
+/* Moving grain — three independent plates from make-grain.py --frames 3,
+   cycled with the .tt-boil idiom. Static grain is a tell. */
+.an-grain-live { position: relative; }
+.an-grain-live > .an-grain-plate {
+  position: absolute; inset: 0; pointer-events: none; z-index: 4;
+  background-size: 256px;
+  mix-blend-mode: overlay;
+  opacity: var(--grain-strength);
+  animation: an-plate-cycle var(--boil-cycle) steps(1, end) infinite;
+}
+.an-grain-live > .an-grain-plate:nth-child(2) {
+  animation-delay: calc(var(--boil-cycle) / 3); }
+.an-grain-live > .an-grain-plate:nth-child(3) {
+  animation-delay: calc(var(--boil-cycle) / 3 * 2); }
+@keyframes an-plate-cycle {
+  0%, 33.32% { opacity: var(--grain-strength); }
+  33.33%, 100% { opacity: 0; }
+}
+
+/* ============================================================
+   4. REGISTERS
+   Treatment strength is keyed to what the object is pretending to
+   be — see the treatment ladder in SKILL.md.
+   ============================================================ */
+
+/* --- Screen. Chris Moran's Venetian Blinds recipe: completion 5%,
+   rotation 90 (horizontal — "most monitors are horizontal"), width 8,
+   feather 1. --- */
+.an-screen {
+  position: relative;
+  overflow: hidden;
+  background: #0E0E0D;
+}
+.an-screen::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, .05) 0 1px,
+    rgba(0, 0, 0, 0)  1px 8px);
+}
+.an-screen::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: radial-gradient(ellipse at center,
+              transparent 42%, rgba(0, 0, 0, .34) 100%);
+}
+/* Pixel grid rather than scanlines — duplicate at 90deg. */
+.an-screen--grid::before {
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,.05) 0 1px, rgba(0,0,0,0) 1px 8px),
+    repeating-linear-gradient(to right,  rgba(0,0,0,.04) 0 1px, rgba(0,0,0,0) 1px 8px);
+}
+
+/* Refresh flicker. The reference is `wiggle(24, 0.08)` — 24 times a second,
+   +/-8% exposure. That amplitude is fine on a small screen inside a frame and
+   is NOT fine on a screen-filling web element, so it is scaled to +/-2.5% and
+   kept opt-in. Low contrast keeps it well under the WCAG general flash
+   threshold; it is disabled outright under reduced motion. */
+.an-screen--flicker { animation: an-flicker calc(1s / 24) steps(2, end) infinite; }
+@keyframes an-flicker {
+  0%   { filter: brightness(1.025); }
+  50%  { filter: brightness(0.975); }
+  100% { filter: brightness(1.025); }
+}
+
+/* --- Footage homogenisation.
+   MANDATORY on every raster asset, not optional. Claude assembles imagery from
+   more mismatched sources than any editor does. The reference is explicit that
+   the specific effects matter less than the fact that every clip goes through
+   the SAME ones: "This matters less about the effects you use. It's just more
+   consistency across clips." --- */
+.an-homogenise {
+  position: relative;
+  filter: grayscale(1) contrast(1.06) brightness(.98);
+}
+.an-homogenise > img,
+.an-homogenise > video { display: block; width: 100%; height: auto; }
+
+/* Edge blur with a feathered inverted radial mask — centre stays sharp,
+   "guides your eye towards the middle". */
+.an-homogenise::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  -webkit-mask-image: radial-gradient(ellipse at center,
+                      transparent 48%, #000 92%);
+          mask-image: radial-gradient(ellipse at center,
+                      transparent 48%, #000 92%);
+}
+/* Duotone rather than greyscale, when the piece has a brand colour to spend. */
+.an-homogenise--duo { filter: grayscale(1) contrast(1.06) sepia(.35)
+                              hue-rotate(var(--duo-hue, 175deg)) saturate(1.6); }
+
+/* --- Focus band. A linear blur map, not a radial vignette: a horizontal band
+   of focus with soft top and bottom, which is what sells macro depth on a flat
+   composition. --- */
+.an-focus-band { position: relative; }
+.an-focus-band::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  backdrop-filter: blur(var(--focus-blur, 10px));
+  -webkit-backdrop-filter: blur(var(--focus-blur, 10px));
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0%, transparent 34%, transparent 66%, #000 100%);
+          mask-image: linear-gradient(to bottom,
+    #000 0%, transparent 34%, transparent 66%, #000 100%);
+}
+
+/* --- Chromatic fringe. Applied per register, never globally at one strength.
+
+   Put this on the CONTAINER, not on dark glyphs sitting on light paper. The
+   filter separates the channels and recombines them with `screen`, which
+   lightens wherever the three offset copies do not fully overlap — so on dark
+   text it visibly washes the ink out, worst at the archival strength. The
+   reference applies it to whole compositions via an adjustment layer, which is
+   the equivalent of putting it on the wrapper here. --- */
+.an-ca-type     { filter: url(#an-fringe-type); }
+.an-ca-graphic  { filter: url(#an-fringe-graphic); }
+.an-ca-screen   { filter: url(#an-fringe-screen); }
+.an-ca-archival { filter: url(#an-fringe-archival); }
+
+/* ============================================================
+   5. NON-NEGOTIABLE
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Flicker goes entirely — it is the one thing here that could actually
+     hurt someone. */
+  .an-screen--flicker { animation: none !important; filter: none !important; }
+
+  /* Grain freezes on its first plate rather than vanishing: the texture is
+     part of the design, only its movement is the accessibility concern. */
+  .an-grain-live > .an-grain-plate {
+    animation: none !important; opacity: 0 !important; }
+  .an-grain-live > .an-grain-plate:first-child {
+    opacity: var(--grain-strength) !important; }
+
+  .an-step-beat, .an-step-settle, .an-step-drift {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* backdrop-filter is the one modern dependency here. Where it is missing the
+   masked layers become invisible rather than wrong — the image simply stays
+   uniformly sharp, which is a graceful loss. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .an-homogenise::before, .an-focus-band::after { display: none; }
+}

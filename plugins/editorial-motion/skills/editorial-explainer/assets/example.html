@@ -1,0 +1,539 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>How Australians see AI</title>
+
+<style>
+/* ============================================================
+   9:16 · 27s loop · eight beats.
+
+   Graphic beats sit on a colour field with the data inset;
+   photographs CUT in full-frame as their own moments.
+   ONE DOT = ONE PER CENT — the hundred is always visible.
+   The dots open as an even scatter, then re-sort.
+
+   Colour separation is enforced on luminance, not just hue:
+   every pair of mark colours is ≥25 L apart, and every mark is
+   ≥25 L from its own field. Values noted inline.
+
+   Data: Essential Report (essentialreport.com.au), real figures.
+   Photography: licensed Shutterstock supplied by the user.
+   Brand: Essential warm grey / ink / orange, Arial for Archivo.
+   ============================================================ */
+
+:root{
+  --orange:#e2491a;    /* L≈48  */
+  --ink:#33333a;       /* L≈22  — darkened for separation */
+  --mid:#9d9893;       /* L≈63  — the neutral middle */
+  --warm:#eceae8;      /* L≈92  — light field */
+  --dark:#2a2a30;      /* L≈18  — dark field */
+  --bone:#f2efe9;      /* L≈94  */
+  --midd:#948d97;      /* L≈60  — neutral on dark */
+  --font:'Archivo',Arial,'Helvetica Neue',Helvetica,sans-serif;
+  --L:27s;
+  --ease-vox:cubic-bezier(.10,.90,.20,1);  /* measured off the AE velocity graph */
+  --tear:polygon(1% 3%,9% 0%,18% 4%,27% 1%,36% 5%,45% 1%,54% 4%,63% 0%,
+    72% 4%,81% 1%,90% 5%,99% 2%,97% 12%,100% 24%,96% 36%,99% 48%,96% 60%,
+    100% 72%,97% 84%,99% 96%,90% 99%,80% 95%,70% 100%,60% 96%,50% 99%,
+    40% 95%,30% 100%,20% 96%,10% 99%,2% 96%,0% 84%,3% 72%,0% 60%,4% 48%,
+    1% 36%,4% 24%,0% 12%);
+}
+*{box-sizing:border-box}
+.page{margin:0;background:#1a1a1c;min-height:100vh;display:grid;place-items:center;
+  padding:20px;gap:14px;font-family:var(--font)}
+.stage{position:relative;width:min(420px,92vw);aspect-ratio:9/16;overflow:hidden;
+  border-radius:4px;isolation:isolate;background:var(--warm)}
+
+.field{position:absolute;inset:0;z-index:1;opacity:0}
+.f-warm{background:var(--warm)}
+.f-dark{background:var(--dark)}
+.field::before{content:"";position:absolute;inset:0;opacity:.55;
+  background-image:linear-gradient(rgba(51,51,58,.09) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(51,51,58,.09) 1px,transparent 1px);
+  background-size:52px 52px}
+.f-dark::before{
+  background-image:linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px)}
+.fw{animation:fw var(--L) steps(1,end) infinite}
+.fd{animation:fd var(--L) steps(1,end) infinite}
+@keyframes fw{0%,9.6%{opacity:0}9.6%,62.2%{opacity:1}62.2%,79.4%{opacity:0}79.4%,86.5%{opacity:1}86.5%,100%{opacity:0}}
+@keyframes fd{0%,62.2%{opacity:0}62.2%,79.4%{opacity:1}79.4%,86.5%{opacity:0}86.5%,100%{opacity:1}}
+
+/* ---------- paper ground ----------
+   Sits ABOVE the colour field but BELOW the marks and all copy, so a
+   fold crease can never darken a letterform. Kept low enough that the
+   field's luminance barely moves and the ≥25 L separation still holds. */
+.paper{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
+  background-size:cover;background-position:center}
+.paper-light{mix-blend-mode:multiply}    /* creases darken a light field */
+.paper-dark{mix-blend-mode:soft-light}   /* creases lift a dark field    */
+.pa{animation:paA var(--L) steps(1,end) infinite}
+.pb{animation:paB var(--L) steps(1,end) infinite}
+.pc{animation:paC var(--L) steps(1,end) infinite}
+@keyframes paA{0%,9.6%{opacity:0}9.6%,62.2%{opacity:.20}62.2%,79.4%{opacity:0}79.4%,86.5%{opacity:.22}86.5%,100%{opacity:0}}
+@keyframes paB{0%,62.2%{opacity:0}62.2%,80%{opacity:.26}80%,100%{opacity:0}}
+@keyframes paC{0%,86.5%{opacity:0}86.5%,100%{opacity:.30}}
+
+.shot{position:absolute;inset:0;z-index:3;opacity:0;overflow:hidden;background:#0e0d0e}
+.shot img{width:100%;height:100%;object-fit:cover;
+  filter:grayscale(1) contrast(1.26) brightness(1.02);
+  animation:punch var(--L) var(--ease-vox) infinite}
+.shot::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:var(--orange);mix-blend-mode:color;opacity:.44}
+@keyframes punch{0%{transform:scale(1.02)}100%{transform:scale(1.3)}}
+.shot figcaption{position:absolute;left:0;bottom:54px;z-index:3;
+  background:var(--orange);color:#fff;font-size:12px;font-weight:700;
+  padding:7px 13px;margin:0}
+.p1{animation:p1 var(--L) steps(1,end) infinite}
+@keyframes p1{0%,9.6%{opacity:1}9.6%,100%{opacity:0}}
+
+/* ---------- torn panels ----------
+   The photograph is composited INTO the paper rather than floating over it:
+   a torn edge, duotone to the palette, and a flat accent copy of its own
+   silhouette offset behind. Above the paper, below the marks and copy. */
+.torn{position:absolute;z-index:4;opacity:0;left:28px;right:28px}
+.torn .echo{position:absolute;inset:0;background:var(--orange);
+  clip-path:var(--tear);transform:translate(11px,10px)}
+.torn .pic{position:absolute;inset:0;clip-path:var(--tear);overflow:hidden;
+  isolation:isolate}
+.torn .pic img{width:100%;height:100%;object-fit:cover;display:block;
+  filter:grayscale(1) contrast(1.3) brightness(1.04);
+  animation:punch var(--L) var(--ease-vox) infinite}
+.torn .pic::after{content:"";position:absolute;inset:0;
+  background:var(--orange);mix-blend-mode:color;opacity:.5}
+.torn figcaption{position:absolute;left:6px;bottom:-32px;background:var(--orange);
+  color:#fff;font-size:11.5px;font-weight:700;padding:6px 11px;margin:0;
+  white-space:nowrap}
+.t2{top:21%;height:33%;animation:tp2 var(--L) linear infinite}
+.t3{top:19%;height:37%;animation:tp3 var(--L) linear infinite}
+@keyframes tp2{0%,54.1%{opacity:0;transform:rotate(-1.5deg) scale(.93)}
+  56.4%{opacity:1;transform:rotate(-1.5deg) scale(1)}
+  61%{opacity:1;transform:rotate(-1.5deg) scale(1)}
+  62.2%{opacity:0;transform:rotate(-1.5deg) scale(1)}100%{opacity:0}}
+@keyframes tp3{0%,79.4%{opacity:0;transform:rotate(1.3deg) scale(.93)}
+  81.2%{opacity:1;transform:rotate(1.3deg) scale(1)}
+  85.6%{opacity:1;transform:rotate(1.3deg) scale(1)}
+  86.5%{opacity:0;transform:rotate(1.3deg) scale(1)}100%{opacity:0}}
+
+canvas{position:absolute;inset:0;z-index:5;width:100%;height:100%;display:block;
+  pointer-events:none}
+
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:20;
+  opacity:.07;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.ticks{position:absolute;top:0;left:0;right:0;z-index:14;display:flex;gap:3px;padding:9px}
+.ticks i{flex:1;height:2px;background:rgba(120,116,118,.4);overflow:hidden;border-radius:9px}
+.ticks i::after{content:"";display:block;height:100%;background:var(--orange);
+  transform:scaleX(0);transform-origin:left}
+.ticks i:nth-child(1)::after{animation:k1 var(--L) linear infinite}
+.ticks i:nth-child(2)::after{animation:k2 var(--L) linear infinite}
+.ticks i:nth-child(3)::after{animation:k3 var(--L) linear infinite}
+.ticks i:nth-child(4)::after{animation:k4 var(--L) linear infinite}
+@keyframes k1{0%{transform:scaleX(0)}22.2%,100%{transform:scaleX(1)}}
+@keyframes k2{0%,22.2%{transform:scaleX(0)}54.1%,100%{transform:scaleX(1)}}
+@keyframes k3{0%,54.1%{transform:scaleX(0)}79.4%,100%{transform:scaleX(1)}}
+@keyframes k4{0%,79.4%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+
+.copy{position:absolute;inset:0;z-index:12;pointer-events:none}
+.blk{position:absolute;left:26px;right:26px;opacity:0}
+.top{top:56px}
+.bot{bottom:30px}
+h2{font-size:25px;line-height:1.14;letter-spacing:-.025em;font-weight:700;margin:0;
+  color:var(--ink)}
+h2 em{font-style:normal;color:var(--orange)}
+.say{font-size:13.5px;line-height:1.45;color:#63606a;margin:8px 0 0;max-width:32ch}
+.src{font-size:9.4px;line-height:1.5;color:#7d7982;margin:9px 0 0;
+  border-top:1px solid rgba(51,51,58,.24);padding-top:8px}
+.on-dark h2{color:var(--bone)}
+.on-dark h2 em{color:#ff7a52}
+.on-dark .say{color:#cfcad2}
+.on-dark .src{color:#b3aeb8;border-top-color:rgba(255,255,255,.26)}
+
+.b2{animation:b2 var(--L) linear infinite}
+.b3{animation:b3 var(--L) linear infinite}
+.b4{animation:b4 var(--L) linear infinite}
+.b6{animation:b6 var(--L) linear infinite}
+.b8{animation:b8 var(--L) linear infinite}
+/* hand-drawn underline: a clean path displaced by fractal noise, then
+   drawn on. Hand-picking wobbly bezier points looks deliberate; noise
+   looks like a pen. */
+.uw{position:relative;display:inline-block}
+.ul{position:absolute;left:0;width:100%;bottom:-11px;height:13px;overflow:visible;
+  pointer-events:none}
+.ul path{stroke-dasharray:var(--ullen,220);animation:ink var(--L) linear infinite}
+/* Draws AFTER the marks settle (25.2s), not across them: the finale's one
+   accent move must not compete with its one data move. */
+@keyframes ink{0%,93.7%{stroke-dashoffset:var(--ullen,220)}97%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:0}}
+@keyframes b2{0%,10%{opacity:0}12.5%{opacity:1}20%{opacity:1}22%{opacity:0}100%{opacity:0}}
+@keyframes b3{0%,22.6%{opacity:0}25%{opacity:1}36%{opacity:1}38.2%{opacity:0}100%{opacity:0}}
+@keyframes b4{0%,38.9%{opacity:0}41.5%{opacity:1}52%{opacity:1}53.8%{opacity:0}100%{opacity:0}}
+@keyframes b6{0%,62.6%{opacity:0}65%{opacity:1}77.9%{opacity:1}78.9%{opacity:0}100%{opacity:0}}
+@keyframes b8{0%,87.2%{opacity:0}89.5%{opacity:1}100%{opacity:1}}
+
+.keys{display:flex;flex-direction:column;gap:5px;margin:8px 0 0}
+.key{display:flex;align-items:baseline;gap:8px;font-size:12px;color:var(--ink)}
+.on-dark .key{color:var(--bone)}
+.key b{font-size:15px;font-weight:700;min-width:32px}
+.key i{width:10px;height:10px;flex:none;transform:translateY(-1px);border-radius:50%;
+  outline:1px solid rgba(0,0,0,.14)}
+.on-dark .key i{outline-color:rgba(255,255,255,.22)}
+
+/* The stack totals are drawn on the canvas, not as DOM chips — see frame().
+   A floating label positioned against moving marks drifts; drawing it with
+   the same maths as the marks cannot. */
+
+/* the trend read-out lives in its own reserved row — never over the dots */
+.wave{position:absolute;left:26px;display:flex;align-items:baseline;gap:10px;opacity:0}
+.wave b{font-size:44px;font-weight:700;letter-spacing:-.04em;color:#ff7a52;line-height:1}
+.wave span{font-size:12.5px;color:var(--bone);font-weight:700}
+.v1{animation:v1 var(--L) linear infinite}
+.v2{animation:v2 var(--L) linear infinite}
+.v3{animation:v3 var(--L) linear infinite}
+.v4{animation:v4 var(--L) linear infinite}
+/* trend beat spans 62.2%–80%; each read-out is scoped inside it and
+   every one closes before 80% so nothing bleeds into the payoff */
+@keyframes v1{0%,63.2%{opacity:0}64.2%{opacity:1}66%{opacity:1}66.6%{opacity:0}100%{opacity:0}}
+@keyframes v2{0%,67.1%{opacity:0}68.1%{opacity:1}69.9%{opacity:1}70.5%{opacity:0}100%{opacity:0}}
+@keyframes v3{0%,71%{opacity:0}72%{opacity:1}73.8%{opacity:1}74.4%{opacity:0}100%{opacity:0}}
+@keyframes v4{0%,74.8%{opacity:0}75.8%{opacity:1}78.2%{opacity:1}78.8%{opacity:0}100%{opacity:0}}
+
+.caption{font-size:12px;color:#98948e;text-align:center;max-width:440px;line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-play-state:paused!important}
+  .f-warm{opacity:1}.blk.b3{opacity:1}
+}
+</style>
+
+<div class="page">
+<div class="stage" id="stage">
+
+  <div class="field f-warm fw"></div>
+  <div class="field f-dark fd"></div>
+
+  <div class="paper paper-light pa" style="background-image:url({{PAPER_FOLD}})"></div>
+  <div class="paper paper-dark  pb" style="background-image:url({{PAPER_RULED}})"></div>
+  <div class="paper paper-dark  pc" style="background-image:url({{PAPER_CRUSH}})"></div>
+
+  <figure class="shot p1" style="margin:0">
+    <img src="{{IMG_APPS}}" alt="A hand holding a phone showing a list of AI assistant apps">
+    <figcaption>Everyone has it in their pocket</figcaption>
+  </figure>
+  <figure class="torn t2" style="margin:0">
+    <span class="echo"></span>
+    <span class="pic"><img src="{{IMG_RACKS}}" alt="Server racks standing on a map of Australia"></span>
+    <figcaption>The build-out lands here</figcaption>
+  </figure>
+  <figure class="torn t3" style="margin:0">
+    <span class="echo"></span>
+    <span class="pic"><img src="{{IMG_SIGN}}" alt="A person holding a placard reading No Data Centers"></span>
+    <figcaption>Opposition abroad &middot; illustrative</figcaption>
+  </figure>
+
+  <canvas id="cv"></canvas>
+  <div class="ticks"><i></i><i></i><i></i><i></i></div>
+
+  <div class="copy">
+    <div class="blk top b2" id="z-top"><h2>How Australians<br>see AI</h2>
+      <p class="say">One hundred dots. Each dot is one per cent of respondents.</p></div>
+    <div class="blk bot b2"><p class="src">Essential Report &middot;
+      essentialreport.com.au</p></div>
+
+    <div class="blk top b3"><h2>Only <em>22 in 100</em> see more<br>opportunity than risk</h2></div>
+    <div class="blk bot b3" id="z-bot">
+      <div class="keys">
+        <span class="key"><i style="background:#e2491a"></i><b>22</b>More opportunity than risk</span>
+        <span class="key"><i style="background:#9d9893"></i><b>41</b>About the same</span>
+        <span class="key"><i style="background:#33333a"></i><b>36</b>More risk than opportunity</span>
+      </div>
+      <p class="src">Q. Which is closest to your view about the introduction of AI into workplaces,
+        society and everyday life? April 2026. Base: all participants (n=1,002). Figures do not
+        sum to 100 due to rounding.</p>
+    </div>
+
+    <div class="blk top b4"><h2>Risk beats opportunity<br>by <em>fourteen points</em></h2>
+      <p class="say">36 against 22, side by side. The 41 who see it evenly sit greyed below.</p></div>
+    <div class="blk bot b4"><p class="src">Essential Report, April 2026.
+      Base: all participants (n=1,002).</p></div>
+
+    <div class="blk top b6 on-dark"><h2>And that has not<br>moved in <em>two years</em></h2></div>
+    <div class="wave v1"><b>21</b><span>Jan 2024</span></div>
+    <div class="wave v2"><b>21</b><span>Jun 2024</span></div>
+    <div class="wave v3"><b>20</b><span>May 2025</span></div>
+    <div class="wave v4"><b>22</b><span>Apr 2026</span></div>
+    <div class="blk bot b6 on-dark"><p class="src">Dots in orange show the share saying AI carries
+      more opportunity than risk, at each wave. Essential Report trend, Jan 2024 – Apr 2026.
+      Base: all participants (min. n=1,000).</p></div>
+
+    <div class="blk top b8 on-dark"><h2>What they want<br>is <em class="uw">guardrails<svg class="ul" id="ulsvg" aria-hidden="true">
+        <path id="ulpath" fill="none" stroke="#ff7a52"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></em></h2></div>
+    <div class="blk bot b8 on-dark">
+      <div class="keys">
+        <span class="key"><i style="background:#e2491a"></i><b>63</b>Only with guardrails and redlines</span>
+        <span class="key"><i style="background:#f2efe9"></i><b>20</b>Allowed to develop freely</span>
+        <span class="key"><i style="background:#948d97"></i><b>17</b>Unsure</span>
+      </div>
+      <p class="src">Q. Which is closest to your view on how AI should be allowed to develop?
+        October 2025. Base: all participants (n=1,041).</p>
+    </div>
+  </div>
+</div>
+<p class="caption">The hundred opens as a map of Australia, then re-sorts. Mark colours are held
+at least 25 luminance steps apart from each other and from their field.</p>
+</div>
+
+<script>
+(function(){
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const stage=document.getElementById('stage');
+const zTop=document.getElementById('z-top'), zBot=document.getElementById('z-bot');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let W=0,H=0,DPR=Math.min(devicePixelRatio||1,2);
+
+const N=100;
+/* mark palettes, separated on luminance — see the note in :root */
+const ORANGE=[226,73,26], INK=[51,51,58], MID=[157,152,147],
+      BONE=[242,239,233], MIDD=[148,141,151];
+
+function cSplit(){const c=[];for(let i=0;i<N;i++)c.push(i<22?ORANGE:(i<63?MID:INK));return c}
+function cWave(v){const c=[];for(let i=0;i<N;i++)c.push(i<v?ORANGE:MIDD);return c}
+function cGuard(){const c=[];for(let i=0;i<N;i++)c.push(i<63?ORANGE:(i<83?BONE:MIDD));return c}
+function aFlat(){const a=[];for(let i=0;i<N;i++)a.push(1);return a}
+function aCompare(){const a=[];for(let i=0;i<N;i++)a.push((i>=22&&i<63)?.5:1);return a}
+
+/* Opening state: phyllotaxis scatter — built in build(). */
+
+let MAP=[],SPLIT=[],COMPARE=[],WAVE=[],GUARD=[],WAVE_H=64,cmp=null;
+
+let geomOK=false;
+function build(){
+  const r=stage.getBoundingClientRect();
+  /* An unsized host (artifact iframe before layout, hidden pane) measures
+     ~0 here. Building from that yields negative gaps and radii. Refuse,
+     and let the frame loop retry until the stage is real. */
+  if(r.width<100||r.height<100){ geomOK=false; return }
+  geomOK=true;
+  W=r.width;H=r.height;
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  const PAD=18;
+  const hOf=function(sel){
+    let m=0;
+    document.querySelectorAll(sel).forEach(function(el){
+      const h=el.getBoundingClientRect().height; if(h>m) m=h;
+    });
+    return m;
+  };
+
+  /* Each beat's band is measured from ITS OWN copy blocks. Sizing every beat
+     from the tallest block in the piece — and reserving the trend read-out
+     row in every beat — makes the finale carry ~110px of empty field for a
+     headline and a read-out it does not have. Blocks are hidden with opacity,
+     so all of them are measurable whichever beat is showing.
+     Floor only against degeneracy (24px absolute), never a fraction of frame
+     height: a percentage floor can exceed the real gap and force the marks
+     under the copy, which is what the band exists to prevent. */
+  const band=function(topSel,botSel,reserve){
+    const topH=hOf(topSel)||H*0.16, botH=hOf(botSel)||H*0.26;
+    const bTop=56+topH+PAD+reserve, bBot=H-30-botH-PAD;
+    const bH=Math.max(bBot-bTop,24);
+    return {bTop:bTop,bH:bH,mid:bTop+bH/2};
+  };
+  const gapOf=function(b){return Math.min(b.bH/10.6,(W-64)/10.6)};
+  const gridAt=function(b){
+    const gap=gapOf(b), side=gap*10;
+    const gx=W/2-side/2+gap/2, gy=b.mid-side/2+gap/2, out=[];
+    for(let i=0;i<N;i++) out.push({x:gx+(i%10)*gap,y:gy+Math.floor(i/10)*gap,r:Math.max(gap*.30,.1)});
+    return out;
+  };
+
+  const bOpen =band('.blk.top.b2','.blk.bot.b2',0);
+  const bSplit=band('.blk.top.b3','.blk.bot.b3',0);
+  const bComp =band('.blk.top.b4','.blk.bot.b4',0);
+  const bWave =band('.blk.top.b6','.blk.bot.b6',WAVE_H);
+  const bGuard=band('.blk.top.b8','.blk.bot.b8',0);
+
+  SPLIT=gridAt(bSplit); WAVE=gridAt(bWave); GUARD=gridAt(bGuard);
+
+  /* Opening state: an even scatter that settles into the grid. A shape the
+     marks are meant to spell only works with a real outline asset behind it —
+     approximating one from a hand-authored polygon reads as a blob. */
+  MAP=[];
+  const gapO=gapOf(bOpen), spread=Math.min(W*.40, gapO*10*.62);
+  for(let i=0;i<N;i++){
+    const rad=spread*Math.sqrt((i+.5)/N), ang=i*2.399963;  /* golden angle */
+    MAP.push({x:W/2+Math.cos(ang)*rad,
+              y:bOpen.mid+Math.sin(ang)*rad*.94, r:Math.max(gapO*.26,.1)});
+  }
+
+  COMPARE=[];
+  const gapC=gapOf(bComp);
+  const cw=6, cg=Math.min(gapC*1.02,(W-96)/14);
+  const colGapX=cw*cg+cg*1.5;
+  const leftX=W/2-colGapX/2-(cw*cg)/2+cg/2;
+  const rightX=W/2+colGapX/2-(cw*cg)/2+cg/2;
+  const baseY=bComp.mid+bComp.bH*0.19;
+  const restY=bComp.mid+bComp.bH*0.33;
+  cmp={leftX:leftX,rightX:rightX,baseY:baseY,cg:cg,cw:cw};
+  let a=0,b=0,c=0;
+  for(let i=0;i<N;i++){
+    if(i<22){const row=Math.floor(a/cw),col=a%cw;
+      COMPARE.push({x:leftX+col*cg,y:baseY-row*cg,r:cg*.31});a++}
+    else if(i>=63){const row=Math.floor(b/cw),col=b%cw;
+      COMPARE.push({x:rightX+col*cg,y:baseY-row*cg,r:cg*.31});b++}
+    else{const per=21,row=Math.floor(c/per),col=c%per;
+      const rg=Math.min((W-72)/per,cg*.52);
+      COMPARE.push({x:W/2-(per*rg)/2+col*rg+rg/2,y:restY+row*rg*1.5,r:rg*.28});c++}
+  }
+  const waveTop=56+(hOf('.blk.top.b6')||H*0.16)+PAD;
+  document.querySelectorAll('.wave').forEach(function(el){el.style.top=waveTop+'px'});
+}
+addEventListener('resize',build);
+if(window.ResizeObserver){ new ResizeObserver(function(){build();}).observe(stage); }
+
+const TL=[
+  {t:2.6,  pos:'map',     col:cWave(0),  al:aFlat()},
+  {t:6.0,  pos:'split',   col:cSplit(),  al:aFlat()},
+  {t:10.4, pos:'compare', col:cSplit(),  al:aCompare()},
+  /* Wave changes move only 1–2 dots, so they use a fast per-state
+     transition (tr/st) and land INSIDE their read-out window — the
+     global pacing made them land after it, and the last one after the
+     canvas had already hidden. */
+  {t:16.9,  pos:'wave', col:cWave(21), al:aFlat(), tr:.45, st:.12},
+  {t:18.0,  pos:'wave', col:cWave(21), al:aFlat(), tr:.45, st:.12},
+  {t:19.05, pos:'wave', col:cWave(20), al:aFlat(), tr:.45, st:.12},
+  {t:20.1,  pos:'wave', col:cWave(22), al:aFlat(), tr:.45, st:.12},
+  /* Starts AFTER the canvas reveal at 23.45, not at the nominal beat start.
+     At 23.1 the leading marks were already ~64% recoloured by the time they
+     became visible, so the payoff arrived as a pop with its fastest part
+     hidden behind the torn panel. See references/ending.md. */
+  {t:23.5,  pos:'guard', col:cGuard(),  al:aFlat()}
+];
+/* margins either side so a fading panel and the marks never co-exist */
+const HIDE=[[0,2.75],[14.35,17.05],[21.35,23.45]];
+const LOOP=27, TRANS=1.2, STAG=.5;
+
+const P={map:function(){return MAP},split:function(){return SPLIT},
+         compare:function(){return COMPARE},wave:function(){return WAVE},
+         guard:function(){return GUARD}};
+const easeOut=function(p){return 1-Math.pow(1-p,3)};
+const lerp=function(a,b,p){return a+(b-a)*p};
+const delay=[];for(let i=0;i<N;i++) delay.push((i/N)*STAG);
+
+window.__dbg={TL:TL,HIDE:HIDE,LOOP:LOOP,grid:function(){return GUARD},
+  dpr:function(){return DPR},canvas:cv,
+  drive:function(t){frame(t*1000)},          /* deterministic single frame */
+  reset:function(){cur=-1;fromS=null}};
+let cur=-1, fromS=null;
+function idxAt(t){let k=0;for(let i=0;i<TL.length;i++) if(t>=TL[i].t)k=i;return k}
+function hidden(t){for(let i=0;i<HIDE.length;i++) if(t>=HIDE[i][0]&&t<HIDE[i][1])return true;return false}
+
+function frame(now){
+  const time=(now/1000)%LOOP;
+  if(!geomOK){ build(); if(!geomOK){ requestAnimationFrame(frame); return } }
+  ctx.clearRect(0,0,W,H);
+  if(hidden(time)){ if(time<2.6) cur=-1; requestAnimationFrame(frame); return }
+  try{
+  const k=idxAt(time);
+  if(k!==cur){
+    fromS=(cur===-1||cur>k)
+      ? {pos:MAP.map(function(){return{x:W/2,y:H*1.15,r:1.4}}),
+         col:cWave(0),al:(function(){const a=[];for(let i=0;i<N;i++)a.push(0);return a})()}
+      : {pos:P[TL[cur].pos](),col:TL[cur].col,al:TL[cur].al};
+    cur=k;
+  }
+  const to=TL[k], toPos=P[to.pos]();
+
+
+  for(let i=0;i<N;i++){
+    const TR=to.tr||TRANS, dly=(i/N)*(to.st!==undefined?to.st:STAG);
+    let p=(time-to.t-dly)/TR; p=p<0?0:(p>1?1:p);
+    const e=easeOut(p);
+    const a=fromS.pos[i], b=toPos[i];
+    const bow=Math.sin(e*Math.PI)*((i%2?1:-1)*8);
+    const ca=fromS.col[i], cb=to.col[i];
+    ctx.beginPath();
+    ctx.arc(lerp(a.x,b.x,e),lerp(a.y,b.y,e)+bow,Math.max(.1,lerp(a.r,b.r,e)),0,6.2832);
+    ctx.fillStyle='rgba('+Math.round(lerp(ca[0],cb[0],e))+','
+      +Math.round(lerp(ca[1],cb[1],e))+','+Math.round(lerp(ca[2],cb[2],e))+','
+      +lerp(fromS.al[i],to.al[i],e).toFixed(3)+')';
+    ctx.fill();
+  }
+
+  /* Stack totals, drawn on the canvas so they are positioned by exactly the
+     same maths as the dots and cannot drift out of alignment. */
+  if(to.pos==='compare'&&cmp){
+    let lp=(time-to.t-STAG-TRANS*0.6)/0.5; lp=lp<0?0:(lp>1?1:lp);
+    if(lp>0){
+      const topL=cmp.baseY-(Math.ceil(22/cmp.cw)-1)*cmp.cg-cmp.cg*.31;
+      const topR=cmp.baseY-(Math.ceil(36/cmp.cw)-1)*cmp.cg-cmp.cg*.31;
+      ctx.save();
+      ctx.globalAlpha=lp;
+      ctx.textAlign='center';
+      ctx.font='700 '+Math.round(cmp.cg*1.15)+'px '+
+        "'Archivo',Arial,Helvetica,sans-serif";
+      ctx.fillStyle='rgb(226,73,26)';
+      ctx.fillText('22', cmp.leftX+(cmp.cw-1)*cmp.cg/2, topL-cmp.cg*0.62);
+      ctx.fillStyle='rgb(51,51,58)';
+      ctx.fillText('36', cmp.rightX+(cmp.cw-1)*cmp.cg/2, topR-cmp.cg*0.62);
+      ctx.restore();
+    }
+  }
+  }catch(err){
+    /* An exception here would end the RAF chain and freeze the piece for
+       good — the failure mode this build shipped with. Log, mark geometry
+       dirty, keep the loop alive. */
+    geomOK=false;
+    if(!window.__frameErr){ window.__frameErr=String(err); }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- hand-drawn underline ----------
+   The wobble lives in the geometry, not a filter. feDisplacementMap
+   pushes PIXELS around after rasterisation, so small strokes alias —
+   and stretching a fixed viewBox across the word made it worse. Here
+   the path is generated at final size with seeded jitter and smoothed,
+   so the browser draws one crisp vector stroke. */
+function buildUL(){
+  const svg=document.getElementById('ulsvg'), path=document.getElementById('ulpath');
+  if(!svg||!path) return;
+  const w=svg.parentElement.getBoundingClientRect().width||120, h=14;
+  svg.setAttribute('width',w); svg.setAttribute('height',h);
+  svg.setAttribute('viewBox','0 0 '+w+' '+h);
+  let seed=7;
+  const r=function(){seed=(seed*9301+49297)%233280;return seed/233280};
+  const n=Math.max(14,Math.round(w/9)), pts=[];
+  for(let i=0;i<=n;i++){
+    const x=2+(w-4)*i/n;
+    const base=h*0.55+Math.sin(i/n*Math.PI*2.1+0.4)*2.2;   /* two gentle arches */
+    pts.push([x, base+(r()-.5)*2.6]);                       /* per-point jitter  */
+  }
+  let d='M'+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
+  for(let i=1;i<pts.length-1;i++){
+    const xc=(pts[i][0]+pts[i+1][0])/2, yc=(pts[i][1]+pts[i+1][1])/2;
+    d+=' Q'+pts[i][0].toFixed(1)+' '+pts[i][1].toFixed(1)+' '+xc.toFixed(1)+' '+yc.toFixed(1);
+  }
+  path.setAttribute('d',d);
+  const len=path.getTotalLength();
+  path.style.setProperty('--ullen',len);
+}
+
+build();
+buildUL();
+setTimeout(function(){build();buildUL()},150);
+addEventListener('resize',buildUL);
+if(RM){
+  const c=cSplit();
+  SPLIT.forEach(function(b,i){
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,6.2832);
+    ctx.fillStyle='rgb('+c[i][0]+','+c[i][1]+','+c[i][2]+')';ctx.fill();
+  });
+}else{
+  requestAnimationFrame(frame);
+}
+})();
+</script>

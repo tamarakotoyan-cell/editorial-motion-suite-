@@ -1,0 +1,238 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Type treatment — the four registers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------------------------------------------------------------
+   Reference board for the type-treatment skill — the four registers.
+
+   TEMPLATE. Replace the four {{IMG_*}} placeholders with base64 data
+   URIs before use; artifact CSP blocks external hosts.
+     {{IMG_PAPER}}  ground texture under every card
+     {{IMG_GRAIN}}  grain plate over the whole card (cover, NOT tiled —
+                    a tiled texture shows its seams as hard bands)
+     {{IMG_MASK}}   luminance mask that erodes the "In" letterforms
+     {{IMG_PHOTO}}  the photograph, used by both "Through" and "On"
+
+   Verified in-browser: all four registers render; the boil cycles
+   through three discrete states with exactly one visible per frame;
+   reduced motion leaves every text element present and static; zero
+   overflow at 200px card width.
+
+   Colours are Essential's placeholders — swap for the client brand.
+   --------------------------------------------------------------- */
+
+:root{
+  --ink:    #2A2622;          /* not #000 — carries the paper's warmth */
+  --paper:  #E9E7E5;
+  --brand:  #E2491A;
+  --mute:   #4E4E50;
+
+  --ease-vox:  cubic-bezier(.10,.90,.20,1);
+  --ease-out:  cubic-bezier(.16,1,.30,1);
+  --beat: .5s;  --snap: .25s;  --hold: 1.5s;
+
+  --char-stagger: 26ms;
+  --boil-cycle: .27s;
+
+  --grain-src: url({{IMG_GRAIN}});
+  --mask-src:  url({{IMG_MASK}});
+  --photo-src: url({{IMG_PHOTO}});
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{
+  font-family: Archivo, Arial, Helvetica, sans-serif;
+  background:#D9D6D2; color:var(--ink);
+  padding: clamp(16px,4vw,48px);
+  display:grid; gap:clamp(16px,3vw,32px);
+  grid-template-columns: repeat(auto-fit, minmax(230px,1fr));
+  align-items:start;
+}
+
+.card{
+  position:relative; isolation:isolate;    /* REQUIRED: contains the blends */
+  aspect-ratio: 9/16; overflow:hidden;
+  background:var(--paper) url({{IMG_PAPER}}) center/cover;
+  display:flex; flex-direction:column; justify-content:center;
+  padding: clamp(18px,5%,36px);
+  border-radius:2px;
+}
+.tag{
+  position:absolute; top:14px; left:14px; z-index:9;
+  font-size:11px; letter-spacing:.12em; font-weight:700;
+  background:var(--ink); color:var(--paper);
+  padding:4px 8px; border-radius:2px; text-transform:uppercase;
+}
+.note{
+  position:absolute; bottom:14px; left:14px; right:14px; z-index:9;
+  font-size:12px; line-height:1.35; color:var(--mute);
+}
+
+/* One grain layer over the WHOLE card — type included.
+   cover, NOT a repeated tile: a tiled texture shows its seams as hard
+   bands, which reads as a rendering fault rather than a surface. */
+.card::after{
+  content:""; position:absolute; inset:0; z-index:8; pointer-events:none;
+  background:var(--grain-src) center/cover no-repeat;
+  mix-blend-mode:overlay; opacity:.55;
+}
+
+/* ---------- 1. IN — printed into the surface ---------- */
+
+.in-hero{
+  font-size: clamp(30px,17cqw,96px); font-weight:800; line-height:.86;
+  letter-spacing:-.03em; text-transform:uppercase;
+  color:var(--ink);
+  mix-blend-mode: multiply;                 /* dark ink, light ground */
+  -webkit-mask-image:var(--mask-src);  mask-image:var(--mask-src);
+  -webkit-mask-size:300px;             mask-size:300px;
+  -webkit-mask-mode:luminance;         mask-mode:luminance;
+  filter:url(#surface);                     /* large type only */
+}
+.card{ container-type:inline-size; }
+
+/* ---------- 2. THROUGH — image inside the letterforms ---------- */
+
+.through{
+  font-size: clamp(34px,17cqw,110px); font-weight:800; line-height:1;
+  letter-spacing:-.02em; text-transform:uppercase;
+  color:var(--ink);                          /* fallback if clipping fails */
+}
+@supports ((background-clip:text) or (-webkit-background-clip:text)){
+  .through{
+    background-image:var(--photo-src);
+    /* Aim a CALM region at the letterforms and blow it up. Fine detail
+       inside type is unreadable at any size — this targets the bokeh,
+       not the subject. */
+    background-size:260% auto; background-position:6% 46%;
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent;
+    filter:contrast(1.3) saturate(1.15);
+  }
+}
+
+/* ---------- 3. ON — plate, scrim, quiet region ---------- */
+
+/* Crop to the photo's QUIET region (the bokeh), so the headline has
+   somewhere to live without a black box over the subject. */
+.on-card{ background:var(--photo-src) 12% 50%/cover; }
+.on-card::before{                              /* local grade, image's dark tone */
+  content:""; position:absolute; inset:0; z-index:1;
+  background:linear-gradient(to top, rgba(26,22,18,.80), transparent 58%);
+}
+.on-copy{ position:relative; z-index:2; margin-top:auto; }
+.on-copy h2{
+  font-size:clamp(26px,9cqw,42px); font-weight:800; line-height:1.02;
+  letter-spacing:-.02em; color:#F4F1ED;        /* not #FFF */
+}
+.on-chip{
+  display:inline-block; background:var(--brand); color:#FFF3EE;
+  font-size:12px; font-weight:700; letter-spacing:.08em;
+  padding:5px 9px; border-radius:2px; margin-bottom:10px;
+  text-transform:uppercase;
+}
+
+/* ---------- 4. MOTION — one animation at a time ---------- */
+
+.motion{ gap:26px; }
+
+.by-char{ font-size:clamp(19px,10cqw,46px); font-weight:800; letter-spacing:-.02em; }
+.by-char span{
+  display:inline-block;
+  animation: rise var(--beat) var(--ease-out) both;
+  animation-delay: calc(var(--i) * var(--char-stagger));
+}
+@keyframes rise{ from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
+
+.fill{ position:relative; display:inline-block;
+       font-size:clamp(16px,8cqw,34px); font-weight:800; color:var(--ink); }
+.fill::after{
+  content:attr(data-text); position:absolute; inset:0; color:var(--brand);
+  clip-path:inset(0 100% 0 0);
+  animation: fill-sweep var(--beat) var(--ease-vox) 1.2s both,
+             fill-settle 400ms var(--ease-out) 2.6s both;
+}
+@keyframes fill-sweep { to{ clip-path:inset(0 0 0 0) } }
+@keyframes fill-settle{ to{ opacity:0 } }
+
+/* Boil — three variants, stepped, never eased.
+   Each variant carries its own JITTERED GEOMETRY (a fixed per-character
+   rotate/offset), which is the small-type technique: feDisplacementMap
+   at this size pixelates the stems. */
+.boil{ position:relative; display:inline-block;
+       font-family:'Bradley Hand','Segoe Print','Comic Sans MS',cursive,sans-serif;
+       font-size:clamp(20px,11cqw,40px); font-weight:700; color:var(--brand);
+       white-space:nowrap; }
+.boil > span{ display:block;
+              animation: boil-flick var(--boil-cycle) steps(1,end) infinite; }
+.boil > span + span{ position:absolute; left:0; top:0; }
+.boil > span:nth-child(2){ animation-delay: calc(var(--boil-cycle)/3); }
+.boil > span:nth-child(3){ animation-delay: calc(var(--boil-cycle)/3*2); }
+.boil i{ display:inline-block; font-style:normal;
+         transform: translate(var(--x,0px), var(--y,0px)) rotate(var(--r,0deg)); }
+@keyframes boil-flick{ 0%,33.32%{opacity:1} 33.33%,100%{opacity:0} }
+
+.lede{ font-size:13px; line-height:1.4; color:var(--mute); max-width:30ch; }
+
+@media (prefers-reduced-motion: reduce){
+  .by-char span{ animation-duration:.01ms !important; animation-delay:0ms !important; }
+  .fill::after{ animation:none !important; opacity:0 !important; }
+  .boil > span{ animation:none !important; opacity:1 !important; }
+  .boil > span + span{ display:none !important; }
+}
+</style>
+
+<!-- Displacement filter. Anisotropic baseFrequency so the warp runs with the
+     paper's grain direction. Large display type ONLY — on small text
+     feDisplacementMap pixelates the stems. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="surface" x="-8%" y="-8%" width="116%" height="116%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.022"
+                  numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="6"
+                       xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<!-- 1 -->
+<div class="card">
+  <span class="tag">In</span>
+  <div class="in-hero">Printed<br>not<br>pasted</div>
+  <p class="note">multiply + texture mask + displacement. The paper eats the edge.</p>
+</div>
+
+<!-- 2 -->
+<div class="card">
+  <span class="tag">Through</span>
+  <div class="through">Read<br>through</div>
+  <p class="note">background-clip:text, with a solid-colour fallback outside @supports.</p>
+</div>
+
+<!-- 3 -->
+<div class="card on-card">
+  <span class="tag">On</span>
+  <div class="on-copy">
+    <span class="on-chip">Essential Report</span>
+    <h2>Type sits in the quiet region, on a local grade — not a black box</h2>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="card motion">
+  <span class="tag">Motion</span>
+  <div class="by-char" aria-label="One at a time">
+    <span aria-hidden="true" style="--i:0">O</span><span aria-hidden="true" style="--i:1">n</span><span aria-hidden="true" style="--i:2">e</span><span aria-hidden="true" style="--i:3">&nbsp;</span><span aria-hidden="true" style="--i:4">a</span><span aria-hidden="true" style="--i:5">t</span><span aria-hidden="true" style="--i:6">&nbsp;</span><span aria-hidden="true" style="--i:7">a</span><span aria-hidden="true" style="--i:8">&nbsp;</span><span aria-hidden="true" style="--i:9">t</span><span aria-hidden="true" style="--i:10">i</span><span aria-hidden="true" style="--i:11">m</span><span aria-hidden="true" style="--i:12">e</span>
+  </div>
+
+  <div class="fill" data-text="Brand arrives, ink reads">Brand arrives, ink reads</div>
+
+  <div class="boil" aria-label="Wiggle">
+    <span aria-hidden="true"><i style="--r:-2.5deg;--y:.5px">W</i><i style="--r:1.5deg;--y:-.5px">i</i><i style="--r:-1deg;--y:.5px">g</i><i style="--r:2deg">g</i><i style="--r:-1.5deg;--y:-.5px">l</i><i style="--r:1deg;--y:.5px">e</i></span>
+    <span aria-hidden="true"><i style="--r:1.5deg;--y:-.5px">W</i><i style="--r:-2deg;--y:.5px">i</i><i style="--r:2deg;--y:-.5px">g</i><i style="--r:-1.5deg;--y:.5px">g</i><i style="--r:1deg">l</i><i style="--r:-2.5deg;--y:-.5px">e</i></span>
+    <span aria-hidden="true"><i style="--r:.5deg;--y:.5px">W</i><i style="--r:2.5deg">i</i><i style="--r:-2deg;--y:-.5px">g</i><i style="--r:1deg;--y:.5px">g</i><i style="--r:-2.5deg;--y:-.5px">l</i><i style="--r:2deg;--y:.5px">e</i></span>
+  </div>
+
+  <p class="lede">Three separate drawings cycled at ~11fps with steps() — never one
+    shape wobbling. Only one of these three moves at a time in real work.</p>
+</div>

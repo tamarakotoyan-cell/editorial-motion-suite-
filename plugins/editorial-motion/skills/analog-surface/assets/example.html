@@ -1,0 +1,286 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Analog surface — Surface / Ink / Life</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------------------------------------------------------------
+   Reference board for the analog-surface skill.
+
+   TEMPLATE. Replace the four {{IMG_*}} placeholders with base64 data
+   URIs before use; artifact CSP blocks external hosts.
+     {{IMG_PAPER}}  paper ground    make-paper.py --variant newsprint --matte
+     {{IMG_MATTE}}  its companion matte, SAME seed — this is not optional,
+                    a matte from a different seed masks the ink against
+                    paper it is not sitting on and the effect silently dies
+     {{IMG_GRAIN}}  grain plate     make-grain.py
+     {{IMG_PHOTO}}  any photograph, for the homogenise and focus-band panels
+
+   Verified in-browser: the ink stack shows four distinct states; the
+   fringe filters render at all four strengths; homogenise blurs edges
+   while the centre stays sharp; the focus band leaves a sharp horizontal
+   strip; reduced motion stops the flicker and freezes boil on a visible
+   state; scrollWidth == clientWidth at 500px with no element exceeding
+   the viewport.
+
+   500px is the floor Chrome headless will actually render — it clamps the
+   window there, and --force-device-scale-factor does not move the CSS
+   viewport — so narrower widths are reasoned, not measured. The only fixed
+   minimum here is the grid's 240px track plus 40px of wrap padding, so it
+   should hold to about 280px; everything else wraps.
+
+   Colours are the reference's own measured values — swap --paper and
+   --ink for the client brand where the brand specifies them.
+   --------------------------------------------------------------- */
+
+/* ---- paste analog.css here; inlined below for a standalone board ---- */
+
+:root {
+  --paper:#FDFAF3; --paper-warm:#FBF6EA; --paper-cool:#F6F7F4; --paper-news:#F2EFE6;
+  --ink:#1F1C18; --ink-soft:#2B2723;
+  --tex-strength:.05; --grain-strength:.06;
+  --boil-cycle:.25s;
+  --tex-paper:url("{{IMG_PAPER}}");
+  --tex-matte:url("{{IMG_MATTE}}");
+  --tex-grain:url("{{IMG_GRAIN}}");
+  --tile:256px;
+}
+
+.an-surface{position:relative;background-color:var(--paper);
+  background-image:var(--tex-paper);background-size:var(--tile);background-repeat:repeat}
+.an-surface--news{background-color:var(--paper-news)}
+.an-surface--vignette::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at center,transparent 45%,rgba(31,28,24,.16) 100%)}
+
+.an-ink{color:var(--ink-soft);mix-blend-mode:multiply;
+  -webkit-mask-image:var(--tex-matte);mask-image:var(--tex-matte);
+  -webkit-mask-size:var(--tile);mask-size:var(--tile)}
+.an-ink--bleed{text-shadow:0 0 .02em rgba(31,28,24,.45),0 0 .05em rgba(31,28,24,.25),0 0 .10em rgba(31,28,24,.12)}
+
+.an-rule{border:0;height:1.5px;background:var(--ink);opacity:.55;
+  -webkit-mask-image:var(--tex-grain);mask-image:var(--tex-grain);
+  -webkit-mask-size:256px;mask-size:256px}
+
+.an-grain{position:relative}
+.an-grain::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;
+  background-image:var(--tex-grain);background-size:256px;
+  mix-blend-mode:overlay;opacity:var(--grain-strength)}
+
+.an-screen{position:relative;overflow:hidden;background:#0E0E0D}
+.an-screen::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,.05) 0 1px,rgba(0,0,0,0) 1px 8px)}
+.an-screen::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.34) 100%)}
+.an-screen--flicker{animation:an-flicker calc(1s / 24) steps(2,end) infinite}
+@keyframes an-flicker{0%{filter:brightness(1.025)}50%{filter:brightness(.975)}100%{filter:brightness(1.025)}}
+
+.an-homogenise{position:relative;filter:grayscale(1) contrast(1.06) brightness(.98)}
+.an-homogenise>img{display:block;width:100%;height:auto}
+.an-homogenise::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  -webkit-mask-image:radial-gradient(ellipse at center,transparent 48%,#000 92%);
+  mask-image:radial-gradient(ellipse at center,transparent 48%,#000 92%)}
+
+.an-focus-band{position:relative}
+.an-focus-band>img{display:block;width:100%;height:auto}
+.an-focus-band::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;
+  backdrop-filter:blur(var(--focus-blur,10px));-webkit-backdrop-filter:blur(var(--focus-blur,10px));
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 34%,transparent 66%,#000 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 34%,transparent 66%,#000 100%)}
+
+.an-ca-type{filter:url(#an-fringe-type)}
+.an-ca-graphic{filter:url(#an-fringe-graphic)}
+.an-ca-screen{filter:url(#an-fringe-screen)}
+.an-ca-archival{filter:url(#an-fringe-archival)}
+
+.an-boil>*{animation:an-boil-flick var(--boil-cycle) steps(1,end) infinite}
+.an-boil{position:relative;display:inline-block}
+.an-boil>*+*{position:absolute;left:0;top:0}
+.an-boil>*:nth-child(2){animation-delay:calc(var(--boil-cycle)/3)}
+.an-boil>*:nth-child(3){animation-delay:calc(var(--boil-cycle)/3*2)}
+@keyframes an-boil-flick{0%,33.32%{opacity:1}33.33%,100%{opacity:0}}
+
+@media (prefers-reduced-motion:reduce){
+  .an-screen--flicker{animation:none!important;filter:none!important}
+  .an-boil>*{animation:none!important;opacity:1!important}
+  .an-boil>*+*{display:none!important}
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .an-homogenise::before,.an-focus-band::after{display:none}
+}
+
+/* ---- board chrome ---- */
+body{margin:0;background:#171614;color:#8A8377;
+  font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px;box-sizing:border-box}
+h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#6E675C;margin:44px 0 4px;font-weight:400;overflow-wrap:anywhere}
+h2 b{color:#C6BDAB;font-weight:400}
+.note{font-size:12px;color:#5E584E;margin:0 0 14px;max-width:min(62ch,100%)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.panel{position:relative;min-height:190px;display:flex;align-items:center;
+  justify-content:center;overflow:hidden}
+.tag{position:absolute;top:8px;left:10px;z-index:6;font-size:10px;
+  letter-spacing:.09em;text-transform:uppercase;color:#9A8F79}
+.an-screen .tag{color:#6F7A6B}
+h1{font:700 34px/1 Georgia,'Times New Roman',serif;margin:0;color:var(--ink)}
+.doc{padding:26px 24px;font:15px/1.6 Georgia,serif;color:var(--ink-soft)}
+.doc .hd{font-size:26px;letter-spacing:.02em;margin:0 0 10px}
+.digital{background:#fff;color:#000}
+.digital .hd{font-family:Helvetica,Arial,sans-serif}
+</style>
+
+<!-- check-artifact-ignore: no-pure-white, homogenise-imagery, fringe-on-glyphs
+     This board demonstrates the failures on purpose. The white panel is the
+     "before" half of the A/B; the raw and focus-band images are deliberately
+     un-homogenised so the treated one has something to be compared against;
+     the fringe row applies the filter to glyphs precisely to show why it
+     should go on the container instead. Everything else must still pass. -->
+
+<!-- filters.svg goes here, as the first child of body -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute"><defs>
+  <filter id="an-fringe-type" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" result="r" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feOffset in="r" dx="-0.5" result="ro"/>
+    <feColorMatrix in="SourceGraphic" result="g" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feColorMatrix in="SourceGraphic" result="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    <feOffset in="b" dx="0.5" result="bo"/>
+    <feBlend in="ro" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="bo" mode="screen"/>
+  </filter>
+  <filter id="an-fringe-graphic" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" result="r" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feOffset in="r" dx="-0.8" result="ro"/>
+    <feColorMatrix in="SourceGraphic" result="g" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feColorMatrix in="SourceGraphic" result="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    <feOffset in="b" dx="0.8" result="bo"/>
+    <feBlend in="ro" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="bo" mode="screen"/>
+  </filter>
+  <filter id="an-fringe-screen" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" result="r" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feOffset in="r" dx="-1.2" result="ro"/>
+    <feColorMatrix in="SourceGraphic" result="g" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feColorMatrix in="SourceGraphic" result="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    <feOffset in="b" dx="1.2" result="bo"/>
+    <feBlend in="ro" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="bo" mode="screen"/>
+  </filter>
+  <filter id="an-fringe-archival" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+    <feColorMatrix in="SourceGraphic" result="r" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feOffset in="r" dx="-2" result="ro"/>
+    <feColorMatrix in="SourceGraphic" result="g" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/>
+    <feColorMatrix in="SourceGraphic" result="b" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+    <feOffset in="b" dx="2" result="bo"/>
+    <feBlend in="ro" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="bo" mode="screen"/>
+  </filter>
+  <filter id="an-boil-1" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="11" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="an-boil-2" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.048" numOctaves="2" seed="27" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="an-boil-3" x="-12%" y="-12%" width="124%" height="124%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.042" numOctaves="2" seed="43" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.9" xChannelSelector="R" yChannelSelector="G"/></filter>
+</defs></svg>
+
+<div class="wrap">
+
+  <h2><b>The argument.</b> Same words, different credibility</h2>
+  <p class="note">The reference demonstrates the whole idea with an A/B: identical
+     text on a white digital rectangle, then on a printed sheet. Nothing about the
+     content changes. "Adding those imperfections signals human curation."</p>
+  <div class="grid">
+    <div class="panel digital doc">
+      <div><p class="hd">H. R. 2122</p>
+        <p>To amend the Outer Continental Shelf Lands Act to prohibit oil-, gas-
+        and methane hydrate-related seismic activities in the North Atlantic,
+        Mid-Atlantic and South Atlantic.</p></div>
+      <span class="tag" style="color:#999">digital</span>
+    </div>
+    <div class="panel an-surface an-surface--news an-surface--vignette an-grain doc">
+      <div class="an-ink an-ink--bleed"><p class="hd">H. R. 2122</p>
+        <p>To amend the Outer Continental Shelf Lands Act to prohibit oil-, gas-
+        and methane hydrate-related seismic activities in the North Atlantic,
+        Mid-Atlantic and South Atlantic.</p></div>
+      <span class="tag">surface + ink + life</span>
+    </div>
+  </div>
+
+  <h2><b>Ink.</b> Built up one layer at a time</h2>
+  <p class="note">Left to right: ink laid on the paper, then multiplied into it,
+     then masked by the paper's own luma matte so the fibres cut into the stroke,
+     then bled. Only the last two are doing the work the reference does.</p>
+  <div class="grid">
+    <div class="panel an-surface"><span class="tag">1 on</span><h1>EVIDENCE</h1></div>
+    <div class="panel an-surface"><span class="tag">2 multiply</span>
+      <h1 style="mix-blend-mode:multiply;color:var(--ink-soft)">EVIDENCE</h1></div>
+    <div class="panel an-surface"><span class="tag">3 + paper matte</span>
+      <h1 class="an-ink">EVIDENCE</h1></div>
+    <div class="panel an-surface an-grain"><span class="tag">4 + bleed + grain</span>
+      <h1 class="an-ink an-ink--bleed">EVIDENCE</h1></div>
+  </div>
+
+  <h2><b>Chromatic fringe.</b> Scaled by register, never one global value</h2>
+  <p class="note">.5 on type, .8 on native graphics, 1.2 on emulated screens,
+     2.0 on archival footage. The rule is the scaling; the numbers are the
+     reference's own.</p>
+  <div class="grid">
+    <div class="panel an-surface"><span class="tag">type · 0.5</span>
+      <h1 class="an-ca-type" style="color:var(--ink)">FRINGE</h1></div>
+    <div class="panel an-surface"><span class="tag">graphic · 0.8</span>
+      <h1 class="an-ca-graphic" style="color:var(--ink)">FRINGE</h1></div>
+    <div class="panel an-surface"><span class="tag">screen · 1.2</span>
+      <h1 class="an-ca-screen" style="color:var(--ink)">FRINGE</h1></div>
+    <div class="panel an-surface"><span class="tag">archival · 2.0</span>
+      <h1 class="an-ca-archival" style="color:var(--ink)">FRINGE</h1></div>
+  </div>
+
+  <h2><b>Screen.</b> Scanlines, falloff, refresh</h2>
+  <p class="note">Horizontal scanlines at 8px pitch and 5% strength — "most
+     monitors are horizontal". The flicker is the reference's wiggle(24, 0.08)
+     scaled down hard: ±2.5%, opt-in, and off entirely under reduced motion.</p>
+  <div class="grid">
+    <div class="panel an-screen"><span class="tag">screen</span>
+      <h1 style="color:#C9C4B4;font-size:30px">localhost</h1></div>
+    <div class="panel an-screen an-screen--flicker"><span class="tag">+ 24Hz refresh</span>
+      <h1 style="color:#C9C4B4;font-size:30px">localhost</h1></div>
+  </div>
+
+  <h2><b>Imagery.</b> Homogenise, then place focus</h2>
+  <p class="note">Every raster asset goes through one shared treatment, so
+     mismatched sources stop reading as mismatched. Then the focus band puts a
+     sharp horizontal strip through the middle — a linear blur map, not a radial
+     vignette, which is what sells macro depth on a flat composition.</p>
+  <div class="grid">
+    <div class="panel" style="padding:0"><span class="tag">raw</span>
+      <img src="{{IMG_PHOTO}}" alt="" style="display:block;width:100%"></div>
+    <div class="panel an-homogenise" style="padding:0"><span class="tag">homogenised</span>
+      <img src="{{IMG_PHOTO}}" alt=""></div>
+    <!-- Focus band on its own, NOT stacked on .an-homogenise. Both put a
+         backdrop-filter layer over the element, and the two masks compose to
+         "blurred everywhere except a small central patch" rather than a band.
+         Pick one per element. -->
+    <div class="panel an-focus-band" style="padding:0">
+      <span class="tag">+ focus band</span>
+      <img src="{{IMG_PHOTO}}" alt=""></div>
+  </div>
+
+  <h2><b>Marks.</b> Rules and boil</h2>
+  <p class="note">The rule is masked with the grain plate rather than filtered —
+     feDisplacementMap on a hairline pixelates, as sources.md §13 records. Boil
+     is three genuinely different states cycled with steps(), never one state
+     tweened.</p>
+  <div class="grid">
+    <div class="panel an-surface" style="flex-direction:column;gap:18px;padding:0 26px">
+      <span class="tag">rule</span>
+      <hr class="an-rule" style="width:100%">
+      <hr class="an-rule" style="width:100%">
+    </div>
+    <div class="panel an-surface"><span class="tag">boil</span>
+      <span class="an-boil">
+        <svg width="188" height="92" fill="none" stroke="#C4442E" stroke-width="3.5" filter="url(#an-boil-1)"><ellipse cx="94" cy="46" rx="82" ry="34"/></svg>
+        <svg width="188" height="92" fill="none" stroke="#C4442E" stroke-width="3.5" filter="url(#an-boil-2)"><ellipse cx="94" cy="46" rx="82" ry="34"/></svg>
+        <svg width="188" height="92" fill="none" stroke="#C4442E" stroke-width="3.5" filter="url(#an-boil-3)"><ellipse cx="94" cy="46" rx="82" ry="34"/></svg>
+      </span>
+    </div>
+  </div>
+
+</div>
