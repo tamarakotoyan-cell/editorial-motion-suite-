@@ -1,0 +1,264 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Format adaptation — one system, four compositions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ---------------------------------------------------------------
+   Reference board for the format-adaptation skill.
+
+   ONE piece — kicker, headline, a two-bar comparison, source —
+   composed four times. The DOM inside every stage is IDENTICAL
+   (prove it: diff the four .stage blocks); only CSS recomposes.
+   Element triage is visible: the annotation exists in 16:9 and
+   9:16 only, the chart drops to a mini pair in 1:1, and the 9:16
+   carries the safe-area debug overlay plus the nested 4:5 crop.
+
+   Verified in-browser: four distinct compositions from identical
+   DOM; safe bands and the dashed 4:5 crop render on the 9:16;
+   characters-per-line roughly constant; reduced motion static.
+   --------------------------------------------------------------- */
+
+/* ---- the approved system: tokens live ONCE ---- */
+:root{
+  --paper:#FDFAF3; --paper-news:#F2EFE6; --ink:#1F1C18; --ink-soft:#2B2723;
+  --mute:#7A7264; --accent:#C4442E;
+  --ease-out:cubic-bezier(0.16,1,0.30,1);
+  --ease-vox:cubic-bezier(0.10,0.90,0.20,1);
+  --beat:.5s; --stagger:70ms;
+}
+
+/* ---- formats.css (inlined for a standalone board) ---- */
+.stage{position:relative;overflow:hidden;container-type:size;
+  background:var(--paper);color:var(--ink)}
+.stage[data-format="16x9"]{aspect-ratio:16/9}
+.stage[data-format="4x5"]{aspect-ratio:4/5}
+.stage[data-format="1x1"]{aspect-ratio:1/1}
+.stage[data-format="9x16"]{aspect-ratio:9/16}
+.stage[data-format="9x16"]{--safe-top:12%;--safe-bottom:25%;--safe-right:13%;--safe-left:6%}
+.stage[data-format="4x5"],.stage[data-format="1x1"]{--safe-top:4%;--safe-bottom:4%;--safe-right:4%;--safe-left:4%}
+.stage[data-format="16x9"]{--safe-top:0%;--safe-bottom:8%;--safe-right:0%;--safe-left:0%}
+.safe{position:absolute;inset:var(--safe-top,0) var(--safe-right,0) var(--safe-bottom,0) var(--safe-left,0)}
+.stage[data-debug="safe"]::before{content:"";position:absolute;inset:0;z-index:90;pointer-events:none;
+  background:
+    linear-gradient(to bottom,rgba(196,68,46,.28) 0 var(--safe-top,0),transparent var(--safe-top,0) calc(100% - var(--safe-bottom,0%)),rgba(196,68,46,.28) calc(100% - var(--safe-bottom,0%)) 100%),
+    linear-gradient(to right,rgba(196,68,46,.28) 0 var(--safe-left,0),transparent var(--safe-left,0) calc(100% - var(--safe-right,0%)),rgba(196,68,46,.28) calc(100% - var(--safe-right,0%)) 100%)}
+.stage[data-format="9x16"][data-debug="safe"]::after{content:"";position:absolute;z-index:91;pointer-events:none;
+  left:0;right:0;top:14.85%;bottom:14.85%;outline:2px dashed rgba(196,68,46,.75);outline-offset:-2px}
+.fmt-only-16x9,.fmt-only-4x5,.fmt-only-1x1,.fmt-only-9x16{display:none}
+.stage[data-format="16x9"] .fmt-only-16x9{display:block}
+.stage[data-format="4x5"] .fmt-only-4x5{display:block}
+.stage[data-format="1x1"] .fmt-only-1x1{display:block}
+.stage[data-format="9x16"] .fmt-only-9x16{display:block}
+.stage[data-format="16x9"] .fmt-not-16x9,.stage[data-format="4x5"] .fmt-not-4x5,
+.stage[data-format="1x1"] .fmt-not-1x1,.stage[data-format="9x16"] .fmt-not-9x16{display:none}
+
+/* ---- the piece: shared bones ---- */
+.kicker{font:600 4.2cqw/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent)}
+.hed{font:700 8.5cqw/1.02 Georgia,'Times New Roman',serif;color:var(--ink);margin:0}
+.annot{font:italic 3.4cqw/1.35 Georgia,serif;color:var(--mute);max-width:22ch}
+.src{font:500 2.6cqw/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--mute)}
+.chart{display:flex;align-items:flex-end;gap:6cqw}
+.bar{display:flex;flex-direction:column;gap:1.6cqw}
+.bar i{display:block;background:var(--ink-soft);width:11cqw;
+  transform-origin:bottom;animation:grow var(--beat) var(--ease-vox) both;
+  animation-delay:calc(var(--i,0)*var(--stagger))}
+.bar.hot i{background:var(--accent)}
+.bar b{font:700 4.6cqw/1 Georgia,serif}
+.bar.hot b{color:var(--accent)}
+.bar span{font:500 2.6cqw/1.2 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--mute)}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.rise{animation:rise var(--beat) var(--ease-out) both;animation-delay:calc(var(--i,0)*var(--stagger))}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* =================================================================
+   COMPOSITION 16x9 — the full argument in space. Two columns:
+   text left, evidence right, annotation beside the hot bar.
+   ================================================================= */
+.stage[data-format="16x9"] .safe{display:grid;grid-template-columns:1.15fr 1fr;
+  grid-template-areas:"txt chart" "txt annot";align-items:center;
+  padding:6cqh 5cqw;box-sizing:border-box;column-gap:4cqw}
+.stage[data-format="16x9"] .txt{grid-area:txt}
+.stage[data-format="16x9"] .chart{grid-area:chart;align-self:end}
+.stage[data-format="16x9"] .annot{grid-area:annot;align-self:start;margin-top:2cqh}
+.stage[data-format="16x9"] .txt .kicker{font-size:2.1cqw}
+.stage[data-format="16x9"] .hed{font-size:5.6cqw;max-width:12ch;margin-top:1.4cqh}
+.stage[data-format="16x9"] .chart{gap:3cqw}
+.stage[data-format="16x9"] .bar i{width:6cqw}
+.stage[data-format="16x9"] .bar b{font-size:2.4cqw}
+.stage[data-format="16x9"] .bar span{font-size:1.2cqw}
+.stage[data-format="16x9"] .bar.cool i{height:9cqh}
+.stage[data-format="16x9"] .bar.hot i{height:32cqh}
+.stage[data-format="16x9"] .annot{font-size:1.7cqw}
+.stage[data-format="16x9"] .src{position:absolute;left:5cqw;bottom:3cqh;font-size:1.1cqw}
+
+/* =================================================================
+   COMPOSITION 4x5 — hero + one support. Stacked; annotation CUT,
+   not shrunk. Muted-loop format: chips would carry the VO's job.
+   ================================================================= */
+.stage[data-format="4x5"] .safe{display:flex;flex-direction:column;
+  justify-content:space-between;padding:7cqh 7cqw;box-sizing:border-box}
+.stage[data-format="4x5"] .kicker{font-size:3.4cqw}
+.stage[data-format="4x5"] .hed{font-size:9cqw;max-width:11ch;margin-top:1.6cqh}
+.stage[data-format="4x5"] .chart{gap:8cqw}
+.stage[data-format="4x5"] .bar i{width:15cqw}
+.stage[data-format="4x5"] .bar.cool i{height:7cqh}
+.stage[data-format="4x5"] .bar.hot i{height:24cqh}
+.stage[data-format="4x5"] .src{font-size:2cqw}
+
+/* =================================================================
+   COMPOSITION 1x1 — the hero alone. The chart survives only as a
+   mini pair; the number carries the frame.
+   ================================================================= */
+.stage[data-format="1x1"] .safe{display:flex;flex-direction:column;
+  justify-content:center;align-items:flex-start;padding:8cqw;box-sizing:border-box}
+.stage[data-format="1x1"] .kicker{font-size:3.6cqw}
+.stage[data-format="1x1"] .hero-num{font:700 22cqw/1 Georgia,serif;color:var(--accent);
+  letter-spacing:-.02em;margin:2cqh 0 1cqh}
+.stage[data-format="1x1"] .hero-cap{font:italic 4.4cqw/1.3 Georgia,serif;color:var(--ink-soft)}
+.stage[data-format="1x1"] .minipair{display:flex;align-items:flex-end;gap:2.4cqw;margin:4cqh 0 9cqw}
+.stage[data-format="1x1"] .minipair i{display:block;width:7cqw;height:8cqw;background:var(--ink-soft)}
+.stage[data-format="1x1"] .minipair i.hot{height:20cqw;background:var(--accent)}
+.stage[data-format="1x1"] .src{position:absolute;left:8cqw;bottom:6cqw;font-size:2.2cqw}
+
+/* =================================================================
+   COMPOSITION 9x16 — the full argument in time: one beat per zone
+   down the stack, everything inside the safe band, hero inside the
+   nested 4:5 crop. Beats arrive sequentially (--i counts beats,
+   not siblings) — simultaneity traded for sequence.
+   ================================================================= */
+.stage[data-format="9x16"] .safe{display:flex;flex-direction:column;
+  justify-content:center;gap:2.6cqh;box-sizing:border-box;
+  /* safe box spans 12-75% of the stage; this re-centres content on the
+     STAGE so the hero lands inside the nested 4:5 feed-preview crop */
+  padding-top:10cqh}
+.stage[data-format="9x16"] .kicker{font-size:4cqw}
+.stage[data-format="9x16"] .hed{font-size:10.5cqw;max-width:10ch;margin-top:1cqh}
+.stage[data-format="9x16"] .chart{gap:9cqw}
+.stage[data-format="9x16"] .bar i{width:16cqw}
+.stage[data-format="9x16"] .bar.cool i{height:5cqh}
+.stage[data-format="9x16"] .bar.hot i{height:15cqh}
+.stage[data-format="9x16"] .annot{font-size:4.2cqw;max-width:24ch}
+.stage[data-format="9x16"] .src{font-size:2.4cqw}
+
+/* ---- board chrome ---- */
+body{margin:0;background:#171614;color:#8A8377;
+  font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{max-width:1280px;margin:0 auto;padding:32px 20px 80px}
+h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E675C;
+  margin:0 0 4px;font-weight:400}
+h2 b{color:#C6BDAB;font-weight:400}
+p.note{font-size:12px;color:#5E584E;max-width:72ch;margin:0 0 18px}
+.row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.cell{flex:0 1 auto}
+.cell .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:#9A8F79;margin:0 0 6px}
+.cell[data-w="16x9"] .stage{width:420px}
+.cell[data-w="4x5"] .stage{width:236px}
+.cell[data-w="1x1"] .stage{width:236px}
+.cell[data-w="9x16"] .stage{width:236px}
+
+@media (prefers-reduced-motion:reduce){
+  .bar i,.rise{animation-duration:.01ms !important;animation-delay:0ms !important}
+}
+</style>
+
+<div class="wrap">
+  <h2><b>One system, four compositions.</b> The inner block is byte-identical in all four stages — only CSS recomposes</h2>
+  <p class="note">16:9 holds the argument in space (annotation beside the evidence).
+  4:5 cuts the annotation rather than shrinking it. 1:1 keeps the hero number alone.
+  9:16 gets the whole argument back, stacked in time, inside the safe band — chrome
+  zones painted, dashed line marking the 4:5 feed-preview crop that must stand alone.</p>
+
+  <div class="row">
+
+    <div class="cell" data-w="16x9"><p class="lbl">16x9 · wide · full argument in space</p>
+      <div class="stage" data-format="16x9">
+        <div class="safe">
+          <div class="txt">
+            <div class="kicker rise" style="--i:0">Cost of living</div>
+            <h1 class="hed fmt-not-1x1 rise" style="--i:1">Rent ate the raise</h1>
+          </div>
+          <div class="hero fmt-only-1x1">
+            <div class="hero-num rise" style="--i:1">+11.4%</div>
+            <p class="hero-cap rise" style="--i:2">rent growth this year — wages managed +3.2%</p>
+            <div class="minipair" aria-hidden="true"><i></i><i class="hot"></i></div>
+          </div>
+          <div class="chart fmt-not-1x1">
+            <div class="bar cool"><b>+3.2%</b><i style="--i:2"></i><span>WAGES</span></div>
+            <div class="bar hot"><b>+11.4%</b><i style="--i:3"></i><span>RENT</span></div>
+          </div>
+          <p class="annot fmt-not-4x5 fmt-not-1x1 rise" style="--i:4">Rents grew three and a half times faster than pay this year.</p>
+          <p class="src">SOURCE — ABS · CoreLogic, 2026</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell" data-w="4x5"><p class="lbl">4x5 · feed · hero + one support</p>
+      <div class="stage" data-format="4x5">
+        <div class="safe">
+          <div class="txt">
+            <div class="kicker rise" style="--i:0">Cost of living</div>
+            <h1 class="hed fmt-not-1x1 rise" style="--i:1">Rent ate the raise</h1>
+          </div>
+          <div class="hero fmt-only-1x1">
+            <div class="hero-num rise" style="--i:1">+11.4%</div>
+            <p class="hero-cap rise" style="--i:2">rent growth this year — wages managed +3.2%</p>
+            <div class="minipair" aria-hidden="true"><i></i><i class="hot"></i></div>
+          </div>
+          <div class="chart fmt-not-1x1">
+            <div class="bar cool"><b>+3.2%</b><i style="--i:2"></i><span>WAGES</span></div>
+            <div class="bar hot"><b>+11.4%</b><i style="--i:3"></i><span>RENT</span></div>
+          </div>
+          <p class="annot fmt-not-4x5 fmt-not-1x1 rise" style="--i:4">Rents grew three and a half times faster than pay this year.</p>
+          <p class="src">SOURCE — ABS · CoreLogic, 2026</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell" data-w="1x1"><p class="lbl">1x1 · feed · the hero alone</p>
+      <div class="stage" data-format="1x1">
+        <div class="safe">
+          <div class="txt">
+            <div class="kicker rise" style="--i:0">Cost of living</div>
+            <h1 class="hed fmt-not-1x1 rise" style="--i:1">Rent ate the raise</h1>
+          </div>
+          <div class="hero fmt-only-1x1">
+            <div class="hero-num rise" style="--i:1">+11.4%</div>
+            <p class="hero-cap rise" style="--i:2">rent growth this year — wages managed +3.2%</p>
+            <div class="minipair" aria-hidden="true"><i></i><i class="hot"></i></div>
+          </div>
+          <div class="chart fmt-not-1x1">
+            <div class="bar cool"><b>+3.2%</b><i style="--i:2"></i><span>WAGES</span></div>
+            <div class="bar hot"><b>+11.4%</b><i style="--i:3"></i><span>RENT</span></div>
+          </div>
+          <p class="annot fmt-not-4x5 fmt-not-1x1 rise" style="--i:4">Rents grew three and a half times faster than pay this year.</p>
+          <p class="src">SOURCE — ABS · CoreLogic, 2026</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell" data-w="9x16"><p class="lbl">9x16 · vertical · argument in time, safe overlay on</p>
+      <div class="stage" data-format="9x16" data-debug="safe">
+        <div class="safe">
+          <div class="txt">
+            <div class="kicker rise" style="--i:0">Cost of living</div>
+            <h1 class="hed fmt-not-1x1 rise" style="--i:1">Rent ate the raise</h1>
+          </div>
+          <div class="hero fmt-only-1x1">
+            <div class="hero-num rise" style="--i:1">+11.4%</div>
+            <p class="hero-cap rise" style="--i:2">rent growth this year — wages managed +3.2%</p>
+            <div class="minipair" aria-hidden="true"><i></i><i class="hot"></i></div>
+          </div>
+          <div class="chart fmt-not-1x1">
+            <div class="bar cool"><b>+3.2%</b><i style="--i:2"></i><span>WAGES</span></div>
+            <div class="bar hot"><b>+11.4%</b><i style="--i:3"></i><span>RENT</span></div>
+          </div>
+          <p class="annot fmt-not-4x5 fmt-not-1x1 rise" style="--i:4">Rents grew three and a half times faster than pay this year.</p>
+          <p class="src">SOURCE — ABS · CoreLogic, 2026</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

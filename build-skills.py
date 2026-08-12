@@ -27,7 +27,7 @@ SRC = ROOT / "plugins" / "editorial-motion" / "skills"
 DIST = ROOT.parent / "editorial-motion-dist"
 SKILLS = ["layout-composition", "motion-system", "analog-surface",
           "editorial-explainer", "imagery-motion", "type-treatment",
-          "premium-product-motion"]
+          "premium-product-motion", "format-adaptation"]
 
 # Cross-skill citations → the file to vendor in, keyed by the literal path text.
 VENDOR = {

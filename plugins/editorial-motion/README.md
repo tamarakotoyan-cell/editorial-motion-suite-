@@ -1,6 +1,6 @@
 # editorial-motion
 
-Seven skills that work as one system for animated, data-led design.
+Eight skills that work as one system for animated, data-led design.
 
 | Skill | Job |
 |---|---|
@@ -11,8 +11,10 @@ Seven skills that work as one system for animated, data-led design.
 | `imagery-motion` | Photographic treatment — torn panels, duotone, selective colour. |
 | `type-treatment` | Type against imagery — texture blending, layering registers, kinetic text. |
 | `premium-product-motion` | The alternative look: lit objects, depth of field, camera. |
+| `format-adaptation` | Re-composes an approved piece for 16:9, 4:5, 1:1 and 9:16. Runs last. |
 
-**Order:** layout → motion → analog-surface → a look skill. `editorial-explainer` and
+**Order:** layout → motion → analog-surface → a look skill → format-adaptation
+when the piece ships to more than one aspect ratio. `editorial-explainer` and
 `premium-product-motion` are alternatives, not companions. `imagery-motion` and
 `type-treatment` are additive to either — imagery owns the picture, type owns
 the words on it.
@@ -54,7 +56,7 @@ are craft rather than borrowed format.
 ## Two ways to use it
 
 **As a Claude Code plugin.** Install from the `emc-plugins` marketplace. The
-seven skills load together and cite each other by relative path.
+eight skills load together and cite each other by relative path.
 
 **As standalone skills**, for any surface that takes one skill at a time —
 Claude Design among them. Relative cross-references dangle outside the bundle,
@@ -64,7 +66,7 @@ so run the builder from the repo root:
 python3 build-skills.py
 ```
 
-That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the seven, with
+That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the eight, with
 the shared references (`sources.md`, `house-rules.md`) vendored into every
 skill that cites them and every path rewritten to be skill-local. It fails
 loudly if any referenced path does not resolve. `--check` validates without

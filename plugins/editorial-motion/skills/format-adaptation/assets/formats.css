@@ -1,0 +1,114 @@
+/* ============================================================
+   formats.css — one approved system, four compositions
+   Drop-in scaffolding for re-composing a piece across 16:9,
+   4:5, 1:1 and 9:16. Pairs with motion.css (timing) and the
+   look skills (style). Style-agnostic: no colours, no type.
+
+   The contract (see SKILL.md):
+     - tokens once, in :root — the approved system
+     - one .stage per format, data-format switched
+     - EXPLICIT per-format blocks, never fluid breakpoints —
+       responsive design reflows; adaptation recomposes
+     - macro-travel in cqw/cqh so distances re-derive from the
+       stage; micro-travel (entrance settles) stays px
+   ============================================================ */
+
+/* ---------- the stage ---------- */
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  /* container-query units inside the stage resolve against ITS box,
+     so `40cqw` is "40% of this format's width" — macro-travel
+     re-derives per format with no per-format keyframes. */
+  container-type: size;
+}
+
+.stage[data-format="16x9"] { aspect-ratio: 16 / 9; }
+.stage[data-format="4x5"]  { aspect-ratio: 4 / 5; }
+.stage[data-format="1x1"]  { aspect-ratio: 1 / 1; }
+.stage[data-format="9x16"] { aspect-ratio: 9 / 16; }
+
+/* ---------- safe areas ----------
+   Conservative union of TikTok / Reels / Stories chrome, 2026.
+   Chrome drifts — re-verify quarterly. Compose as if the bands
+   were solid: nothing load-bearing inside them. */
+
+.stage[data-format="9x16"] {
+  --safe-top: 12%; --safe-bottom: 25%; --safe-right: 13%; --safe-left: 6%;
+}
+.stage[data-format="4x5"],
+.stage[data-format="1x1"] {
+  --safe-top: 4%; --safe-bottom: 4%; --safe-right: 4%; --safe-left: 4%;
+}
+.stage[data-format="16x9"] {
+  --safe-top: 0%; --safe-bottom: 8%; --safe-right: 0%; --safe-left: 0%;
+}
+
+/* Content that must respect the chrome sits in .safe. */
+.safe {
+  position: absolute;
+  inset: var(--safe-top, 0) var(--safe-right, 0)
+         var(--safe-bottom, 0) var(--safe-left, 0);
+}
+
+/* ---------- debug overlay ----------
+   <div class="stage" data-format="9x16" data-debug="safe"> paints the
+   chrome bands and the nested 4:5 feed-preview crop. Sign-off pass:
+   overlay on, one look per format, then remove the attribute. */
+
+.stage[data-debug="safe"]::before {
+  content: ""; position: absolute; inset: 0; z-index: 90; pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      rgba(196, 68, 46, .28) 0 var(--safe-top, 0),
+      transparent var(--safe-top, 0) calc(100% - var(--safe-bottom, 0%)),
+      rgba(196, 68, 46, .28) calc(100% - var(--safe-bottom, 0%)) 100%),
+    linear-gradient(to right,
+      rgba(196, 68, 46, .28) 0 var(--safe-left, 0),
+      transparent var(--safe-left, 0) calc(100% - var(--safe-right, 0%)),
+      rgba(196, 68, 46, .28) calc(100% - var(--safe-right, 0%)) 100%);
+}
+/* The centre 4:5 crop feeds preview from a 9:16 — the nested-crop rule.
+   Height of a 4:5 crop of a 9:16 frame = (4/5 h_ratio): centre 70.3%. */
+.stage[data-format="9x16"][data-debug="safe"]::after {
+  content: ""; position: absolute; z-index: 91; pointer-events: none;
+  left: 0; right: 0; top: 14.85%; bottom: 14.85%;
+  outline: 2px dashed rgba(196, 68, 46, .75);
+  outline-offset: -2px;
+}
+
+/* ---------- element triage ----------
+   Identical DOM in every stage; formats differ only in composition.
+   One copy edit fixes all four. */
+
+.fmt-only-16x9, .fmt-only-4x5, .fmt-only-1x1, .fmt-only-9x16 { display: none; }
+.stage[data-format="16x9"] .fmt-only-16x9 { display: block; }
+.stage[data-format="4x5"]  .fmt-only-4x5  { display: block; }
+.stage[data-format="1x1"]  .fmt-only-1x1  { display: block; }
+.stage[data-format="9x16"] .fmt-only-9x16 { display: block; }
+
+.stage[data-format="16x9"] .fmt-not-16x9,
+.stage[data-format="4x5"]  .fmt-not-4x5,
+.stage[data-format="1x1"]  .fmt-not-1x1,
+.stage[data-format="9x16"] .fmt-not-9x16 { display: none; }
+
+/* ---------- travel ----------
+   Macro-travel crosses the stage: cqw/cqh, re-derives per format.
+   Micro-travel (the 18px entrance settle) is perceptual: px, invariant.
+   Keyframes read the custom properties so one @keyframes block serves
+   every format — set the distance on the element, per format block. */
+
+@keyframes fmt-cross-x { from { transform: translateX(var(--travel-x, 40cqw)); }
+                         to   { transform: none; } }
+@keyframes fmt-cross-y { from { transform: translateY(var(--travel-y, 30cqh)); }
+                         to   { transform: none; } }
+
+/* Stagger follows the reading axis — set per format on the parent:
+   16x9 rows read left→right, vertical stacks read top→bottom. The
+   delay math itself lives in motion.css ([style*="--i"]). */
+
+@media (prefers-reduced-motion: reduce) {
+  .stage * { animation-duration: .01ms !important;
+             animation-iteration-count: 1 !important; }
+}

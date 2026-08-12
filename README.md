@@ -4,7 +4,7 @@ Essential Media's Claude Code plugin marketplace.
 
 | Plugin | What |
 |---|---|
-| `editorial-motion` | Seven skills for animated, data-led design — layout, motion, analog surface treatment, data-journalism structure, imagery, type, product motion. Plus the tooling: texture generators, an artifact linter, procedural sound, and an HTML→MP4 renderer. |
+| `editorial-motion` | Eight skills for animated, data-led design — layout, motion, analog surface treatment, data-journalism structure, imagery, type, product motion, multi-format adaptation. Plus the tooling: texture generators, an artifact linter, procedural sound, and an HTML→MP4 renderer. |
 
 ## Install
 

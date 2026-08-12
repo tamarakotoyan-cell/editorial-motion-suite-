@@ -55,6 +55,7 @@ from pathlib import Path
 
 PRESETS = {
     "square":   (1080, 1080),
+    "portrait": (1080, 1350),
     "vertical": (1080, 1920),
     "wide":     (1920, 1080),
     "board":    (1200, 900),
