@@ -54,9 +54,11 @@ def build_skill(name, check=False):
     if not check:
         if out.exists():
             shutil.rmtree(out)
-        # ignore Finder droppings — a .DS_Store shipped inside analog-surface.zip
-        # before this filter existed
-        shutil.copytree(src, out, ignore=shutil.ignore_patterns(".DS_Store"))
+        # ignore Finder droppings and build caches — a .DS_Store shipped inside
+        # analog-surface.zip before this filter existed, and __pycache__ shipped
+        # three .pyc files into it after the asset scripts were run in place
+        shutil.copytree(src, out, ignore=shutil.ignore_patterns(
+            ".DS_Store", "__pycache__", "*.pyc", "*.pyo"))
 
     target = src if check else out
     skill_md = target / "SKILL.md"
