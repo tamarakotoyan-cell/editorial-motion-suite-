@@ -73,8 +73,10 @@ python3 check-artifact.py artifact.html
 
 It catches the mechanical failures prose gets wrong under load — pure white or
 black grounds, imagery outside a homogenise wrapper, a missing
-prefers-reduced-motion block, easing off the house set, sub-100ms travel.
-**Errors are not advisory.** A warning may be left in, but only with a reason.
+prefers-reduced-motion block, easing off the house set, sub-100ms travel, a
+banned title, `tabular-nums` on a hero figure, stagger outside the house band, a
+missing source and sample-size line. **Errors are not advisory.** A warning may
+be left in, but only with a reason.
 
 If the piece renders to video, render with the checker on — it refuses a
 silently frozen clip rather than writing a plausible-looking file.

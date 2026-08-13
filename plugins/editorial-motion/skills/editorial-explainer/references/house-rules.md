@@ -24,6 +24,11 @@ governing idea is upstream of every styling rule.
 
 ## Ban list
 
+Entries marked 🔒 are enforced by `check-artifact.py` — the linter fails the
+artifact, so they do not depend on being recalled from this document under load.
+The rest still do. Migrating more of them is the standing direction of travel:
+a rule that fails a build beats a rule in a paragraph.
+
 **Structural** — wrong decision made before styling started:
 
 - A colour per category when the story is one number
@@ -44,7 +49,7 @@ governing idea is upstream of every styling rule.
 - **Serif or display face on the hero figure**
 - Decorative background gradients that mean nothing
 - Icons or emoji used as data marks
-- **`tabular-nums` on a large standalone number** — equal-width digits read loose
+- 🔒 **`tabular-nums` on a large standalone number** — equal-width digits read loose
 
 **Motion** — the animated version of the same problem:
 
@@ -53,7 +58,7 @@ governing idea is upstream of every styling rule.
 - Count-up animation on stats that aren't the point
 - Motion that only makes sense while playing, so the screenshot fails
 
-Banned titles: "Key Insights", "Data Overview", "By the Numbers".
+🔒 Banned titles: "Key Insights", "Data Overview", "By the Numbers".
 
 ## What to do instead
 
@@ -67,8 +72,8 @@ Banned titles: "Key Insights", "Data Overview", "By the Numbers".
 - **Thin marks, hairline solid gridlines** one shade off the background, or none.
   Separate fills with a 2px background-coloured gap, not a border.
 - **Label selectively** — the endpoint, the extreme, the one series that matters.
-- **Source and sample size**, small and muted, bottom-aligned. Non-negotiable for
-  research work.
+- 🔒 **Source and sample size**, small and muted, bottom-aligned. Non-negotiable
+  for research work.
 
 ## The three-question check
 
@@ -97,6 +102,8 @@ What is a house decision rather than a number:
 - Ambient → `--ease-in-out`, so the loop point is invisible.
 - Stickers → `--ease-spring`, a slight overshoot past final size, then settle.
 - Never linear, except gradient drift.
+- 🔒 Stagger stays in the house band — `check-artifact.py` fails an artifact
+  whose `--stagger` sits outside it.
 
 ## The ceiling
 

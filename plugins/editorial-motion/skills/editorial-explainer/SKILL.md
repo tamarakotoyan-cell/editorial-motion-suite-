@@ -211,8 +211,7 @@ Take the faces from the brand system. Assign them:
 - **Utility** — axis labels, captions, chip text. Small, uppercase,
   letter-spaced ~.08em, muted.
 - **Hero figure** — the utility or body sans, set very large. ⚠️ Never a serif or
-  display face on the hero figure, and never `tabular-nums` on a large standalone
-  number.
+  display face on the hero figure.
 
 **The editorial feel comes from scale contrast and restraint, not from borrowing
 a display serif.** Reach for a Perfect Fourth (1.333) scale via
@@ -776,9 +775,6 @@ population assembling into evidence — and it never embarrasses you.
 **Small multiples.** Identical geometry, only the data changing. Identical
 framing is what lets the eye compare; panels that shift around become a
 slideshow.
-
-**Source and sample size**, small and muted, bottom-aligned. Non-negotiable for
-research work.
 
 ## Editorial devices
 

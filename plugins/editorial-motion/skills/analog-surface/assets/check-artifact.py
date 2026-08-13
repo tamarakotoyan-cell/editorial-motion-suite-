@@ -69,6 +69,31 @@ MASK_SIZE = re.compile(r"mask-size\s*:\s*(\d+)px", re.I)
 TILE = re.compile(r"--tile\s*:\s*(\d+)px", re.I)
 SEMVER = re.compile(r"\d+\.\d+\.\d+")
 
+# --- rules migrated out of prose ------------------------------------------
+# A rule recalled from an 850-line document under load is less reliable than a
+# rule that fails a build. These were prose-only and are mechanically checkable;
+# the prose they replace has been deleted rather than left as a second copy.
+
+BANNED_TITLES = {"key insights", "data overview", "by the numbers"}
+HEADING = re.compile(r"<(h[1-6])\b[^>]*>(.*?)</\1\s*>", re.I | re.S)
+TAG = re.compile(r"<[^>]+>")
+
+TNUM = re.compile(r"font-variant-numeric\s*:[^;{}]*tabular-nums"
+                  r"|font-feature-settings\s*:[^;{}]*[\"']tnum[\"']", re.I)
+FONT_SIZE = re.compile(r"font-size\s*:([^;{}]*)", re.I)
+SIZE_VALUE = re.compile(r"([\d.]+)\s*(rem|em|px|vw|vmin|vh)", re.I)
+# What counts as "a large standalone number" rather than ordinary body copy.
+HERO_MIN = {"rem": 3.0, "em": 3.0, "px": 48.0, "vw": 6.0, "vmin": 6.0, "vh": 6.0}
+
+STAGGER = re.compile(r"--stagger\s*:\s*([\d.]+)\s*(ms|s)\b", re.I)
+
+# Attribution is rarely the literal word "source" — the house pattern is a
+# `.src` block reading "Essential Report · Base: all participants (n=1,002)".
+# Matching only on "source" would have failed the system's own best data
+# example, which is how this check found its shape.
+ATTRIBUTION = re.compile(r"\bn\s*=\s*[\d,]+|\bbase\s*:|\bsource\b|\bfieldwork\b",
+                         re.I)
+
 
 def plugin_version(start=None):
     """The version a stamp must match, read from the plugin manifest.
@@ -148,7 +173,8 @@ RULE_TOKEN = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 ALL_RULES = {"no-pure-white", "no-pure-black", "homogenise-imagery",
              "fringe-on-glyphs", "reduced-motion", "roughen-hairlines",
              "house-easing", "texture-strength", "matte-alignment",
-             "jump-cut", "version-stamp", "unparsed"}
+             "jump-cut", "version-stamp", "banned-title", "tabular-nums-hero",
+             "stagger-band", "source-line", "unparsed"}
 
 
 def ignored_rules(text):
@@ -327,6 +353,55 @@ def check(text, name="<input>", version=None):
                 f"({version}). The artifact would be attributed to the wrong "
                 f"version", line))
 
+    # --- 11. Banned titles --------------------------------------------------
+    for m in HEADING.finditer(clean):
+        words = " ".join(TAG.sub(" ", m.group(2)).split()).strip().lower()
+        if words.rstrip(".:") in BANNED_TITLES:
+            findings.append(Finding(
+                "error", "banned-title",
+                f'"{words}" is a banned title. A title names the finding, not '
+                f'the section — if it could sit above any chart, it is not '
+                f'doing any work', line_of(m.start())))
+
+    # --- 12. tabular-nums on a hero figure ----------------------------------
+    for m in TNUM.finditer(clean):
+        open_brace = clean.rfind("{", 0, m.start())
+        close_brace = clean.find("}", m.start())
+        block = clean[open_brace + 1:close_brace if close_brace != -1 else len(clean)]
+        size = FONT_SIZE.search(block)
+        if not size:
+            continue
+        if any(float(v) >= HERO_MIN.get(u.lower(), 1e9)
+               for v, u in SIZE_VALUE.findall(size.group(1))):
+            findings.append(Finding(
+                "error", "tabular-nums-hero",
+                "tabular-nums on a large standalone number. Equal-width digits "
+                "exist to stop columns jittering; on a hero figure they just "
+                "read loose", line_of(m.start())))
+
+    # --- 13. Stagger outside the house band ---------------------------------
+    for m in STAGGER.finditer(clean):
+        ms = float(m.group(1)) * (1000 if m.group(2).lower() == "s" else 1)
+        if not 60 <= ms <= 90:
+            findings.append(Finding(
+                "warn", "stagger-band",
+                f"--stagger is {ms:g}ms; the house band is 60-90ms. Below 50ms "
+                f"siblings read as simultaneous, above 90ms the sequence drags",
+                line_of(m.start())))
+
+    # --- 14. Source and sample size -----------------------------------------
+    attributed = bool(ATTRIBUTION.search(clean)) or any(
+        c in ("src", "source") or c.endswith("-src") or c.endswith("-source")
+        for _, attrs, _, _ in parser.elements
+        for c in (attrs.get("class") or "").split())
+    if not attributed:
+        findings.append(Finding(
+            "warn", "source-line",
+            "no source or sample-size line. Non-negotiable for research work — "
+            "a warning rather than an error only because this checker cannot "
+            "tell a survey finding from a product mockup. Under --strict it "
+            "fails"))
+
     unknown = suppressed - ALL_RULES
     if unknown:
         findings.append(Finding(
@@ -347,7 +422,7 @@ TEST_VERSION = "9.9.9"
 GOOD = """<!doctype html>
 <meta name="editorial-motion" content="9.9.9">
 <style>
-:root{--tile:512px;--tex-strength:.05}
+:root{--tile:512px;--tex-strength:.05;--stagger:70ms}
 .an-surface{background-color:#FDFAF3;background-size:var(--tile)}
 .an-ink{mix-blend-mode:multiply;mask-image:url(m.png);mask-size:512px}
 .an-rule{height:1.5px;background:#1F1C18;mask-image:url(g.png)}
@@ -359,25 +434,29 @@ GOOD = """<!doctype html>
 </style>
 <!-- background:#fff in a comment must not be flagged -->
 <div class="an-homogenise"><img src="a.png"></div>
-<h1 class="an-ink">EVIDENCE</h1>"""
+<h1 class="an-ink">Two in three renters skipped heating</h1>
+<p class="src">Essential Report, April 2026. Base: all participants (n=1,002).</p>"""
 
 BAD = """<!doctype html><style>
-:root{--tile:512px;--tex-strength:.35}
+:root{--tile:512px;--tex-strength:.35;--stagger:140ms}
 .card{background:#fff}
 .dark{background-color:black}
 .hr{border-bottom:1px solid #ccc}
 .y{animation:slide 60ms cubic-bezier(0.25,0.1,0.25,1) both}
 .an-ink{mask-image:url(m.png);mask-size:256px}
+.figure{font-size:7rem;font-variant-numeric:tabular-nums}
 @keyframes slide{from{transform:translateX(20px)}to{transform:none}}
 </style>
 <div class="an-homogenise"><img src="ok.png"></div>
 <img src="loose.png">
+<h2>Key Insights</h2>
 <h1 class="an-ca-archival">FRINGE</h1>"""
 
 EXPECTED_BAD = {"no-pure-white", "no-pure-black", "texture-strength",
                 "roughen-hairlines", "house-easing", "jump-cut",
                 "matte-alignment", "homogenise-imagery", "fringe-on-glyphs",
-                "reduced-motion", "version-stamp"}
+                "reduced-motion", "version-stamp", "banned-title",
+                "tabular-nums-hero", "stagger-band", "source-line"}
 
 
 def self_test():

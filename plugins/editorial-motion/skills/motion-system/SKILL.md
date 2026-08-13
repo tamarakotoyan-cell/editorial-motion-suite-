@@ -209,8 +209,10 @@ and it is the rule that keeps a set from turning to noise.
 
 ## Stagger
 
-Sequence siblings at **60–90ms** apart. Below 50ms they read as simultaneous;
-above 120ms the sequence starts to drag.
+Sequence siblings using `--stagger` from `assets/motion.css`. Too close and they
+read as simultaneous, so the sequence buys you nothing; too far apart and it
+drags. `check-artifact.py` fails an artifact whose `--stagger` sits outside the
+house band, so this is enforced rather than remembered.
 
 ```css
 .item { animation: rise 520ms var(--ease-out) both; }

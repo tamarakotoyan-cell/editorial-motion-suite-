@@ -30,6 +30,26 @@ Engineering rigour, not craft. No design rule changed in this release.
   stamp is still required but its value is not matched.
 - **This changelog**, and a CI step asserting it agrees with `plugin.json`.
 - Four shipped `example.html` boards now carry the stamp.
+- **A golden brief set** — `evals/briefs.json` and `evals/run-evals.py`. Six
+  briefs covering the real work: a stat tile, a multi-panel explainer, a 9:16
+  social cut, a report visual, a product mockup, and a chart whose finding is a
+  single number. One command checks router-first, load order, exclusivity,
+  artifact produced and `check-artifact.py --strict` per brief, and writes a
+  rubric for the three-question check. Nothing tested the skills before this.
+- **Four rules moved from prose into the linter**, each with a self-test case:
+  banned titles, `tabular-nums` on a hero figure, stagger outside the house
+  band, and a missing source and sample-size line. The prose they replace is
+  deleted; ban-list entries that are machine-enforced are marked 🔒.
+- **Loop-length tokens** in `motion.css` — `--loop-line`, `--loop-tile`,
+  `--loop-max`.
+
+**Fixed**
+
+- The house timing kit and the one-ambient-one-accent ceiling were each written
+  out in two documents, and had drifted: spring overshoot read "~4%" in
+  `house-rules.md` and "~5%" in `motion-system`. `motion.css` now owns the
+  numbers and both documents cite it. An ownership table in the plugin README
+  gives every cross-skill rule area one owner.
 
 **Changed**
 
@@ -38,8 +58,12 @@ Engineering rigour, not craft. No design rule changed in this release.
   itself opt-in; "always render with `--check`" was prose, and prose is skipped
   under load. `--no-check` opts out for a deliberately static piece. `--check`
   is still accepted, does nothing, and says so.
-- `build-skills.py` builds the router alongside the eight, and knows how to
-  rewrite a citation of `check-artifact.py` for standalone bundles.
+- `build-skills.py` builds the router alongside the eight, knows how to rewrite
+  a citation of `check-artifact.py` for standalone bundles, and carries
+  `motion.css` into any bundle that vendors `house-rules.md` — which now names
+  the timing tokens without restating their values.
+- CI additionally gates the eval set's well-formedness and asserts the linter's
+  copy of the house curve set still matches `motion.css`.
 
 ## 1.5.0 — 2026-08-12
 
