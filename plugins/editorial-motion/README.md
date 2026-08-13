@@ -1,13 +1,14 @@
 # editorial-motion
 
-Nine skills that work as one system for animated, data-led design — a router
-and the eight it dispatches to.
+Ten skills that work as one system for animated, data-led design — a router
+and the nine it dispatches to.
 
 | Skill | Job |
 |---|---|
 | `editorial-motion` | The router. Load order, precedence, pre-delivery lint. Teaches no design. |
 | `layout-composition` | Grid, focal point, proportion, type scale. Runs first. |
 | `motion-system` | Easing, timing, stagger, cutting the curve. Style-agnostic. |
+| `design-motion-sound` | Transitional and accent SFX: whooshes, hits, risers, interface cues and licensed comedy sounds. |
 | `analog-surface` | Surface / Ink / Life. Paper, ink-in-fibre, screens, grain. |
 | `editorial-explainer` | Data-journalism structure, charts, persistent-mark animation. |
 | `imagery-motion` | Photographic treatment — torn panels, duotone, selective colour. |
@@ -15,8 +16,9 @@ and the eight it dispatches to.
 | `premium-product-motion` | The alternative look: lit objects, depth of field, camera. |
 | `format-adaptation` | Re-composes an approved piece for 16:9, 4:5, 1:1 and 9:16. Runs last. |
 
-**Order:** layout → motion → analog-surface → a look skill → format-adaptation
-when the piece ships to more than one aspect ratio. `editorial-explainer` and
+**Order:** layout → motion → sound when required → analog-surface → a look skill
+→ format-adaptation when the piece ships to more than one aspect ratio.
+`editorial-explainer` and
 `premium-product-motion` are alternatives, not companions. `imagery-motion` and
 `type-treatment` are additive to either — imagery owns the picture, type owns
 the words on it.
@@ -61,6 +63,7 @@ and only for the last two.
 | `analog-surface/assets/make-grain.py` | Seamless grain plates, single or animated |
 | `analog-surface/assets/check-artifact.py` | Lints generated HTML against the mechanically checkable house rules |
 | `motion-system/assets/sfx.js` | Procedural sound design, muted by default |
+| `design-motion-sound/scripts/mix_sfx.py` | Mix timecoded SFX cues into a video with ffmpeg |
 | `motion-system/assets/render.py` | Renders an animated artifact to MP4 at 12fps |
 
 Textures are generated rather than sourced because the stock libraries the
@@ -87,7 +90,7 @@ are craft rather than borrowed format.
 ## Two ways to use it
 
 **As a Claude Code plugin.** Install from the `emc-plugins` marketplace. The
-nine skills load together and cite each other by relative path.
+ten skills load together and cite each other by relative path.
 
 **As standalone skills**, for any surface that takes one skill at a time —
 Claude Design among them. Relative cross-references dangle outside the bundle,
@@ -97,7 +100,7 @@ so run the builder from the repo root:
 python3 build-skills.py
 ```
 
-That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the nine, with
+That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the ten, with
 the shared references (`sources.md`, `house-rules.md`) vendored into every
 skill that cites them and every path rewritten to be skill-local. It fails
 loudly if any referenced path does not resolve. `--check` validates without

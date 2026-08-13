@@ -9,6 +9,29 @@ Newest first. Dates are the release date, ISO.
 
 ---
 
+## 1.7.0 — 2026-08-13
+
+**Added**
+
+- **`design-motion-sound`**, a focused SFX skill for transitional and accent
+  sound. It creates cue cards for whooshes and swishes, impacts and hits, risers
+  and uplifters, interface cues, and licensed meme-inspired or cartoon-style
+  sounds; it also covers lawful sourcing, rights logging, frame-aware sync,
+  mixing and playback checks.
+- **A deterministic ffmpeg mixer**, `design-motion-sound/scripts/mix_sfx.py`,
+  with a documented JSON cue schema.
+
+**Changed**
+
+- Sound generation is explicitly limited to short SFX. Voiceover generation,
+  music composition and general audio beds are out of scope; supplied dialogue
+  and music are preserved as mix constraints.
+
+**Fixed**
+
+- Silent input videos now retain their full duration when the final SFX cue
+  finishes before the picture.
+
 ## 1.6.0 — 2026-08-13
 
 Engineering rigour, not craft. No design rule changed in this release.

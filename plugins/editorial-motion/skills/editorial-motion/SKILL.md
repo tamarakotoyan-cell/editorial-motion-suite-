@@ -1,6 +1,6 @@
 ---
 name: editorial-motion
-description: Start here for any design, motion or visual request — this skill decides which of the editorial-motion skills to load and in what order. Use whenever the work is a chart, graph, data visualisation, infographic, stat tile, slide, deck, poster, social graphic, carousel, report visual, landing page, hero section, product mockup, UI showcase, title sequence, animation, video cut, or any generated HTML artifact whose job is to be looked at. Also use when a piece needs a vertical, square or social version, and when an existing artifact needs checking before it goes out. Dispatches and states precedence; teaches no design rules of its own.
+description: Start here for any design, motion, sound-design or visual request — this skill decides which of the editorial-motion skills to load and in what order. Use whenever the work is a chart, graph, data visualisation, infographic, stat tile, slide, deck, poster, social graphic, carousel, report visual, landing page, hero section, product mockup, UI showcase, title sequence, animation, video cut, SFX plan, cue sheet, or any generated HTML artifact whose job is to be looked at. Also use when a piece needs transitional sound effects, a vertical, square or social version, or checking before it goes out. Dispatches and states precedence; teaches no design rules of its own.
 ---
 
 # editorial-motion — start here
@@ -18,20 +18,23 @@ made out of order gets made twice.
    type scale. Settled before anything is placed or styled.
 2. **motion-system** — whenever the piece moves, and most pieces should. Easing,
    the two timing registers, stagger, exits, reduced motion.
-3. **analog-surface** — whenever there is a physical surface in it: paper,
+3. **design-motion-sound** — after choreography is settled, whenever the piece
+   needs transitional or accent SFX. Whooshes and swishes, impacts and hits,
+   risers and uplifters, interface cues and licensed comedy sounds.
+4. **analog-surface** — whenever there is a physical surface in it: paper,
    documents, maps, screenshots, archival or stock imagery, or a flat colour
    fill that would read better as a ground.
-4. **One look skill. Never both** — they are alternatives:
+5. **One look skill. Never both** — they are alternatives:
    - **editorial-explainer** when the job is to make a number or a finding
      land. Charts, data stories, report visuals, social data tiles.
    - **premium-product-motion** when the job is to make an object feel
      expensive. Product mockups, app UI showcases, feature reveals, titles.
-5. **Additive to either, when the content calls for it:**
+6. **Additive to either, when the content calls for it:**
    - **imagery-motion** — there is a photo, screenshot, video, cutout or scan.
      Owns the picture.
    - **type-treatment** — text sits on a picture, texture or colour field, or
      the text itself animates. Owns the words on it.
-6. **format-adaptation** — last, and only when the piece ships to more than one
+7. **format-adaptation** — last, and only when the piece ships to more than one
    aspect ratio. It re-composes per format; it is not a way to crop a master.
 
 A bare request — "make me a chart about housing affordability" — resolves to
@@ -53,7 +56,7 @@ Every generated artifact carries the version of the system that made it, in the
 head:
 
 ```html
-<meta name="editorial-motion" content="1.6.0">
+<meta name="editorial-motion" content="1.7.0">
 ```
 
 Take the number from the plugin manifest, `.claude-plugin/plugin.json`; if these

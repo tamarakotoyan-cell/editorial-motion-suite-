@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build standalone, self-contained skill folders from the editorial-motion plugin.
 
-The plugin works as a bundle: a router plus eight skills that cite each other by
+The plugin works as a bundle: a router plus nine skills that cite each other by
 relative path (`../motion-system/references/sources.md`). Those paths resolve inside the
 plugin and dangle anywhere else. Any surface that takes skills one at a time —
 Claude Design among them — needs each skill to carry everything it cites.
@@ -26,6 +26,7 @@ SRC = ROOT / "plugins" / "editorial-motion" / "skills"
 # dist output must stay outside the tree Claude Code scans (see comment above).
 DIST = ROOT.parent / "editorial-motion-dist"
 SKILLS = ["editorial-motion", "layout-composition", "motion-system",
+          "design-motion-sound",
           "analog-surface", "editorial-explainer", "imagery-motion",
           "type-treatment", "premium-product-motion", "format-adaptation"]
 

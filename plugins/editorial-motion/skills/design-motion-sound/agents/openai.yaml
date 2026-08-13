@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Motion Sound"
+  short_description: "Plan and mix transitional and accent SFX"
+  default_prompt: "Use $design-motion-sound to create cue cards and mix transitional SFX for this animation."
