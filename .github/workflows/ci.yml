@@ -1,0 +1,54 @@
+name: ci
+
+# Every check here already existed and was run by hand. This makes them a gate.
+# All four are stdlib-only Python, so there is nothing to install.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build validates — every cited path resolves inside its own skill
+        run: python3 build-skills.py --check
+
+      - name: Linter self-test — every check still fires
+        run: |
+          python3 plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py \
+            --self-test
+
+      - name: Tile regression — seam continuity false-positives
+        run: |
+          python3 plugins/editorial-motion/skills/analog-surface/assets/check-tile-regression.py
+
+      # The examples are the system's own worked demonstrations. If they break the
+      # house rules, either the rules are wrong or the examples are.
+      # Errors fail the build; warnings are printed but tolerated. editorial-explainer's
+      # example currently carries 4 analog-surface warnings — see issue before
+      # promoting this step to --strict.
+      - name: Shipped examples pass the house rules
+        run: |
+          LINTER=plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py
+          find plugins -name 'example.html' -print0 \
+            | xargs -0 -r python3 "$LINTER"
+
+      - name: Build output is free of caches and Finder droppings
+        run: |
+          python3 build-skills.py
+          if find ../editorial-motion-dist \
+               \( -name '__pycache__' -o -name '*.pyc' -o -name '.DS_Store' \) \
+               -print -quit | grep -q .; then
+            echo "::error::build output contains caches or Finder droppings"
+            exit 1
+          fi
+          echo "build output clean"
