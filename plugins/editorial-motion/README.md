@@ -1,9 +1,11 @@
 # editorial-motion
 
-Eight skills that work as one system for animated, data-led design.
+Nine skills that work as one system for animated, data-led design — a router
+and the eight it dispatches to.
 
 | Skill | Job |
 |---|---|
+| `editorial-motion` | The router. Load order, precedence, pre-delivery lint. Teaches no design. |
 | `layout-composition` | Grid, focal point, proportion, type scale. Runs first. |
 | `motion-system` | Easing, timing, stagger, cutting the curve. Style-agnostic. |
 | `analog-surface` | Surface / Ink / Life. Paper, ink-in-fibre, screens, grain. |
@@ -18,6 +20,12 @@ when the piece ships to more than one aspect ratio. `editorial-explainer` and
 `premium-product-motion` are alternatives, not companions. `imagery-motion` and
 `type-treatment` are additive to either — imagery owns the picture, type owns
 the words on it.
+
+That order, the precedence stack below and the pre-delivery lint step are
+restated in `skills/editorial-motion/SKILL.md` — the router — because Claude
+does not read plugin READMEs at runtime. This file is for people; the router is
+the same content in the one place the model will actually see it. Change one
+and change the other.
 
 ## Tooling
 
@@ -56,7 +64,7 @@ are craft rather than borrowed format.
 ## Two ways to use it
 
 **As a Claude Code plugin.** Install from the `emc-plugins` marketplace. The
-eight skills load together and cite each other by relative path.
+nine skills load together and cite each other by relative path.
 
 **As standalone skills**, for any surface that takes one skill at a time —
 Claude Design among them. Relative cross-references dangle outside the bundle,
@@ -66,13 +74,14 @@ so run the builder from the repo root:
 python3 build-skills.py
 ```
 
-That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the eight, with
+That writes `dist/<skill>/` and `dist/<skill>.zip` for each of the nine, with
 the shared references (`sources.md`, `house-rules.md`) vendored into every
 skill that cites them and every path rewritten to be skill-local. It fails
 loudly if any referenced path does not resolve. `--check` validates without
 writing.
 
-Upload order still matters: `layout-composition`, then `motion-system`, then
+Upload order still matters: `editorial-motion` first, then
+`layout-composition`, then `motion-system`, then
 `analog-surface` if the piece has any physical surface in it, then one look skill. Load `editorial-explainer` if you want the data-journalism
 look, `premium-product-motion` if you want lit objects and camera moves — they
 are alternatives, not companions. `imagery-motion` and `type-treatment` are additive to either.

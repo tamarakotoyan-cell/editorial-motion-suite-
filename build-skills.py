@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build standalone, self-contained skill folders from the editorial-motion plugin.
 
-The plugin works as a bundle: five skills that cite each other by relative path
-(`../motion-system/references/sources.md`). Those paths resolve inside the
+The plugin works as a bundle: a router plus eight skills that cite each other by
+relative path (`../motion-system/references/sources.md`). Those paths resolve inside the
 plugin and dangle anywhere else. Any surface that takes skills one at a time —
 Claude Design among them — needs each skill to carry everything it cites.
 
@@ -25,9 +25,9 @@ SRC = ROOT / "plugins" / "editorial-motion" / "skills"
 # ROOT.parent, not ROOT: the builder now lives inside the marketplace repo, and
 # dist output must stay outside the tree Claude Code scans (see comment above).
 DIST = ROOT.parent / "editorial-motion-dist"
-SKILLS = ["layout-composition", "motion-system", "analog-surface",
-          "editorial-explainer", "imagery-motion", "type-treatment",
-          "premium-product-motion", "format-adaptation"]
+SKILLS = ["editorial-motion", "layout-composition", "motion-system",
+          "analog-surface", "editorial-explainer", "imagery-motion",
+          "type-treatment", "premium-product-motion", "format-adaptation"]
 
 # Cross-skill citations → the file to vendor in, keyed by the literal path text.
 VENDOR = {
@@ -43,6 +43,8 @@ PROSE = {
     "`../editorial-explainer/SKILL.md`": "the editorial-explainer skill",
     "`../imagery-motion/SKILL.md`": "the imagery-motion skill",
     "`../motion-system/assets/motion.css`": "the motion-system skill's `motion.css`",
+    "`../analog-surface/assets/check-artifact.py`":
+        "the analog-surface skill's `check-artifact.py`",
 }
 
 VENDOR_NOTE = ("<!-- Vendored copy. Master: plugins/editorial-motion/skills/{origin}\n"
