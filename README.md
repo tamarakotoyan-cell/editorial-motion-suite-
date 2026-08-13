@@ -1,6 +1,4 @@
-# emc-plugins
-
-Essential Media's Claude Code plugin marketplace.
+# Editorial motion pack
 
 | Plugin | What |
 |---|---|
