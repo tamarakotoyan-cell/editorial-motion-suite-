@@ -140,7 +140,8 @@ One source file, four explicit compositions:
   (`data-debug="safe"`) that paints them — turn it on before sign-off.
 - Production renders: one format per run through the motion-system skill's
   `render.py` — presets `wide`, `portrait`, `square`, `vertical` match the
-  four stages. Always `--check`.
+  four stages. The frozen-render check runs by default; do not pass
+  `--no-check` to silence it.
 
 ## Order of work
 

@@ -499,10 +499,11 @@ delay instead of flashing at full opacity first.
 - `assets/render.py` — renders an animated artifact to MP4, frame by frame, at
   the house 12fps. Needs Chrome and ffmpeg, nothing else.
 
-**Always render with `--check`.** It refuses to produce a frozen video, and
-frozen is the failure mode you will not notice until someone else watches it:
-`transform` and `opacity` animations run on the compositor thread, so the
-obvious implementation of a frame-stepper captures the same instant every time
-and still writes a plausible-looking file. `render.py` sets each animation's
-`currentTime` explicitly for this reason, and `--check` measures how much the
-first and last frames differ rather than merely whether they differ.
+**It refuses to produce a frozen video, and does so by default** — frozen is the
+failure mode you will not notice until someone else watches it. `transform` and
+`opacity` animations run on the compositor thread, so the obvious implementation
+of a frame-stepper captures the same instant every time and still writes a
+plausible-looking file. `render.py` sets each animation's `currentTime`
+explicitly for this reason, and the pre-flight probe measures how much the first
+and last frames differ rather than merely whether they differ. `--no-check` opts
+out, and is only right for a piece that is deliberately static.

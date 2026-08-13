@@ -24,9 +24,15 @@ jitter. The video looked plausible in a file listing and was frozen. Virtual
 time is still used, at a fixed budget, but only to let the page finish loading
 deterministically.
 
-That jitter also defeated the first version of `--check`, which only asked
-whether frames *differed*. It now measures how much they differ, via PSNR, so
-"different by a few pixels of noise" no longer passes for "animating".
+That jitter also defeated the first version of the pre-flight check, which only
+asked whether frames *differed*. It now measures how much they differ, via PSNR,
+so "different by a few pixels of noise" no longer passes for "animating".
+
+**The check runs by default.** It was opt-in, which meant the guard against the
+failure it exists to catch was itself opt-in — a frozen clip is not visible in a
+file listing, and the SKILL.md instruction to "always render with --check" is
+prose, which gets skipped under load. `--no-check` opts out, for the rare piece
+that is deliberately static.
 
 The cost is a process per frame, so a 5-second clip at 12fps is 60 launches and
 roughly a minute. That is the trade for determinism and for needing nothing
@@ -41,8 +47,8 @@ Usage
 -----
     python3 render.py artifact.html --duration 5 --out clip.mp4
     python3 render.py artifact.html --duration 8 --fps 12 --preset vertical
-    python3 render.py https://example.com/board.html --duration 3 --check
-    python3 render.py artifact.html --duration 4 --keep-frames
+    python3 render.py https://example.com/board.html --duration 3
+    python3 render.py still.html --duration 4 --no-check   # deliberately static
 """
 
 import argparse
@@ -215,10 +221,16 @@ def main(argv=None):
     p.add_argument("--keep-frames", action="store_true")
     p.add_argument("--frame-timeout", type=float, default=30.0)
     p.add_argument("--chrome")
+    p.add_argument("--no-check", action="store_true",
+                   help="skip the pre-flight probe. Only for a piece you know "
+                        "is deliberately static")
     p.add_argument("--check", action="store_true",
-                   help="probe three frames first and stop if the animation "
-                        "does not advance")
+                   help=argparse.SUPPRESS)   # accepted, now the default
     args = p.parse_args(argv)
+
+    if args.check:
+        print("note: --check is the default now; the flag does nothing. "
+              "Use --no-check to skip the probe.", file=sys.stderr)
 
     if args.duration <= 0:
         p.error("--duration must be positive")
@@ -259,7 +271,7 @@ def main(argv=None):
             sep = "&" if "?" in base else "?"
             return f"{base}{sep}t={int(ms)}" if frozen else base
 
-        if args.check:
+        if not args.no_check:
             probes = []
             for i, ms in enumerate([0, frame_ms * max(1, total // 2),
                                     frame_ms * max(2, total - 1)]):
@@ -283,7 +295,8 @@ def main(argv=None):
                     "prefers-reduced-motion is stopping it, it is driven by "
                     "requestAnimationFrame rather than the Web Animations "
                     "timeline, or the duration requested is shorter than the "
-                    "first beat. Rendering would produce a frozen video.")
+                    "first beat. Rendering would produce a frozen video.\n"
+                    "If the piece is deliberately static, pass --no-check.")
             print("check: the page advances"
                   + (f" (PSNR {score:.1f} dB first vs last)"
                      if score is not None else ""))
