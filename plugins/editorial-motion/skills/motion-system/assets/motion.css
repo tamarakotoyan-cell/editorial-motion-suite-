@@ -2,18 +2,31 @@
    motion.css — drop-in motion primitives
    Paste into any artifact's <style>. Style-agnostic: no colours,
    no type, no layout. Pair with a look skill for the visuals.
+
+   THIS FILE OWNS THE NUMBERS. The house curve set, the timing kit
+   and the loop lengths live here and nowhere else. motion-system's
+   SKILL.md and house-rules.md explain when to reach for each and
+   cite this file for the values, rather than restating them — two
+   copies of a number is two numbers, and the ~4%/~5% spring
+   overshoot that had drifted between those two documents is what
+   that looks like in practice.
+
+   check-artifact.py validates artifacts against the curve set below,
+   and CI asserts its copy still matches this file.
    ============================================================ */
 
 :root {
+  /* ---- The house curve set. Nothing outside this list. ---- */
   --ease-vox:    cubic-bezier(0.10, 0.90, 0.20, 1); /* reference curve — mass, hero entrances */
-  --ease-out:    cubic-bezier(0.16, 1, 0.30, 1);
-  --ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);
+  --ease-out:    cubic-bezier(0.16, 1, 0.30, 1);    /* entrances — the default */
+  --ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);    /* heavy in/out — transitions, cuts, ambient */
   --ease-io:     cubic-bezier(0.83, 0, 0.17, 1);    /* alias of --ease-in-out */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-in:     cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* overshoots ~5% — chips, toggles, stickers */
+  --ease-in:     cubic-bezier(0.55, 0, 1, 0.45);    /* exits only */
+  /* Linear is wrong for everything except a continuous loop —
+     spinners, marquees, gradient drift. */
 
-  /* House timing kit — see editorial-explainer/references/house-rules.md.
-     Use these names, not generic duration bands. */
+  /* ---- House timing kit. Use these names, not duration bands. ---- */
   --snap:    0.25s;   /* stickers, pops, anything physical */
   --beat:     0.5s;   /* word and line reveals — the entrance default */
   --settle:   1.2s;   /* full text blocks arriving */
@@ -24,7 +37,12 @@
      hover tints). Never use it for a reveal — under 100ms reads as a jump-cut. */
   --micro:   150ms;
 
-  --stagger:  70ms;
+  --stagger:  70ms;   /* house band is 60–90ms */
+
+  /* ---- Loop lengths. Past --loop-max people scroll before it resolves. ---- */
+  --loop-line:  3s;   /* a single line */
+  --loop-tile:  6s;   /* a stacked tile */
+  --loop-max:   8s;   /* ceiling for any loop */
 }
 
 /* ---------- entrances ---------- */

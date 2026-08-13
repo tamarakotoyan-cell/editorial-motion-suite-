@@ -27,6 +27,29 @@ does not read plugin READMEs at runtime. This file is for people; the router is
 the same content in the one place the model will actually see it. Change one
 and change the other.
 
+## Rule ownership
+
+A rule with two homes has two futures. These areas each sit across more than one
+skill, so each has **one owner**; everywhere else cites it rather than restating
+it. If you are adding a rule, find its area here first.
+
+| Rule area | Owner | Everyone else |
+|---|---|---|
+| House curve set, timing kit, stagger band, loop lengths | `motion-system/assets/motion.css` — the values, machine-readable | `motion-system` §Easing/§Duration and `house-rules.md` §House timing kit explain *which* to reach for and cite the file for *what* |
+| One-ambient-one-accent ceiling, the accent/ambient move vocabulary | `house-rules.md` §The ceiling, §The signature accent move | `motion-system` §The ceiling points at it |
+| Kinetic and animated type | `type-treatment` §Type in motion | `motion-system` §Entrance vocabulary owns general entrances and defers text to it; timing and easing still govern |
+| Footage homogenisation — whether one shared treatment is required | `analog-surface` §5 | `imagery-motion` §Duotone owns the grading recipe, not the policy |
+| Type scale ratios and the maths | `layout-composition` §Type scales | `editorial-explainer` and `type-treatment` cite it |
+| Typographic roles in a data piece — display, body, utility, hero figure | `editorial-explainer` §Typography, as roles | `type-treatment` owns styling and layering against imagery, not role assignment |
+
+Two of these were genuine duplicates with the values written out twice, and they
+had already drifted: spring overshoot read "~4%" in one document and "~5%" in
+the other. That is the argument for the table.
+
+`check-artifact.py` keeps its own copy of the curve set, because it has to lint
+artifacts with no plugin around it. CI asserts that copy still matches
+`motion.css`, so the duplication cannot drift silently.
+
 ## Tooling
 
 Stdlib-only Python and vanilla JS — nothing to install but Chrome and ffmpeg,

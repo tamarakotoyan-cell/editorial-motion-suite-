@@ -47,8 +47,28 @@ PROSE = {
         "the analog-surface skill's `check-artifact.py`",
 }
 
+# A vendored file can have dependencies of its own. house-rules.md names the
+# timing tokens but deliberately no longer carries their values — motion.css is
+# the single source — so a bundle that gets house-rules.md and not motion.css
+# would carry the rule with the numbers missing.
+VENDOR_DEPS = {
+    "references/house-rules.md":
+        [(SRC / "motion-system" / "assets" / "motion.css", "assets/motion.css")],
+}
+
 VENDOR_NOTE = ("<!-- Vendored copy. Master: plugins/editorial-motion/skills/{origin}\n"
                "     Regenerate with build-skills.py; do not edit here. -->\n\n")
+
+# Same note, for a file where an HTML comment would be a syntax error.
+VENDOR_NOTE_CSS = ("/* Vendored copy. Master: plugins/editorial-motion/skills/{origin}\n"
+                   "   Regenerate with build-skills.py; do not edit here. */\n\n")
+
+
+def vendor_file(origin, dest):
+    note = VENDOR_NOTE_CSS if dest.suffix == ".css" else VENDOR_NOTE
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(note.format(origin=origin.relative_to(SRC)) +
+                    origin.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def build_skill(name, check=False):
@@ -72,12 +92,16 @@ def build_skill(name, check=False):
             continue
         vendored.append(local)
         if not check:
-            dest = out / local
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            rel = origin.relative_to(SRC)
-            dest.write_text(VENDOR_NOTE.format(origin=rel) +
-                            origin.read_text(encoding="utf-8"), encoding="utf-8")
+            vendor_file(origin, out / local)
             text = text.replace(path_text, local)
+        for dep_origin, dep_local in VENDOR_DEPS.get(local, []):
+            # The skill may already own the file — motion-system owns motion.css
+            # — in which case there is nothing to bring in.
+            if (SRC / name / dep_local).exists():
+                continue
+            vendored.append(dep_local)
+            if not check:
+                vendor_file(dep_origin, out / dep_local)
 
     for old, new in PROSE.items():
         if old in text and not check:

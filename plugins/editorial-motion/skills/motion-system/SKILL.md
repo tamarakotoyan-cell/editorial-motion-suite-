@@ -35,16 +35,13 @@ thing holding it together.
 
 ## Easing
 
-Linear is wrong for everything except continuous loops (spinners, marquees,
-ambient drift). Use these four and nothing else:
+**The house curve set is in `assets/motion.css`** — `--ease-vox`, `--ease-out`,
+`--ease-in-out`, `--ease-spring`, `--ease-in` — and nothing outside it is house
+easing. `check-artifact.py` fails an artifact that uses a curve off the set, so
+this is enforced rather than advised. Linear is wrong for everything except a
+continuous loop.
 
-```css
---ease-vox:   cubic-bezier(0.10, 0.90, 0.20, 1);/* the reference curve — see below */
---ease-out:   cubic-bezier(0.16, 1, 0.30, 1);   /* entrances — fast, then settle */
---ease-in-out:cubic-bezier(0.83, 0, 0.17, 1);   /* heavy in/out — transitions, cuts */
---ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);/* slight overshoot — chips, toggles, counters */
---ease-in:    cubic-bezier(0.55, 0, 1, 0.45);   /* exits only */
-```
+This section is about *which* to reach for, not what the numbers are.
 
 **The reference curve.** A tutorial breakdown showing the actual After Effects
 velocity graph (`references/sources.md` §12) has velocity climbing to a ~250%/sec
@@ -57,30 +54,25 @@ weighted rather than merely quick.
 feel like it has mass. Keep `--ease-out` for ordinary UI-scale motion, where the
 extreme curve reads as sluggish on small distances.
 
-`--ease-out` is the default. Reach for it unless you have a reason not to.
-`--ease-spring` overshoots ~5%; use it sparingly or the whole page reads bouncy
-and cheap. Never apply a spring to something large — overshoot on a full-width
-panel looks like a bug.
+`--ease-out` is the default. Reach for it unless you have a reason not to. Use
+`--ease-spring` sparingly or the whole page reads bouncy and cheap, and never on
+something large — overshoot on a full-width panel looks like a bug.
 
 ## Duration
 
-**Use the house timing kit** where one exists — named tokens beat ad-hoc numbers,
-because a shared vocabulary is what makes a set of assets read as one family:
+**Use the house timing kit** — `--snap`, `--beat`, `--settle`, `--hold`,
+`--drift`, and the loop lengths — rather than ad-hoc numbers. Named tokens beat
+invented ones because a shared vocabulary is what makes a set of assets read as
+one family. **The values live in `assets/motion.css` and only there**; paste it
+in and use the token names.
 
-| Token | Value | Use for |
-|---|---|---|
-| Snap | 0.25s | Stickers, pops, anything physical |
-| Beat | 0.5s | Word and line reveals |
-| Settle | 1.2s | Full text blocks arriving |
-| Hold | 1.5s | Dwell before a loop resets |
-| Drift | 8–12s | Ambient background movement |
+What the tokens cannot tell you is the judgement:
 
-Anything under 100ms reads as a jump-cut. Anything over 1s on a *single* element
-reads as sluggish — if you need more time, you need more elements staggered, not
-one slower element.
-
-**Loop length:** 3s for a single line, 6s for a stacked tile. Past 8s people
-scroll before it resolves.
+- Anything under 100ms reads as a jump-cut *if the element travels*. See the
+  snap register below for the exception.
+- Anything over 1s on a *single* element reads as sluggish. If you need more
+  time, you need more elements staggered, not one slower element.
+- A loop past `--loop-max` loses people before it resolves — they scroll.
 
 ### The two registers
 
@@ -209,19 +201,11 @@ output level.
 
 ## The ceiling
 
-**One ambient move plus one accent move per composition. That is the maximum.**
-
-- *Ambient* — always on, no visible reset (gradient drift, slow push-in, grain
-  flicker, halftone shimmer).
-- *Accent* — one beat inside the loop (word-stagger blur-in, line-stack build,
-  sticker pop, cutout rise, annotation draw-on).
-
-Exceeding this is the most common way a well-built set turns to noise. Keep the
-same easing and stagger across every asset even when the moves differ — that
-consistency is what reads as a system.
-
-**Movement never crosses the composition's optical centre** unless it is the
-hero element.
+**One ambient move plus one accent move per composition, and no more.** The rule
+and the move vocabulary that goes with it belong to the house standard —
+`../editorial-explainer/references/house-rules.md`, §The ceiling and §The
+signature accent move. Read it there; it is stricter than general motion advice
+and it is the rule that keeps a set from turning to noise.
 
 ## Stagger
 
@@ -259,20 +243,11 @@ whatever arrives next on that trajectory.
 
 Applied to a slide or section change:
 
-```css
-@keyframes swap-out { /* first half: accelerate hard, exit at max speed */
-  from { transform: translateX(0);      opacity: 1; }
-  to   { transform: translateX(-14vw);  opacity: 0; }
-}
-@keyframes swap-in {  /* second half: enter at max speed, decelerate hard */
-  from { transform: translateX(14vw);   opacity: 0; }
-  to   { transform: translateX(0);      opacity: 1; }
-}
-.leaving { animation: swap-out 260ms cubic-bezier(0.55, 0, 1, 1) both; }
-.entering{ animation: swap-in  260ms cubic-bezier(0, 0, 0.45, 1) both; }
-/* The two halves meet at peak velocity. Fire .entering exactly when
-   .leaving ends — no gap, no overlap. Equal durations are essential. */
-```
+`motion.css` ships this as **`.is-leaving` and `.is-entering`** — use those
+rather than retyping the curves. The first half accelerates hard and exits at
+maximum speed; the second enters at maximum speed and decelerates hard, so the
+two halves meet at peak velocity and the cut hides inside it. Fire `.is-entering`
+the instant `.is-leaving` ends: no gap, no overlap, equal durations.
 
 Three things break it, and all three are common mistakes:
 - **A gap between the two halves.** Even 30ms of stillness exposes the cut.
@@ -336,6 +311,11 @@ or use `offset-path` where support allows:
 
 Pick **one** per design and repeat it. Mixing entrance types across a single
 page is the fastest way to look incoherent.
+
+These are the general entrances, for anything. **Text that animates as text —
+per-character reveals, two-stage arrival, fill sweeps, digit rolls — belongs to
+type-treatment**, which owns the kinetic-type vocabulary and the rule that only
+one text animation runs at a time. The timing and easing here still govern it.
 
 ```css
 /* Rise — the safe default. Small distance, never more than ~24px. */

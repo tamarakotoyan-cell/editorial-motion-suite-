@@ -241,6 +241,10 @@ Offset 6–14px, always the same direction across a set.
 
 ### Duotone / high-contrast grading
 
+This is the recipe, not the policy. **Whether every raster asset must share one
+treatment is analog-surface's rule** — §5, Footage homogenisation, where it is
+mandatory. What follows is how to grade one, once that decision is made.
+
 Cutouts read best pushed to high-contrast black and white, then optionally
 tinted. Raw colour photography inside a designed frame usually fights the
 palette.

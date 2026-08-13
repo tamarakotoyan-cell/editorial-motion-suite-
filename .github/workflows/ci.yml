@@ -47,6 +47,39 @@ jobs:
           print(f"version {version} agrees with the changelog")
           PY
 
+      # motion.css owns the house curve set. check-artifact.py keeps a second
+      # copy because it has to lint artifacts with no plugin around it — the one
+      # duplication the ownership table allows, on condition it cannot drift.
+      - name: Linter's curve set still matches motion.css
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          from pathlib import Path
+
+          skills = Path("plugins/editorial-motion/skills")
+          css = (skills / "motion-system/assets/motion.css").read_text(encoding="utf-8")
+          linter = (skills / "analog-surface/assets/check-artifact.py").read_text(encoding="utf-8")
+
+          bezier = re.compile(r"cubic-bezier\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,"
+                              r"\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)")
+          in_css = {tuple(round(float(g), 2) for g in m.groups())
+                    for m in bezier.finditer(css)}
+
+          block = re.search(r"HOUSE_CURVES\s*=\s*\{(.*?)\}", linter, re.S)
+          if not block:
+              sys.exit("::error::could not find HOUSE_CURVES in check-artifact.py")
+          in_linter = {tuple(round(float(v), 2) for v in row)
+                       for row in re.findall(r"\(([^)]*)\)", block.group(1))
+                       for row in [row.split(",")] if len(row) == 4}
+
+          missing = in_css - in_linter
+          if missing:
+              sys.exit(f"::error::motion.css defines {sorted(missing)}, which "
+                       f"HOUSE_CURVES does not accept")
+          print(f"{len(in_css)} curves in motion.css, all accepted by the "
+                f"linter's {len(in_linter)}")
+          PY
+
       - name: Linter self-test — every check still fires
         run: |
           python3 plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py \

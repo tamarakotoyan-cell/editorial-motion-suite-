@@ -82,26 +82,21 @@ Any "no" is a fix, not a ship.
 
 ## House timing kit
 
-Shared vocabulary so a set of tiles reads as one family. **Use these names and
-values**, not generic duration bands.
+Shared vocabulary so a set of tiles reads as one family. **Use the token names,
+not generic duration bands** — `--snap`, `--beat`, `--settle`, `--hold`,
+`--drift`, `--stagger`, and the `--loop-*` lengths.
 
-| Token | Value | Use for |
-|---|---|---|
-| Snap | 0.25s | Stickers, pops, anything physical |
-| Beat | 0.5s | Word and line reveals |
-| Settle | 1.2s | Full text blocks arriving |
-| Hold | 1.5s | Dwell before the loop resets |
-| Drift | 8–12s | Ambient background movement |
+**The values live in the motion-system skill's `motion.css` and only there.**
+This file used to carry a second copy of the table; the copies had already
+drifted apart on spring overshoot, which is the argument against keeping them.
+Paste `motion.css` in and use the names.
 
-Easing:
+What is a house decision rather than a number:
 
-- Reveals → ease-out. Fast in, gentle landing.
-- Ambient → ease-in-out, so the loop point is invisible.
-- Stickers → slight overshoot, ~4% past final size, then settle.
+- Reveals → `--ease-out`. Fast in, gentle landing.
+- Ambient → `--ease-in-out`, so the loop point is invisible.
+- Stickers → `--ease-spring`, a slight overshoot past final size, then settle.
 - Never linear, except gradient drift.
-
-Loop length: 3s for a single line, 6s for a stacked tile. Past 8s people scroll
-before it resolves.
 
 ## The ceiling
 
