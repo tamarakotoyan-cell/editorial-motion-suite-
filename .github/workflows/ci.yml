@@ -52,6 +52,13 @@ jobs:
           python3 plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py \
             --self-test
 
+      # The briefs themselves cost tokens and minutes, so a real run belongs in
+      # the version-bump process, run by a person. What CI can do for free is
+      # keep the set honest: every skill a brief names still exists, and no
+      # brief has quietly stopped expecting the router.
+      - name: Eval set is well-formed
+        run: python3 evals/run-evals.py --dry-run
+
       - name: Tile regression — seam continuity false-positives
         run: |
           python3 plugins/editorial-motion/skills/analog-surface/assets/check-tile-regression.py

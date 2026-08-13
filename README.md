@@ -20,9 +20,25 @@ README for the system, precedence and build instructions. `build-skills.py`
 generates standalone per-skill zips into `../editorial-motion-dist/`
 (deliberately outside this tree) for surfaces that take one skill at a time.
 
-After editing, bump the version in
-`plugins/editorial-motion/.claude-plugin/plugin.json` **and add a matching
-entry at the top of `plugins/editorial-motion/CHANGELOG.md`** — CI fails the
-build if the two disagree, because that version is what every generated
-artifact gets stamped with. Then commit and push; installs update with
-`/plugin update editorial-motion@emc-plugins`.
+### Bumping a version
+
+1. Run the golden briefs and read the result. This is the only check that tests
+   the *skills* rather than the paths or the linter:
+
+   ```
+   python3 evals/run-evals.py
+   ```
+
+   It prints pass/fail per brief for the mechanical checks — router first,
+   correct load order, no excluded skill, artifact produced, linter clean under
+   `--strict` — and writes `rubric.md` for the three-question check, which is
+   the half no script can grade. It drives the plugin **in the working tree**,
+   so it tests what you just edited. It needs an authenticated `claude` CLI and
+   costs tokens; CI only validates that the set is well-formed.
+2. Bump the version in `plugins/editorial-motion/.claude-plugin/plugin.json`
+   **and add a matching entry at the top of
+   `plugins/editorial-motion/CHANGELOG.md`.** CI fails the build if the two
+   disagree, because that version is what every generated artifact gets stamped
+   with.
+3. Commit and push. Installs update with
+   `/plugin update editorial-motion@emc-plugins`.

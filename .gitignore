@@ -5,3 +5,5 @@ __pycache__/
 # a second SKILL.md with the same name: silently breaks plugin loading
 dist/
 editorial-motion-dist/
+# eval run output — artifacts, transcripts and lint logs, regenerated per run
+evals/runs/
