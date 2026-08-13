@@ -64,7 +64,7 @@ and only for the last two.
 | `analog-surface/assets/check-artifact.py` | Lints generated HTML against the mechanically checkable house rules |
 | `motion-system/assets/sfx.js` | Procedural sound design, muted by default |
 | `design-motion-sound/scripts/mix_sfx.py` | Mix timecoded SFX cues into a video with ffmpeg |
-| `motion-system/assets/render.py` | Renders an animated artifact to MP4 at 12fps |
+| `motion-system/assets/render.py` | Renders an animated artifact to MP4 at 12fps, with its `sfx.js` cues mixed in |
 
 Textures are generated rather than sourced because the stock libraries the
 reference tutorials use forbid redistribution inside a plugin — and because at

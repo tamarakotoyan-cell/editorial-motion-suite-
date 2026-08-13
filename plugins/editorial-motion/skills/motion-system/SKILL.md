@@ -479,13 +479,21 @@ delay instead of flashing at full opacity first.
   that actually comes out. Run it after editing `sfx.js`: a gain value is not
   an output level, and the filters attenuate each voice differently.
 - `assets/render.py` — renders an animated artifact to MP4, frame by frame, at
-  the house 12fps. Needs Chrome and ffmpeg, nothing else.
+  the house 12fps, and mixes in the piece's sound cues. Needs Chrome and
+  ffmpeg, nothing else.
 
 **It refuses to produce a frozen video, and does so by default** — frozen is the
-failure mode you will not notice until someone else watches it. `transform` and
-`opacity` animations run on the compositor thread, so the obvious implementation
-of a frame-stepper captures the same instant every time and still writes a
-plausible-looking file. `render.py` sets each animation's `currentTime`
-explicitly for this reason, and the pre-flight probe measures how much the first
-and last frames differ rather than merely whether they differ. `--no-check` opts
-out, and is only right for a piece that is deliberately static.
+failure mode you will not notice until someone else watches it. `--no-check`
+opts out, and is only right for a piece that is deliberately static.
+
+Getting a page to hold still at an exact instant takes three mechanisms,
+because no single clock reaches everything. `transform` and `opacity`
+animations run on the compositor thread and ignore virtual time, so Web
+Animations are pinned by setting `currentTime` directly. `requestAnimationFrame`
+is invisible to that call, and Chrome services rAF on its own cadence in
+headless, so `render.py` replaces rAF with a queue it drains at an exact
+timestamp — without that, a canvas piece renders at roughly half speed and at a
+different speed on every machine, which still passes a does-it-move check.
+`<video>` follows neither and is seeked directly. **You do not need to do
+anything about this** — it is why a canvas or rAF artifact renders correctly
+now, where it used to come out silently wrong.

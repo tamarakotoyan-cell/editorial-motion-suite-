@@ -56,7 +56,7 @@ Every generated artifact carries the version of the system that made it, in the
 head:
 
 ```html
-<meta name="editorial-motion" content="1.7.0">
+<meta name="editorial-motion" content="1.8.0">
 ```
 
 Take the number from the plugin manifest, `.claude-plugin/plugin.json`; if these

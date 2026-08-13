@@ -206,18 +206,34 @@ function AnalogSFX(options) {
     return between(-opt.desyncFrames, opt.desyncFrames) * frame;
   }
 
+  /* Every cue is logged whether or not it sounds. An offline render has no
+     user gesture, so audio is always muted there — logging after the mute
+     guard would mean a rendered video comes out silent with nothing to say
+     why. render.py reads this log to mux the real thing. Because the desync
+     comes from the seeded RNG, the log and a live playback of the same
+     artifact agree on where the cue lands. */
+  function cueLog() {
+    if (typeof window === 'undefined') return [];
+    return (window.__analogSFXCues = window.__analogSFXCues || []);
+  }
+
   function play(name, o) {
     o = o || {};
-    if (!ensure() || muted) return false;
     const voice = VOICES[name];
     if (!voice) { console.warn(`AnalogSFX: no voice "${name}"`); return false; }
-    if (ctx.state === 'suspended') ctx.resume();
-    const db = clampDb(o.gain === undefined ? -14 : o.gain) + (TRIM[name] || 0);
+
     const slop = o.exact ? 0 : desyncMs();
     const lead = o.jcut ? -opt.jcutMs : 0;
-    const when = ctx.currentTime
-               + Math.max(0, ((o.at || 0) + slop + lead) / 1000);
-    voice(when, db);
+    const at = Math.max(0, (o.at || 0) + slop + lead);
+    const gain = o.gain === undefined ? -14 : o.gain;
+    /* The requested gain, before clamp and per-voice trim — those belong to
+       the voice and get applied again at render time. Logging the trimmed
+       value would apply the trim twice. */
+    cueLog().push({ sound: name, at: at, gain_db: gain, accent: !!o.accent });
+
+    if (!ensure() || muted) return false;
+    if (ctx.state === 'suspended') ctx.resume();
+    voice(ctx.currentTime + at / 1000, clampDb(gain) + (TRIM[name] || 0));
     return true;
   }
 
@@ -239,7 +255,8 @@ function AnalogSFX(options) {
           gain = gain === undefined ? -10 : gain;
         }
       }
-      play(c.sound, { at: c.at, gain: gain, jcut: c.jcut, exact: c.exact });
+      play(c.sound, { at: c.at, gain: gain, jcut: c.jcut, exact: c.exact,
+                      accent: !!c.accent });
     });
     warnings.forEach(w => console.warn('AnalogSFX: ' + w));
     return warnings;
@@ -281,7 +298,7 @@ function AnalogSFX(options) {
     paint();
   }
 
-  return {
+  const api = {
     play, scene, bed, attachToggle,
     enable: () => { ensure(); return setMuted(false); },
     disable: () => setMuted(true),
@@ -305,7 +322,43 @@ function AnalogSFX(options) {
       ctx = saveCtx; master = saveMaster; muted = saveMuted;
       return done;
     },
+
+    /* The same render, encoded as a base64 16-bit WAV. render.py pulls voices
+       out this way and hands the files to mix_sfx.py: the levels stay here,
+       where the -20..-10 dBFS window and the per-voice trim are decided, and
+       the placement stays in the mixer. Nothing has to agree about gain twice. */
+    renderWav(name, db, seconds) {
+      return this.render(name, db, seconds).then(function (buf) {
+        const n = buf.length, data = buf.getChannelData(0);
+        const bytes = new ArrayBuffer(44 + n * 2), view = new DataView(bytes);
+        const ascii = (off, s) => {
+          for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+        };
+        ascii(0, 'RIFF'); view.setUint32(4, 36 + n * 2, true); ascii(8, 'WAVE');
+        ascii(12, 'fmt '); view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+        view.setUint32(24, buf.sampleRate, true);
+        view.setUint32(28, buf.sampleRate * 2, true);
+        view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+        ascii(36, 'data'); view.setUint32(40, n * 2, true);
+        for (let i = 0; i < n; i++) {
+          const s = Math.max(-1, Math.min(1, data[i]));
+          view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+        }
+        let bin = '';
+        const raw = new Uint8Array(bytes);
+        for (let i = 0; i < raw.length; i += 0x8000) {
+          bin += String.fromCharCode.apply(null, raw.subarray(i, i + 0x8000));
+        }
+        return btoa(bin);
+      });
+    },
   };
+
+  /* Last instance wins. render.py needs a handle to reach renderWav, and
+     artifacts keep their instance in a local const. */
+  if (typeof window !== 'undefined') window.__analogSFX = api;
+  return api;
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = AnalogSFX;

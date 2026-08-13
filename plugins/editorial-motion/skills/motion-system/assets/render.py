@@ -2,46 +2,56 @@
 """Render an animated HTML artifact to a video file, frame by frame.
 
 The plugin produces HTML. Social and client deliverables are video. This walks
-the artifact through virtual time one frame at a time and assembles the result,
-so the 12fps stepping the house style calls for is genuinely 12fps rather than
-an approximation of it.
+the artifact through a controlled clock one frame at a time, so the 12fps
+stepping the house style calls for is genuinely 12fps rather than an
+approximation of it.
 
 How it works, and why this way
 ------------------------------
-Each frame is a separate Chrome launch. A small script is injected into a temp
-copy of the page; it reads a timestamp from the query string, pauses every
-animation via `document.getAnimations()`, and sets each one's `currentTime` to
-that moment. The screenshot is then a still of the composition at exactly that
-instant. Same input, same output, every run.
+One Chrome, driven over the DevTools protocol for the whole render. Each frame
+advances a virtual clock, pins every animation to that instant, and captures the
+surface.
 
-**It does not use `--virtual-time-budget` to drive the animation, and that is
-the whole point of the design.** The obvious approach — set the virtual-time
-budget to the frame's timestamp — silently does not work: `transform` and
-`opacity` animations are promoted to the compositor thread, which runs on real
-time and ignores virtual time entirely. Measured on a bar animating
-`translateX(0 -> 900px)`, every frame came back at x ~780 with ±10px of random
-jitter. The video looked plausible in a file listing and was frozen. Virtual
-time is still used, at a fixed budget, but only to let the page finish loading
-deterministically.
+**The clock is driven two ways at once, and that is the whole design.** Neither
+mechanism is sufficient alone:
 
-That jitter also defeated the first version of the pre-flight check, which only
-asked whether frames *differed*. It now measures how much they differ, via PSNR,
-so "different by a few pixels of noise" no longer passes for "animating".
+- `transform` and `opacity` animations are promoted to the **compositor thread**,
+  which runs on real time and ignores `--virtual-time-budget` entirely. Measured
+  on a bar animating `translateX(0 -> 900px)`, every frame came back at x ~780
+  with ±10px of random jitter — a video that looked plausible in a file listing
+  and was frozen. So Web Animations are pinned explicitly, by setting
+  `currentTime` on everything `document.getAnimations()` returns.
+- That call only covers the Web Animations timeline. Anything driven by
+  `requestAnimationFrame`, canvas, WebGL, `setTimeout` or a `<video>` element is
+  invisible to it and would render as its first frame forever. **Virtual time
+  does drive those**, so each frame advances the virtual clock by exactly one
+  frame's worth before pinning.
 
-**The check runs by default.** It was opt-in, which meant the guard against the
-failure it exists to catch was itself opt-in — a frozen clip is not visible in a
-file listing, and the SKILL.md instruction to "always render with --check" is
-prose, which gets skipped under load. `--no-check` opts out, for the rare piece
-that is deliberately static.
+Together they cover both. `<video>` elements are seeked directly, since they
+follow neither.
 
-The cost is a process per frame, so a 5-second clip at 12fps is 60 launches and
-roughly a minute. That is the trade for determinism and for needing nothing
-installed beyond Chrome.
+The previous version launched **a separate Chrome process per frame** — 60
+launches for a 5-second clip, around a minute of wall clock, and it froze on any
+rAF or canvas artifact without saying so. A persistent connection fixes the
+speed and the correctness together.
 
-Audio is not muxed here. sfx.js runs in the browser and virtual time does not
-render it; add the cue list with ffmpeg afterwards if the piece needs sound.
+`--check` measures how much the first and last probe frames differ, via PSNR
+rather than byte equality: compositor jitter changed a handful of pixels per
+frame, which defeated the first version of the check. It runs by default; the
+guard against a failure that is invisible in a file listing should not itself be
+opt-in. `--no-check` opts out for a deliberately static piece.
 
-Requires Chrome and ffmpeg. Stdlib only otherwise.
+Sound
+-----
+`sfx.js` synthesises its voices in the browser and there is no user gesture in a
+headless render, so nothing sounds. Instead the page's cue log is read back after
+the frames, each voice is rendered offline to a WAV, and `mix_sfx.py` places them
+against the video. Levels stay in `sfx.js`, placement stays in the mixer.
+`--no-audio` skips it.
+
+Requires Chrome and ffmpeg. Stdlib only otherwise — the protocol runs over
+Chrome's `--remote-debugging-pipe`, which is newline-delimited JSON on two file
+descriptors, so there is no websocket client to install.
 
 Usage
 -----
@@ -52,11 +62,16 @@ Usage
 """
 
 import argparse
+import base64
+import json
 import os
+import select
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 PRESETS = {
@@ -75,9 +90,64 @@ CHROME_CANDIDATES = [
     "/usr/bin/chromium-browser",
 ]
 
-# Chrome headless will not open a window narrower than this; anything smaller is
-# silently widened, which would render the artifact at the wrong breakpoint.
-MIN_CHROME_WIDTH = 500
+# Long enough for a voice's tail; the mixer places by timecode, and trailing
+# silence in a source file costs nothing.
+VOICE_SECONDS = 2.0
+
+# Installed before any page script runs, so the page never sees the real one.
+#
+# Advancing virtual time is not enough for requestAnimationFrame. Chrome
+# services rAF on its own cadence, and in headless — where frames are produced
+# on demand rather than on a display's refresh — that cadence does not track the
+# budget. Measured on a canvas drawing its own elapsed time: after advancing
+# 2000ms in twelfth-of-a-second steps, the page had reached 1.12s. It moved, so
+# it passed the frozen-page check, and it was wrong: 54% speed, and different on
+# every run because it depended on how fast the machine happened to be.
+#
+# So rAF becomes a queue this script drains at an exact timestamp, and
+# performance.now() reports the same clock. Deterministic, and identical run to
+# run — which the eval set needs, since a render that varies cannot be compared
+# against a previous version.
+CLOCK_SHIM = """
+(function(){
+  var clock = 0, nextId = 1, pending = new Map();
+  window.requestAnimationFrame = function(cb){
+    var id = nextId++; pending.set(id, cb); return id;
+  };
+  window.cancelAnimationFrame = function(id){ pending.delete(id); };
+  try { performance.now = function(){ return clock; }; } catch (e) {}
+  window.__renderClock = {
+    now: function(){ return clock; },
+    tick: function(t){
+      clock = t;
+      /* Cleared before dispatch: a callback that re-registers — which is the
+         normal rAF loop — lands in the next tick, not this one. */
+      var due = Array.from(pending.values());
+      pending.clear();
+      due.forEach(function(cb){ try { cb(t); } catch (e) {} });
+      return due.length;
+    }
+  };
+})();
+"""
+
+# Web Animations follow neither the shim nor virtual time when they are promoted
+# to the compositor, and <video> follows nothing at all. Both are set directly.
+PIN = """
+(function(t){
+  var pinned = 0;
+  if (window.__renderClock) window.__renderClock.tick(t);
+  if (document.getAnimations) {
+    document.getAnimations().forEach(function(a){
+      try { a.pause(); a.currentTime = t; pinned++; } catch (e) {}
+    });
+  }
+  document.querySelectorAll('video').forEach(function(v){
+    try { v.pause(); v.currentTime = t / 1000; } catch (e) {}
+  });
+  return pinned;
+})(%s)
+"""
 
 
 def find_chrome(override=None):
@@ -85,206 +155,354 @@ def find_chrome(override=None):
         if Path(override).exists():
             return override
         sys.exit(f"chrome not found at {override}")
-    for c in CHROME_CANDIDATES:
-        if Path(c).exists():
-            return c
+    for candidate in CHROME_CANDIDATES:
+        if Path(candidate).exists():
+            return candidate
     found = shutil.which("google-chrome") or shutil.which("chromium")
     if found:
         return found
     sys.exit("Chrome not found. Pass --chrome /path/to/chrome")
 
 
-# Injected into a temp copy of the page. Reads ?t=<ms> and freezes every
-# animation at that instant. document.getAnimations() covers CSS animations and
-# transitions; re-running it after load and on the next frame catches anything
-# started late by script.
-FREEZE = """
-<script>
-(function(){
-  var t = parseFloat(new URLSearchParams(location.search).get('t') || '0');
-  function freeze(){
-    if (!document.getAnimations) return;
-    document.getAnimations().forEach(function(a){
-      try { a.pause(); a.currentTime = t; } catch (e) {}
-    });
-  }
-  freeze();
-  document.addEventListener('DOMContentLoaded', freeze);
-  window.addEventListener('load', function(){
-    freeze();
-    requestAnimationFrame(freeze);
-  });
-  window.__renderFreeze = freeze;
-})();
-</script>
-"""
+class CDPError(RuntimeError):
+    pass
 
 
-def to_url(target):
-    if target.startswith(("http://", "https://", "file://")):
-        return target
-    p = Path(target).resolve()
-    if not p.exists():
-        sys.exit(f"no such file: {target}")
-    return p.as_uri()
+class Chrome:
+    """One headless Chrome, spoken to over --remote-debugging-pipe.
 
+    The pipe transport rather than --remote-debugging-port because it needs no
+    websocket client (there is none in the stdlib), no port to allocate and no
+    race between "Chrome printed a URL" and "Chrome is listening".
 
-def prepare(target, workdir):
-    """Return a base URL whose page freezes its animations at ?t=<ms>.
-
-    Local files are copied next to their original directory contents so that
-    relative references keep resolving; remote URLs cannot be rewritten, so they
-    are returned untouched and the caller falls back to virtual time.
+    Chrome reads commands on fd 3 and writes replies on fd 4, so the fds are
+    placed by posix_spawn's file actions. subprocess's preexec_fn cannot do it:
+    it runs after the child has already closed inherited descriptors, and Chrome
+    exits with "Remote debugging pipe file descriptors are not open".
     """
-    if target.startswith(("http://", "https://")):
-        return target, False
-    src = Path(target[7:] if target.startswith("file://") else target).resolve()
-    if not src.exists():
-        sys.exit(f"no such file: {target}")
-    html = src.read_text(encoding="utf-8")
-    if "</body>" in html:
-        html = html.replace("</body>", FREEZE + "</body>", 1)
-    else:
-        html += FREEZE
-    # Write the temp copy INTO the source directory so relative asset paths,
-    # which are the normal case for these artifacts, still resolve.
-    tmp = src.parent / f".render-{os.getpid()}-{src.name}"
-    tmp.write_text(html, encoding="utf-8")
-    workdir.append(tmp)
-    return tmp.resolve().as_uri(), True
 
+    def __init__(self, binary, width, height, timeout=30.0):
+        self.timeout = timeout
+        self.profile = tempfile.mkdtemp(prefix="render-profile-")
+        self._next_id = 0
+        self._buf = b""
+        self._events = []
 
-def shoot(chrome, url, out_path, width, height, timeout, settle_ms=1200):
-    cmd = [
-        chrome, "--headless", "--disable-gpu", "--hide-scrollbars",
-        "--no-first-run", "--no-default-browser-check",
-        "--force-color-profile=srgb",
-        f"--window-size={width},{height}",
-        # Fixed budget: this only lets the page finish loading. The animation
-        # clock is set by the injected freeze script, not by virtual time.
-        f"--virtual-time-budget={settle_ms}",
-        f"--screenshot={out_path}",
-        url,
-    ]
-    try:
-        subprocess.run(cmd, capture_output=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return False
-    return Path(out_path).exists()
+        cmd_r, self._cmd_w = os.pipe()
+        self._evt_r, evt_w = os.pipe()
+        argv = [binary, "--headless=new", "--remote-debugging-pipe",
+                "--disable-gpu", "--hide-scrollbars", "--mute-audio",
+                "--no-first-run", "--no-default-browser-check",
+                "--force-color-profile=srgb", "--disable-lcd-text",
+                f"--user-data-dir={self.profile}", "about:blank"]
+        # Chrome is chatty on stderr about mach ports, page-load metrics and
+        # allocators regardless of --log-level; none of it is actionable here
+        # and all of it buries the render's own output.
+        self.pid = os.posix_spawn(binary, argv, os.environ, file_actions=[
+            (os.POSIX_SPAWN_OPEN, 1, os.devnull, os.O_WRONLY, 0o666),
+            (os.POSIX_SPAWN_OPEN, 2, os.devnull, os.O_WRONLY, 0o666),
+            (os.POSIX_SPAWN_DUP2, cmd_r, 3),
+            (os.POSIX_SPAWN_DUP2, evt_w, 4)])
+        os.close(cmd_r)
+        os.close(evt_w)
+
+        target = self.call("Target.createTarget", {"url": "about:blank"})
+        self.session = self.call("Target.attachToTarget", {
+            "targetId": target["targetId"], "flatten": True})["sessionId"]
+        self.call("Page.enable")
+        self.call("Runtime.enable")
+        self.call("Emulation.setDeviceMetricsOverride", {
+            "width": width, "height": height,
+            "deviceScaleFactor": 1, "mobile": False})
+        # Not --window-size: an override renders at the size asked for, where
+        # headless Chrome silently widens a window under about 500px and would
+        # have produced the artifact at the wrong breakpoint.
+
+    # -- transport ---------------------------------------------------------
+    def _read_message(self, deadline):
+        while True:
+            if b"\0" in self._buf:
+                raw, self._buf = self._buf.split(b"\0", 1)
+                return json.loads(raw)
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                raise CDPError("timed out waiting for Chrome")
+            # select, not a bare read: a blocking read on a quiet pipe never
+            # returns, so the deadline above would never be reached and a stall
+            # would hang the render rather than fail it.
+            if not select.select([self._evt_r], [], [], remaining)[0]:
+                continue
+            chunk = os.read(self._evt_r, 1 << 16)
+            if not chunk:
+                raise CDPError("Chrome closed the protocol pipe (it exited)")
+            self._buf += chunk
+
+    def call(self, method, params=None, timeout=None):
+        self._next_id += 1
+        msg_id = self._next_id
+        message = {"id": msg_id, "method": method, "params": params or {}}
+        if getattr(self, "session", None):
+            message["sessionId"] = self.session
+        os.write(self._cmd_w, json.dumps(message).encode() + b"\0")
+
+        deadline = time.time() + (timeout or self.timeout)
+        while True:
+            msg = self._read_message(deadline)
+            if msg.get("id") == msg_id:
+                if "error" in msg:
+                    raise CDPError(f"{method}: {msg['error'].get('message')}")
+                return msg.get("result", {})
+            if "method" in msg:
+                self._events.append(msg)
+
+    def wait_for(self, event, timeout=None):
+        deadline = time.time() + (timeout or self.timeout)
+        while True:
+            for i, msg in enumerate(self._events):
+                if msg.get("method") == event:
+                    return self._events.pop(i)
+            msg = self._read_message(deadline)
+            if msg.get("method") == event:
+                return msg
+            if "method" in msg:
+                self._events.append(msg)
+
+    def evaluate(self, expression, await_promise=False):
+        result = self.call("Runtime.evaluate", {
+            "expression": expression, "returnByValue": True,
+            "awaitPromise": await_promise})
+        if "exceptionDetails" in result:
+            detail = result["exceptionDetails"]
+            raise CDPError(detail.get("exception", {}).get(
+                "description", detail.get("text", "evaluate failed")))
+        return result.get("result", {}).get("value")
+
+    def close(self):
+        for fd in (self._cmd_w, self._evt_r):
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+        try:
+            os.kill(self.pid, signal.SIGTERM)
+            for _ in range(50):
+                if os.waitpid(self.pid, os.WNOHANG)[0]:
+                    break
+                time.sleep(0.05)
+            else:
+                os.kill(self.pid, signal.SIGKILL)
+                os.waitpid(self.pid, 0)
+        except (ProcessLookupError, ChildProcessError):
+            pass
+        shutil.rmtree(self.profile, ignore_errors=True)
+
+    # -- the clock ---------------------------------------------------------
+    def load(self, url, settle_ms=1200):
+        """Navigate with the virtual clock running, then stop it at zero."""
+        self.call("Page.addScriptToEvaluateOnNewDocument",
+                  {"source": CLOCK_SHIM})
+        self.call("Emulation.setVirtualTimePolicy", {"policy": "pause"})
+        self.call("Page.navigate", {"url": url})
+        self.call("Emulation.setVirtualTimePolicy", {
+            "policy": "pauseIfNetworkFetchesPending",
+            "budget": settle_ms, "waitForNavigation": True})
+        self.wait_for("Emulation.virtualTimeBudgetExpired")
+        # Loading consumed virtual time; the artifact's timeline starts now.
+        self.virtual_ms = 0.0
+        self.evaluate(PIN % 0)
+
+    def seek(self, ms):
+        """Put every clock the page can read at exactly `ms`.
+
+        Virtual time carries setTimeout, Date.now and network; the shim carries
+        rAF and performance.now; PIN carries Web Animations and <video>.
+        """
+        advance = ms - self.virtual_ms
+        if advance > 0:
+            self.call("Emulation.setVirtualTimePolicy", {
+                "policy": "pauseIfNetworkFetchesPending", "budget": advance})
+            self.wait_for("Emulation.virtualTimeBudgetExpired")
+            self.virtual_ms = ms
+        self.evaluate(PIN % repr(float(ms)))
+
+    def screenshot(self, path):
+        data = self.call("Page.captureScreenshot",
+                         {"format": "png", "fromSurface": True})["data"]
+        Path(path).write_bytes(base64.b64decode(data))
 
 
 def psnr(ffmpeg, a, b):
     """Average PSNR between two PNGs in dB, or None if it cannot be measured.
 
-    High PSNR means near-identical. Byte comparison is not enough here: the
-    first version of this check passed a completely frozen render because
-    compositor jitter changed a handful of pixels per frame.
+    High PSNR means near-identical. Byte comparison is not enough: the first
+    version of this check passed a completely frozen render because compositor
+    jitter changed a handful of pixels per frame.
     """
     if not ffmpeg:
         return None
-    r = subprocess.run(
+    proc = subprocess.run(
         [ffmpeg, "-i", str(a), "-i", str(b), "-lavfi", "psnr", "-f", "null", "-"],
         capture_output=True, text=True)
-    for token in r.stderr.split():
+    for token in proc.stderr.split():
         if token.startswith("average:"):
-            val = token.split(":", 1)[1]
-            if val in ("inf", "-inf"):
+            value = token.split(":", 1)[1]
+            if value in ("inf", "-inf"):
                 return 99.0
             try:
-                return float(val)
+                return float(value)
             except ValueError:
                 return None
     return None
 
 
 def differ(paths):
-    """True if the given frames are not all byte-identical."""
     first = Path(paths[0]).read_bytes()
     return any(Path(p).read_bytes() != first for p in paths[1:])
 
 
+def to_url(target):
+    if target.startswith(("http://", "https://", "file://")):
+        return target
+    path = Path(target).resolve()
+    if not path.exists():
+        sys.exit(f"no such file: {target}")
+    return path.as_uri()
+
+
+def collect_audio(browser, workdir):
+    """Pull the page's cue log and render each voice to a WAV.
+
+    Returns a cue file path for mix_sfx.py, or None when the artifact has no
+    sound. Gains are baked into the WAVs by sfx.js, which owns the level rules,
+    so the cue file asks the mixer only for placement.
+    """
+    raw = browser.evaluate("JSON.stringify(window.__analogSFXCues || [])")
+    cues = json.loads(raw or "[]")
+    if not cues:
+        return None
+
+    # Let the clock run again. Rendering a voice goes through an
+    # OfflineAudioContext, whose task queue is frozen along with virtual time —
+    # awaiting that promise with the budget exhausted waits forever.
+    browser.call("Emulation.setVirtualTimePolicy", {"policy": "advance"})
+    if not browser.evaluate("!!(window.__analogSFX && "
+                            "window.__analogSFX.renderWav)"):
+        print("warning: the page logged sound cues but exposes no renderer; "
+              "sfx.js may be an older copy. Rendering silent.", file=sys.stderr)
+        return None
+
+    audio_dir = workdir / "audio"
+    audio_dir.mkdir(exist_ok=True)
+    rendered, entries = {}, []
+    for cue in cues:
+        key = (cue["sound"], cue.get("gain_db", -14))
+        if key not in rendered:
+            wav = browser.evaluate(
+                f"window.__analogSFX.renderWav({json.dumps(cue['sound'])},"
+                f"{float(key[1])},{VOICE_SECONDS})", await_promise=True)
+            if not wav:
+                continue
+            name = f"{cue['sound']}-{len(rendered)}.wav"
+            (audio_dir / name).write_bytes(base64.b64decode(wav))
+            rendered[key] = f"audio/{name}"
+        entries.append({"file": rendered[key],
+                        "at": round(cue.get("at", 0) / 1000.0, 4),
+                        "gain_db": 0})
+    if not entries:
+        return None
+    cue_file = workdir / "cues.json"
+    cue_file.write_text(json.dumps({"cues": entries}, indent=2), encoding="utf-8")
+    print(f"sound: {len(entries)} cue(s), {len(rendered)} voice(s) rendered")
+    return cue_file
+
+
+def mux(cue_file, video, out):
+    """Hand the cue file to mix_sfx.py rather than reimplementing the mix."""
+    mixer = Path(__file__).resolve().parent.parent.parent / \
+        "design-motion-sound" / "scripts" / "mix_sfx.py"
+    if not mixer.exists():
+        print(f"warning: {mixer.name} not found; leaving the video silent",
+              file=sys.stderr)
+        return False
+    proc = subprocess.run([sys.executable, str(mixer), str(video),
+                           str(cue_file), str(out)],
+                          capture_output=True, text=True)
+    if proc.returncode != 0:
+        print(f"warning: mixing failed, leaving the video silent:\n"
+              f"{proc.stderr.strip()}", file=sys.stderr)
+        return False
+    return True
+
+
 def main(argv=None):
-    p = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Render an animated HTML artifact to video.")
-    p.add_argument("target", help="HTML file path or URL")
-    p.add_argument("--duration", type=float, required=True,
-                   help="seconds to render")
-    p.add_argument("--fps", type=int, default=12,
-                   help="frame rate (default 12, the house posterize rate)")
-    p.add_argument("--preset", choices=sorted(PRESETS),
-                   help="canvas size preset")
-    p.add_argument("--width", type=int)
-    p.add_argument("--height", type=int)
-    p.add_argument("--out", default="out.mp4")
-    p.add_argument("--crf", type=int, default=18,
-                   help="x264 quality, lower is better (default 18)")
-    p.add_argument("--keep-frames", action="store_true")
-    p.add_argument("--frame-timeout", type=float, default=30.0)
-    p.add_argument("--chrome")
-    p.add_argument("--no-check", action="store_true",
-                   help="skip the pre-flight probe. Only for a piece you know "
-                        "is deliberately static")
-    p.add_argument("--check", action="store_true",
-                   help=argparse.SUPPRESS)   # accepted, now the default
-    args = p.parse_args(argv)
+    parser.add_argument("target", help="HTML file path or URL")
+    parser.add_argument("--duration", type=float, required=True,
+                        help="seconds to render")
+    parser.add_argument("--fps", type=int, default=12,
+                        help="frame rate (default 12, the house posterize rate)")
+    parser.add_argument("--preset", choices=sorted(PRESETS),
+                        help="canvas size preset")
+    parser.add_argument("--width", type=int)
+    parser.add_argument("--height", type=int)
+    parser.add_argument("--out", default="out.mp4")
+    parser.add_argument("--crf", type=int, default=18,
+                        help="x264 quality, lower is better (default 18)")
+    parser.add_argument("--keep-frames", action="store_true")
+    parser.add_argument("--frame-timeout", type=float, default=30.0)
+    parser.add_argument("--chrome")
+    parser.add_argument("--no-check", action="store_true",
+                        help="skip the pre-flight probe. Only for a piece you "
+                             "know is deliberately static")
+    parser.add_argument("--no-audio", action="store_true",
+                        help="skip the sound cue pass")
+    parser.add_argument("--check", action="store_true", help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
 
     if args.check:
         print("note: --check is the default now; the flag does nothing. "
               "Use --no-check to skip the probe.", file=sys.stderr)
-
     if args.duration <= 0:
-        p.error("--duration must be positive")
+        parser.error("--duration must be positive")
     if args.fps < 1 or args.fps > 60:
-        p.error("--fps must be between 1 and 60")
+        parser.error("--fps must be between 1 and 60")
 
     width, height = PRESETS.get(args.preset, PRESETS["wide"])
     if args.width:
         width = args.width
     if args.height:
         height = args.height
-    if width < MIN_CHROME_WIDTH:
-        print(f"warning: Chrome headless will not render narrower than "
-              f"{MIN_CHROME_WIDTH}px; {width} would be silently widened. "
-              f"Rendering at {MIN_CHROME_WIDTH} and letting you crop.",
-              file=sys.stderr)
-        width = MIN_CHROME_WIDTH
 
     chrome = find_chrome(args.chrome)
     ffmpeg = shutil.which("ffmpeg")
     frame_ms = 1000.0 / args.fps
     total = int(round(args.duration * args.fps))
+    url = to_url(args.target)
 
     workdir = Path(tempfile.mkdtemp(prefix="render-"))
     frames_dir = workdir / "frames"
     frames_dir.mkdir()
-    temps = []
+    browser = None
+    started = time.time()
 
     try:
-        base, frozen = prepare(args.target, temps)
-        if not frozen:
-            print("warning: a remote URL cannot have the freeze script "
-                  "injected, so animation timing falls back to virtual time — "
-                  "which compositor-driven transforms ignore. Save the page "
-                  "locally for a reliable render.", file=sys.stderr)
-
-        def frame_url(ms):
-            sep = "&" if "?" in base else "?"
-            return f"{base}{sep}t={int(ms)}" if frozen else base
+        browser = Chrome(chrome, width, height, timeout=args.frame_timeout)
+        browser.load(url)
 
         if not args.no_check:
             probes = []
             for i, ms in enumerate([0, frame_ms * max(1, total // 2),
                                     frame_ms * max(2, total - 1)]):
                 path = frames_dir / f"probe{i}.png"
-                if not shoot(chrome, frame_url(ms), str(path), width, height,
-                             args.frame_timeout):
-                    sys.exit(f"probe frame at {int(ms)}ms failed to render")
+                browser.seek(ms)
+                browser.screenshot(path)
                 probes.append(path)
 
             score = psnr(ffmpeg, probes[0], probes[-1])
-            frozen_still = (score is not None and score > 45) or \
-                           (score is None and not differ(probes))
-            if frozen_still:
+            frozen = (score is not None and score > 45) or \
+                     (score is None and not differ(probes))
+            if frozen:
                 detail = (f"PSNR {score:.1f} dB between the first and last "
                           f"probe — essentially the same image"
                           if score is not None else
@@ -292,26 +510,27 @@ def main(argv=None):
                 sys.exit(
                     f"the page does not animate: {detail}.\n"
                     "Common causes: the animation waits on a user gesture, "
-                    "prefers-reduced-motion is stopping it, it is driven by "
-                    "requestAnimationFrame rather than the Web Animations "
-                    "timeline, or the duration requested is shorter than the "
-                    "first beat. Rendering would produce a frozen video.\n"
+                    "prefers-reduced-motion is stopping it, or the duration "
+                    "requested is shorter than the first beat.\n"
                     "If the piece is deliberately static, pass --no-check.")
             print("check: the page advances"
                   + (f" (PSNR {score:.1f} dB first vs last)"
                      if score is not None else ""))
             for path in probes:
                 path.unlink()
+            # The probes ran the clock forward; restart it for the real frames.
+            browser.close()
+            browser = Chrome(chrome, width, height, timeout=args.frame_timeout)
+            browser.load(url)
 
         print(f"rendering {total} frames at {args.fps}fps, {width}x{height}")
         for i in range(total):
-            ms = int(round(i * frame_ms))
-            out = frames_dir / f"f{i:05d}.png"
-            if not shoot(chrome, frame_url(ms), str(out), width, height,
-                         args.frame_timeout):
-                sys.exit(f"frame {i} ({ms}ms) failed to render")
-            if (i + 1) % 10 == 0 or i + 1 == total:
+            browser.seek(i * frame_ms)
+            browser.screenshot(frames_dir / f"f{i:05d}.png")
+            if (i + 1) % 25 == 0 or i + 1 == total:
                 print(f"  {i + 1}/{total}")
+
+        cue_file = None if args.no_audio else collect_audio(browser, workdir)
 
         if not ffmpeg:
             keep = Path.cwd() / "frames"
@@ -323,19 +542,26 @@ def main(argv=None):
 
         # yuv420p for player compatibility; the pad keeps odd dimensions legal
         # for x264, which requires even width and height.
-        cmd = [ffmpeg, "-y", "-loglevel", "error",
-               "-framerate", str(args.fps),
-               "-i", str(frames_dir / "f%05d.png"),
-               "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-               "-c:v", "libx264", "-crf", str(args.crf),
-               "-pix_fmt", "yuv420p", args.out]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if r.returncode != 0:
-            sys.exit(f"ffmpeg failed:\n{r.stderr}")
+        silent = workdir / "silent.mp4" if cue_file else Path(args.out)
+        proc = subprocess.run(
+            [ffmpeg, "-y", "-loglevel", "error",
+             "-framerate", str(args.fps),
+             "-i", str(frames_dir / "f%05d.png"),
+             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+             "-c:v", "libx264", "-crf", str(args.crf),
+             "-pix_fmt", "yuv420p", str(silent)],
+            capture_output=True, text=True)
+        if proc.returncode != 0:
+            sys.exit(f"ffmpeg failed:\n{proc.stderr}")
+
+        if cue_file and not mux(cue_file, silent, Path(args.out)):
+            shutil.copy(silent, args.out)
 
         size = Path(args.out).stat().st_size
-        print(f"\n{args.out}  {total} frames  {args.duration}s @ {args.fps}fps  "
-              f"{size // 1024} KB")
+        elapsed = time.time() - started
+        print(f"\n{args.out}  {total} frames  {args.duration}s @ {args.fps}fps"
+              f"{'  + sound' if cue_file else ''}  {size // 1024} KB  "
+              f"in {elapsed:.1f}s")
 
         if args.keep_frames:
             keep = Path.cwd() / "frames"
@@ -345,14 +571,12 @@ def main(argv=None):
             print(f"frames kept in {keep}")
         return 0
 
+    except CDPError as exc:
+        sys.exit(f"Chrome protocol error: {exc}")
     finally:
-        for t in temps:
-            try:
-                t.unlink()
-            except OSError:
-                pass
-        if workdir.exists():
-            shutil.rmtree(workdir, ignore_errors=True)
+        if browser:
+            browser.close()
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 if __name__ == "__main__":

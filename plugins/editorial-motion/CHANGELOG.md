@@ -9,6 +9,46 @@ Newest first. Dates are the release date, ISO.
 
 ---
 
+## 1.8.0 — 2026-08-13
+
+`render.py` rebuilt on the DevTools protocol. Framed as reliability rather than
+video quality: it was the component most likely to produce a wrong artefact
+without saying so.
+
+**Fixed**
+
+- **Canvas, WebGL and `requestAnimationFrame` artifacts rendered wrong and
+  passed the check.** Only the Web Animations timeline was being frozen, so
+  anything on rAF was invisible to it. Advancing Chrome's virtual time is not
+  sufficient either: it services rAF on its own cadence, and in headless — where
+  frames are produced on demand rather than on a display refresh — that cadence
+  does not track the budget. Measured on a canvas drawing its own elapsed time,
+  a 2-second seek left the page at 1.12s: 54% speed, machine-dependent, and
+  moving enough to satisfy a does-it-move check. `render.py` now installs a
+  clock shim before page scripts run, so rAF is a queue drained at an exact
+  timestamp and `performance.now()` agrees with it. The same canvas now lands on
+  2.000s at every seek, identically on every run.
+- A stalled protocol read hung the render indefinitely instead of timing out —
+  the deadline could never be reached from inside a blocking read.
+
+**Changed**
+
+- **One Chrome for the whole render, over `--remote-debugging-pipe`.** It was one
+  process per frame: 60 launches for a 5-second clip. A 5s clip now renders in
+  about 7 seconds rather than about a minute. The pipe transport rather than a
+  debugging port because there is no websocket client in the stdlib, no port to
+  allocate and no race with Chrome's startup.
+- **Sound is muxed.** `sfx.js` synthesises in the browser and never sounds in a
+  headless render, so cues are logged whether or not they play, each voice is
+  rendered offline to a WAV, and `design-motion-sound`'s `mix_sfx.py` places
+  them. Levels stay in `sfx.js`, placement stays in the mixer, and `render.py`
+  does not reimplement either. `--no-audio` skips the pass.
+- Canvas size is set with a device-metrics override, so a piece narrower than
+  500px renders at the size asked for. Headless Chrome silently widened the
+  window before, producing the artifact at the wrong breakpoint.
+- Chrome's stderr is discarded; none of it was actionable and all of it buried
+  the render's own output.
+
 ## 1.7.0 — 2026-08-13
 
 **Added**
