@@ -13,19 +13,27 @@ Stdlib only. Ancestry is tracked with html.parser rather than guessed with
 regexes, so the "image outside a homogenise wrapper" and "fringe on glyphs"
 checks are accurate rather than approximate.
 
+One check is about provenance rather than craft: every artifact must carry
+`<meta name="editorial-motion" content="X.Y.Z">`, matching the plugin manifest.
+Without it there is no way to attribute an output to the version that made it,
+and so no way to show that an edit to a skill improved or degraded anything.
+
 Usage
 -----
     python3 check-artifact.py artifact.html
     python3 check-artifact.py *.html --strict     # warnings also fail
     python3 check-artifact.py --self-test         # prove the checks still fire
+    python3 check-artifact.py a.html --version-stamp 1.6.0   # override
 
 Exit codes: 0 clean, 1 errors found (or warnings under --strict), 2 bad usage.
 """
 
 import argparse
+import json
 import re
 import sys
 from html.parser import HTMLParser
+from pathlib import Path
 
 # The house curve set, from motion-system/assets/motion.css.
 HOUSE_CURVES = {
@@ -59,6 +67,27 @@ REDUCED_BLOCK = re.compile(
     r"@media[^{]*prefers-reduced-motion[^{]*\{", re.I)
 MASK_SIZE = re.compile(r"mask-size\s*:\s*(\d+)px", re.I)
 TILE = re.compile(r"--tile\s*:\s*(\d+)px", re.I)
+SEMVER = re.compile(r"\d+\.\d+\.\d+")
+
+
+def plugin_version(start=None):
+    """The version a stamp must match, read from the plugin manifest.
+
+    Walks up from this file looking for `.claude-plugin/plugin.json`. A
+    standalone bundle has no manifest above it, in which case the stamp is
+    still required but its value cannot be matched — which beats baking a
+    constant in here that drifts the first time someone bumps plugin.json and
+    forgets this file.
+    """
+    here = Path(start or __file__).resolve()
+    for parent in here.parents:
+        manifest = parent / ".claude-plugin" / "plugin.json"
+        if manifest.is_file():
+            try:
+                return json.loads(manifest.read_text(encoding="utf-8")).get("version")
+            except (OSError, ValueError):
+                return None
+    return None
 
 
 class Finding:
@@ -119,7 +148,7 @@ RULE_TOKEN = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 ALL_RULES = {"no-pure-white", "no-pure-black", "homogenise-imagery",
              "fringe-on-glyphs", "reduced-motion", "roughen-hairlines",
              "house-easing", "texture-strength", "matte-alignment",
-             "jump-cut", "unparsed"}
+             "jump-cut", "version-stamp", "unparsed"}
 
 
 def ignored_rules(text):
@@ -144,7 +173,7 @@ def ignored_rules(text):
     return rules
 
 
-def check(text, name="<input>"):
+def check(text, name="<input>", version=None):
     findings = []
     suppressed = ignored_rules(text)
     clean = strip_comments(text)
@@ -274,6 +303,30 @@ def check(text, name="<input>"):
                 "as a jump-cut; only sub-perceptual UI feedback belongs here",
                 scan[:m.start()].count("\n") + 1))
 
+    # --- 10. Version stamp --------------------------------------------------
+    # An artifact that cannot say which version of the system produced it is
+    # not evidence of anything. Without this, no edit to a skill can be shown
+    # to have improved or degraded output.
+    stamps = [(a.get("content"), line) for tag, a, _, line in parser.elements
+              if tag == "meta" and (a.get("name") or "").lower() == "editorial-motion"]
+    if not stamps:
+        findings.append(Finding(
+            "error", "version-stamp",
+            'no <meta name="editorial-motion" content="X.Y.Z"> tag. Every '
+            'generated artifact records the version that made it'))
+    for got, line in stamps:
+        value = (got or "").strip()
+        if not SEMVER.fullmatch(value):
+            findings.append(Finding(
+                "error", "version-stamp",
+                f"version stamp {got!r} is not an X.Y.Z version", line))
+        elif version and value != version:
+            findings.append(Finding(
+                "error", "version-stamp",
+                f"version stamp {value} does not match the plugin manifest "
+                f"({version}). The artifact would be attributed to the wrong "
+                f"version", line))
+
     unknown = suppressed - ALL_RULES
     if unknown:
         findings.append(Finding(
@@ -287,7 +340,13 @@ def check(text, name="<input>"):
 
 # ------------------------------------------------------------------ tests ---
 
-GOOD = """<!doctype html><style>
+# Fixed so the self-test does not depend on the repo it is run from, or start
+# failing the next time plugin.json is bumped.
+TEST_VERSION = "9.9.9"
+
+GOOD = """<!doctype html>
+<meta name="editorial-motion" content="9.9.9">
+<style>
 :root{--tile:512px;--tex-strength:.05}
 .an-surface{background-color:#FDFAF3;background-size:var(--tile)}
 .an-ink{mix-blend-mode:multiply;mask-image:url(m.png);mask-size:512px}
@@ -318,13 +377,13 @@ BAD = """<!doctype html><style>
 EXPECTED_BAD = {"no-pure-white", "no-pure-black", "texture-strength",
                 "roughen-hairlines", "house-easing", "jump-cut",
                 "matte-alignment", "homogenise-imagery", "fringe-on-glyphs",
-                "reduced-motion"}
+                "reduced-motion", "version-stamp"}
 
 
 def self_test():
     ok = True
 
-    good = check(GOOD, "GOOD")
+    good = check(GOOD, "GOOD", version=TEST_VERSION)
     if good:
         ok = False
         print("FAIL: clean input produced findings (false positives):")
@@ -333,7 +392,7 @@ def self_test():
     else:
         print("pass: clean input produces no findings")
 
-    fired = {f.rule for f in check(BAD, "BAD")}
+    fired = {f.rule for f in check(BAD, "BAD", version=TEST_VERSION)}
     missing = EXPECTED_BAD - fired
     unexpected = fired - EXPECTED_BAD
     if missing:
@@ -348,7 +407,8 @@ def self_test():
     # Suppression must remove exactly the named rules and nothing else.
     directive = ("<!-- check-artifact-ignore: no-pure-white, "
                  "homogenise-imagery -->\n")
-    after = {f.rule for f in check(directive + BAD, "BAD+ignore")}
+    after = {f.rule for f in check(directive + BAD, "BAD+ignore",
+                                   version=TEST_VERSION)}
     if {"no-pure-white", "homogenise-imagery"} & after:
         ok = False
         print("FAIL: suppression directive did not remove its named rules")
@@ -357,6 +417,30 @@ def self_test():
         print(f"FAIL: suppression changed unrelated findings — {sorted(after)}")
     else:
         print("pass: suppression removes exactly the rules it names")
+
+    # A stamp that is present but wrong is the failure mode that matters:
+    # absence is obvious, a stale number attributes the artifact to a version
+    # that did not make it. Otherwise-clean input, so the stamp is the only
+    # thing that can fire.
+    stale = GOOD.replace('content="9.9.9"', 'content="1.0.0"')
+    fired_stale = {f.rule for f in check(stale, "GOOD+stale",
+                                         version=TEST_VERSION)}
+    if fired_stale != {"version-stamp"}:
+        ok = False
+        print(f"FAIL: a mismatched version stamp should fire version-stamp "
+              f"and nothing else — got {sorted(fired_stale)}")
+    else:
+        print("pass: a mismatched version stamp is caught")
+
+    # With no manifest to compare against — a standalone bundle — the stamp is
+    # still required, but a value that cannot be verified must not be failed.
+    unknown_ver = {f.rule for f in check(stale, "GOOD+stale", version=None)}
+    if unknown_ver:
+        ok = False
+        print(f"FAIL: with no known version, an unverifiable stamp should pass "
+              f"— got {sorted(unknown_ver)}")
+    else:
+        print("pass: an unverifiable stamp passes when no manifest is found")
 
     print("\nSELF-TEST PASSED" if ok else "\nSELF-TEST FAILED")
     return 0 if ok else 1
@@ -370,12 +454,18 @@ def main(argv=None):
                    help="warnings fail too")
     p.add_argument("--self-test", action="store_true",
                    help="verify the checks still fire, then exit")
+    p.add_argument("--version-stamp", metavar="X.Y.Z",
+                   help="version artifacts must be stamped with. Defaults to "
+                        "the plugin manifest above this script; if there is "
+                        "none, the stamp is required but not matched")
     args = p.parse_args(argv)
 
     if args.self_test:
         return self_test()
     if not args.files:
         p.error("give at least one HTML file, or --self-test")
+
+    version = args.version_stamp or plugin_version()
 
     errors = warns = 0
     for path in args.files:
@@ -384,7 +474,7 @@ def main(argv=None):
         except OSError as exc:
             print(f"{path}: cannot read — {exc}")
             return 2
-        findings = check(text, path)
+        findings = check(text, path, version=version)
         e = sum(1 for f in findings if f.level == "error")
         w = len(findings) - e
         errors += e

@@ -47,6 +47,21 @@ Where two sources disagree, the higher one wins:
    It overrides every style skill, including the reference material they cite.
 3. **The skill files**, in the load order above.
 
+## Stamp the output
+
+Every generated artifact carries the version of the system that made it, in the
+head:
+
+```html
+<meta name="editorial-motion" content="1.6.0">
+```
+
+Take the number from the plugin manifest, `.claude-plugin/plugin.json`; if these
+skills were installed one at a time and there is no manifest, use the version
+they were published under. Without a stamp an output cannot be attributed to a
+version, and no change to these skills can be shown to have helped or hurt. The
+linter treats a missing, malformed or stale stamp as an error.
+
 ## Before delivering
 
 Lint the generated HTML with `../analog-surface/assets/check-artifact.py` and

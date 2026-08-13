@@ -1,7 +1,7 @@
 name: ci
 
 # Every check here already existed and was run by hand. This makes them a gate.
-# All four are stdlib-only Python, so there is nothing to install.
+# All of them are stdlib-only Python, so there is nothing to install.
 
 on:
   push:
@@ -21,6 +21,31 @@ jobs:
 
       - name: Build validates — every cited path resolves inside its own skill
         run: python3 build-skills.py --check
+
+      # The manifest version is what artifacts get stamped with and what eval
+      # results are attributed to. A release the changelog says nothing about
+      # is a release nobody can reason about six months later.
+      - name: Manifest version matches the newest changelog entry
+        run: |
+          python3 - <<'PY'
+          import json, re, sys
+          from pathlib import Path
+
+          plugin = Path("plugins/editorial-motion")
+          version = json.loads(
+              (plugin / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+          )["version"]
+          headings = re.findall(
+              r"^## +(\d+\.\d+\.\d+)\b",
+              (plugin / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+
+          if not headings:
+              sys.exit("::error::CHANGELOG.md has no '## X.Y.Z' heading")
+          if headings[0] != version:
+              sys.exit(f"::error::plugin.json is {version} but the newest "
+                       f"CHANGELOG entry is {headings[0]}")
+          print(f"version {version} agrees with the changelog")
+          PY
 
       - name: Linter self-test — every check still fires
         run: |
