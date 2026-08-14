@@ -1,8 +1,8 @@
 name: ci
 
 # Every check here already existed and was run by hand. This makes them a gate.
-# The Python checks are stdlib-only. The hosted runner's Chrome and ffmpeg are
-# used for the end-to-end render regression.
+# The Python checks are stdlib-only. The hosted runner's Chrome and an explicit
+# ffmpeg package are used for the end-to-end render regression.
 
 on:
   push:
@@ -28,6 +28,11 @@ jobs:
 
       - name: Foundation production path smoke test
         run: python3 scripts/test_foundation.py
+
+      - name: Install ffmpeg for the render regression
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg
 
       - name: Deterministic Chrome and ffmpeg render regression
         run: python3 scripts/test_render_determinism.py
