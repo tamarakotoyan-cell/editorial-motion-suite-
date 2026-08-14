@@ -126,7 +126,11 @@ def main() -> int:
 
         renderer = project / "tools" / "render.py"
         source = project / "src" / "index.html"
-        outputs = [temporary_root / "first.mp4", temporary_root / "second.mp4"]
+        outputs = [
+            temporary_root / "warmup.mp4",
+            temporary_root / "first.mp4",
+            temporary_root / "second.mp4",
+        ]
         for output in outputs:
             run(
                 sys.executable,
@@ -145,7 +149,8 @@ def main() -> int:
                 "--no-audio",
             )
 
-        frames = [frame_fingerprints(ffmpeg, path) for path in outputs]
+        comparands = outputs[1:]
+        frames = [frame_fingerprints(ffmpeg, path) for path in comparands]
         schedules = [
             [line.rsplit(",", 1)[0].rstrip() for line in render]
             for render in frames
@@ -159,7 +164,7 @@ def main() -> int:
         if frames[0] == frames[1]:
             average_psnr = minimum_psnr = 99.0
         else:
-            average_psnr, minimum_psnr = psnr(ffmpeg, *outputs)
+            average_psnr, minimum_psnr = psnr(ffmpeg, *comparands)
             if minimum_psnr < MIN_FRAME_PSNR:
                 raise SystemExit(
                     "rendered frames differ visibly: "
@@ -167,9 +172,9 @@ def main() -> int:
                     f"required {MIN_FRAME_PSNR:.2f}dB"
                 )
 
-        hashes = [sha256(path) for path in outputs]
+        hashes = [sha256(path) for path in comparands]
 
-        metadata = probe(ffprobe, outputs[0])
+        metadata = probe(ffprobe, comparands[0])
         video = next(
             (stream for stream in metadata.get("streams", []) if stream.get("codec_type") == "video"),
             None,

@@ -22,9 +22,9 @@ Foundation 0.1: one standalone production system for Codex and Claude.
   Claude packaging. Both hosts discover the same skill source.
 - A dependency-free HTML/CSS/JavaScript starter, format-aware render command and
   cross-host release validator.
-- An end-to-end CI regression that renders the starter twice through Chrome and
-  ffmpeg, verifies the encoded media and frame schedule, and rejects any decoded
-  frame pair below 45dB PSNR.
+- An end-to-end CI regression that warms the browser runtime, renders the starter
+  twice through Chrome and ffmpeg, verifies the encoded media and frame schedule,
+  and rejects any decoded frame pair below 45dB PSNR.
 
 **Changed**
 
