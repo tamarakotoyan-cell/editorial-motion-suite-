@@ -20,7 +20,7 @@
     ],
     "defaultPrompt": "Use Editorial Motion to plan and produce this motion brief through the appropriate production, design, render and QA stages."
   },
-  "repository": "https://github.com/tamarakotoyan-cell/emc-plugins",
+  "repository": "https://github.com/tamarakotoyan-cell/editorial-motion-suite-",
   "keywords": [
     "motion",
     "data-visualisation",

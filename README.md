@@ -7,7 +7,7 @@
 ## Install in Claude Code
 
 ```
-/plugin marketplace add tamarakotoyan-cell/emc-plugins
+/plugin marketplace add tamarakotoyan-cell/editorial-motion-suite-
 /plugin install editorial-motion@emc-plugins
 ```
 
