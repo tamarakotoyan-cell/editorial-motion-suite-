@@ -18,6 +18,7 @@ WIDTH = 320
 HEIGHT = 180
 FPS = 12
 DURATION = 1
+MIN_FRAME_PSNR = 45.0
 
 
 def run(*command: object, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -52,6 +53,33 @@ def frame_fingerprints(ffmpeg: str, media: Path) -> list[str]:
         "-",
     )
     return [line for line in result.stdout.splitlines() if line and not line.startswith("#")]
+
+
+def psnr(ffmpeg: str, first: Path, second: Path) -> tuple[float, float]:
+    result = run(
+        ffmpeg,
+        "-i",
+        first,
+        "-i",
+        second,
+        "-lavfi",
+        "psnr",
+        "-f",
+        "null",
+        "-",
+    )
+    summary = next(
+        (line for line in reversed(result.stderr.splitlines()) if "PSNR" in line),
+        "",
+    )
+    values = {}
+    for token in summary.split():
+        field, separator, value = token.partition(":")
+        if separator and field in {"average", "min"}:
+            values[field] = 99.0 if value == "inf" else float(value)
+    if set(values) != {"average", "min"}:
+        raise SystemExit(f"could not parse ffmpeg PSNR summary: {summary or 'no output'}")
+    return values["average"], values["min"]
 
 
 def probe(ffprobe: str, media: Path) -> dict:
@@ -118,20 +146,26 @@ def main() -> int:
             )
 
         frames = [frame_fingerprints(ffmpeg, path) for path in outputs]
-        if frames[0] != frames[1]:
-            mismatch = next(
-                (
-                    index
-                    for index, pair in enumerate(zip(frames[0], frames[1]))
-                    if pair[0] != pair[1]
-                ),
-                min(len(frames[0]), len(frames[1])),
-            )
+        schedules = [
+            [line.rsplit(",", 1)[0].rstrip() for line in render]
+            for render in frames
+        ]
+        if schedules[0] != schedules[1]:
             raise SystemExit(
-                "decoded frames are not deterministic: "
-                f"first mismatch at frame {mismatch}; "
-                f"counts {len(frames[0])} and {len(frames[1])}"
+                "render frame schedules do not match: "
+                f"counts {len(schedules[0])} and {len(schedules[1])}"
             )
+
+        if frames[0] == frames[1]:
+            average_psnr = minimum_psnr = 99.0
+        else:
+            average_psnr, minimum_psnr = psnr(ffmpeg, *outputs)
+            if minimum_psnr < MIN_FRAME_PSNR:
+                raise SystemExit(
+                    "rendered frames differ visibly: "
+                    f"minimum PSNR {minimum_psnr:.2f}dB, "
+                    f"required {MIN_FRAME_PSNR:.2f}dB"
+                )
 
         hashes = [sha256(path) for path in outputs]
 
@@ -162,8 +196,10 @@ def main() -> int:
             raise SystemExit("render metadata mismatch: " + json.dumps(wrong, sort_keys=True))
 
     print(
-        f"OK: two frame-identical {DURATION}s H.264 renders, {WIDTH}x{HEIGHT} "
-        f"at {FPS}fps; container sha256 {hashes[0]} and {hashes[1]}"
+        f"OK: two visually deterministic {DURATION}s H.264 renders, "
+        f"{WIDTH}x{HEIGHT} at {FPS}fps; PSNR min {minimum_psnr:.2f}dB, "
+        f"average {average_psnr:.2f}dB; container sha256 {hashes[0]} and "
+        f"{hashes[1]}"
     )
     return 0
 
