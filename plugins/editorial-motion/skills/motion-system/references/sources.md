@@ -665,3 +665,112 @@ pretending to be; one global setting is the common mistake.
 | Native graphics | tinted ground, no pure white | roughen edges 2–3 | posterize 12 | 0.8 |
 | Screen / UI | scanlines + vignette | — | 24 Hz flicker + posterize 12 | 1.2 |
 | Archival footage | shared homogenisation | — | posterize 12 + grain 1.4 | 2.0 |
+
+---
+
+## 16. Nuclear Motion — "How to Design Infographics in the Vox Style"
+
+`youtube.com/watch?v=1Lru07jxWkQ`, 7:05, published 16 Sep 2025.
+Downloaded at 1080p60, contact-sheeted at 1 frame / 4s, transcript pulled,
+palette and bar geometry measured in pixels, step cadence measured by frame
+differencing. Analysed 14 Aug 2026.
+
+An After Effects screen recording — roughly 85% software UI. The design content
+is a three-frame showcase reel at 0:00–0:16 and the finished build looping at
+6:44–7:05. Same genre as the §12/§14 local set and by a fifth author, so it
+counts as **independent corroboration** of the picture findings rather than new
+territory.
+
+### Corroborated, by measurement rather than by caption
+
+- **Posterize Time 12fps over the whole composition**, applied as one adjustment
+  layer carrying the grain as well. Frame differencing on the final loop shows
+  content updating every **4–6 frames of a 60fps capture** — ~12 discrete
+  updates/sec. This is the first *measured* confirmation of the 12fps figure;
+  §12 and §14 had it from captions and panel readings only.
+  → Drives: *The stepped finish*, and the `--step-*` tokens in `motion.css`.
+- **Roughen Edges on grid rules** (§15) — and here also on the **data marks
+  themselves**, which §15 does not cover.
+- **Noise for film grain**, same adjustment layer.
+- Fractal Noise → Color Key (kill white) → CC Ball Action → Fill: a dot/halftone
+  overlay tinted to the ground.
+
+### New — the broken grid
+
+The grid is a solid grid eroded by Roughen Edges, so the rules fragment
+irregularly rather than repeating a dash. Visually it is the single strongest
+surface move in the piece.
+→ Drives: *Broken grid* in `analog-surface`, and the amendment to the gridline
+ban in `editorial-explainer` — the ban is on the dash *convention*, not on a
+line the surface has eaten.
+
+### New — loop structure, measured
+
+Loop restarts at t=413.83s and t=419.87s → **6.04s**, sitting on `--loop-tile`.
+Animation resolves in **~2.1s**; the remaining **~3.9s is a static hold**.
+Roughly **1:2 motion-to-hold**.
+→ Drives: *Reveal short, hold long*.
+
+### ⛔ Negative finding — the reference's charts do not encode their data
+
+The most important thing in this source, and the reason it must not be treated
+as a craft model for charts.
+
+Showcase frame at 0:03, bar lengths measured against stated values:
+
+| Label | Value | Bar | px per % |
+|---|---|---|---|
+| Unemployment | 43% | 762px | 17.7 |
+| Banks that failed | 85% | **283px** | 3.3 |
+| Growth of government spending | 72% | 864px | 12.0 |
+
+The **85% bar is the shortest on the chart**, at a third the length of the 43%
+bar — and the frame carries a `0%…100%` axis with gridlines asserting a scale
+the marks ignore. The finished build at 7:03 is better but still not linear:
+520px/62%, 598px/65%, 464px/42% — 8.4, 9.2 and 11.0 px per percent.
+
+The bars were drawn by eye and the numbers typed on afterwards. Neither chart is
+wrong in a way a reader could catch.
+→ Drives: *The mark must equal the number*, and check 4 in *Before shipping*.
+
+### Negative finding — colour
+
+| Role | Hex | L\* | vs card |
+|---|---|---|---|
+| Ground (peach) | `#F5DECC` | 89.9 | — |
+| Card (paper) | `#F5E5D5` | 91.8 | — |
+| Bar (blue) | `#91B9D6` | 73.3 | **ΔL 18.5**, 1.69:1 |
+| Deck / source | `#9C9286` | 61.1 | ΔL 30.7, **2.48:1** |
+| Highlight | `#F2F649` | 94.0 | — |
+| Ink | `#000000` | 0.0 | 17.05:1 |
+
+Two distinct failures, and the pack caught only one of them:
+
+- The **bars fail the existing ΔL ≥25 rule** (18.5). The rule works; the chart
+  evaporates at the 200px test exactly as predicted.
+- The **source line passes ΔL comfortably (30.7) and is still unreadable at
+  2.48:1.** ΔL measures separability, not legibility, and nothing in the pack
+  was asking the second question.
+  → Drives: the contrast-ratio floor table in *Neutrals must be separable*.
+
+### Negative finding — sequencing
+
+At 6:54 and 7:00 the headline is still typewriting while the bars are already
+growing. Two entrances competing for the same two seconds in a frame that
+carries one thought.
+→ Drives: the new *What breaks it* entry.
+
+### Trade dress — no change needed
+
+Sampled `#F2F649` lemon highlighter behind an italicised word, with blue bars
+and a high-contrast display serif. Exactly the combination `editorial-explainer`
+already lists as *"recognisably Vox, do not reproduce"*. The existing ban is
+correctly calibrated.
+
+### What this source is worth
+
+Take the surface and timing findings; they are measured and they corroborate
+four other authors. **Do not take its charts.** The set as a whole is
+practitioners demonstrating a *look*, and this entry is the clearest evidence
+that look-fidelity and data integrity come apart — the piece is convincingly
+Vox-like and its central graphic is false.

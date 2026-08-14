@@ -9,6 +9,63 @@ Newest first. Dates are the release date, ISO.
 
 ---
 
+## 1.9.0 — 2026-08-14
+
+Reference analysis of a fifth Vox-style author (`sources.md` §16 — Nuclear
+Motion, "How to Design Infographics in the Vox Style", measured rather than
+read off captions). It corroborated the surface and timing findings and exposed
+one hole the pack had never closed: **nothing required a chart's marks to match
+its numbers.**
+
+**Added**
+
+- **`editorial-explainer` → "The mark must equal the number".** Length ÷ value
+  constant across the series; geometry computed from the datum. Two corollaries:
+  no axis without a scale, and a value label is not a substitute for a correct
+  mark. Backed by measurement — the reference ships a bar chart whose 85% bar is
+  the *shortest on the chart*, and a finished build running at 8.4, 9.2 and 11.0
+  px per percent. Both look plausible; neither is catchable by a reader.
+  New *Before shipping* check 4 makes it a gate.
+- **A contrast-ratio floor for text roles**, alongside the existing ΔL rule for
+  marks. The two measure different things: the same reference's source line
+  passes ΔL at 30.7 and is unreadable at 2.48:1. ΔL asks whether two things are
+  separable; it never asked whether text could be read.
+- **Horizontal bars** in the *Charts must move* table, plus the texture-stretch
+  trap — `scaleX` on a bar carrying grain or halftone starts the texture
+  compressed and relaxes it over the entrance. Reveal with `clip-path` instead.
+  The reference does this wrong in the way that is easiest to copy.
+- **`analog-surface` → "Broken grid".** A grid masked with the paper's own grain
+  tile, so rules fragment where the fibre didn't take ink. The strongest surface
+  move in the new reference.
+- **`--step-*` tokens in `motion.css`** — the 12fps clock as six named tokens
+  instead of per-animation arithmetic. `steps(n)` at duration × 12 is the sum
+  everyone gets wrong once, and a mismatched count reads as a bug.
+- ***Reveal short, hold long*** in `motion-system`. Measured: a three-bar chart
+  resolves in ~2.1s then holds ~3.9s inside a 6.04s loop — 1:2 motion-to-hold,
+  landing on `--loop-tile`. A loop animating more than half its length never
+  gives the reader the still frame the piece is judged on.
+
+**Changed**
+
+- **The dashed-gridline ban now names its exception.** The ban is on the dash
+  *convention* — `stroke-dasharray` is a chart signal that means something. A
+  solid hairline eroded by the surface treatment is not a dashed line and is
+  encouraged. Previously the rule read literally enough to forbid the best thing
+  in the reference material.
+- **Stepped time is a property of the piece, not of one element.** The recipe
+  applies it over the whole composition; stepping ambient drift while entrances
+  stay interpolated runs two clocks at once and reads as bolted on.
+- `sources.md` §16 records the new reference, including its failures. The set is
+  practitioners demonstrating a *look* — this entry is the clearest evidence
+  that look-fidelity and data integrity come apart, and future readers should
+  not treat the set as trustworthy on charts.
+
+**Not changed**
+
+- The Vox trade-dress ban. Sampled `#F2F649` lemon highlighter, blue bars,
+  high-contrast display serif — exactly what the ban already names. Correctly
+  calibrated, left alone.
+
 ## 1.8.0 — 2026-08-13
 
 `render.py` rebuilt on the DevTools protocol. Framed as reliability rather than

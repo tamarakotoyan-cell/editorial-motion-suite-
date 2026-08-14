@@ -60,6 +60,29 @@ noticeable as texture, it is too strong.
 **Vignette in CSS, not in the texture.** A centred falloff cannot tile, and in
 CSS it adapts to the element rather than to the tile.
 
+**Broken grid.** The strongest single surface move in the Vox-style reference
+set (`../motion-system/references/sources.md` §16), and cheap: a background grid
+that *erodes* rather than tiles cleanly. Draw the grid at one shade off the
+ground, then mask it with the same grain tile the paper uses. The line survives
+where the fibre took ink and drops out where it didn't, so it fragments
+irregularly — never on a repeating interval.
+
+```css
+.grid {
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: var(--grid-step) var(--grid-step);
+  -webkit-mask-image: var(--grain-src);  mask-image: var(--grain-src);
+  -webkit-mask-size: 420px;              mask-size: 420px;   /* same tile, same size as the paper */
+  opacity: .5;
+}
+```
+
+⚠️ **This is not a licence for `stroke-dasharray`.** An eroded solid line and a
+dashed line look adjacent and mean opposite things — a dash pattern is a chart
+convention (projected, excluded, below threshold). Same tile and same size as
+the surface, or the grid reads as a separate object floating over the paper.
+
 **Textures are generated, not sourced.** `assets/make-paper.py` and
 `assets/make-grain.py` produce seamless tiles with no licensing question and no
 network dependency. Where procedural genuinely loses is a hero sheet at full

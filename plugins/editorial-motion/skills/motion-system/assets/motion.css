@@ -43,6 +43,20 @@
   --loop-line:  3s;   /* a single line */
   --loop-tile:  6s;   /* a stacked tile */
   --loop-max:   8s;   /* ceiling for any loop */
+
+  /* ---- The stepped register: one 12fps clock for the whole composition. ----
+     Posterized time is what stops smooth interpolation reading as
+     computer-generated. It is a property of the piece, not of one element:
+     pick it once, then run every move on these instead of the curves above.
+     Step counts are duration x 12 — precomputed because deriving them per
+     animation is the step everyone gets wrong. Measured on the reference at
+     ~12 discrete updates/sec; see SKILL.md -> The stepped finish. */
+  --step-snap:      steps(3,  end);   /* 0.25s */
+  --step-beat:      steps(6,  end);   /* 0.5s  */
+  --step-settle:    steps(14, end);   /* 1.2s  — 14.4 rounded down */
+  --step-drift:     steps(120, end);  /* 10s   */
+  --step-loop-line: steps(36, end);   /* 3s    */
+  --step-loop-tile: steps(72, end);   /* 6s    */
 }
 
 /* ---------- entrances ---------- */

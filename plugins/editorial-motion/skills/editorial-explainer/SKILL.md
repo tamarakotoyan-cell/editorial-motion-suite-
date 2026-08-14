@@ -191,6 +191,26 @@ Rules:
   are carried by colour alone.
 - Check in greyscale, and at 200px.
 
+**ΔL separates marks; it does not make text readable.** The two measures answer
+different questions and a palette can pass one while failing the other. Run both:
+
+| | Measure | Floor |
+|---|---|---|
+| Mark vs mark, mark vs field | **ΔL** | ≥25 |
+| Deck, source line, axis labels, captions vs their field | **contrast ratio** | ≥4.5:1 |
+| Any text below ~14px or set in a light weight | **contrast ratio** | ≥4.5:1, and reconsider the size |
+
+Measured on the reference set (`../motion-system/references/sources.md` §16):
+a Vox-style build whose source line is a warm grey on cream sits at **ΔL 30.7 —
+comfortably past the mark floor — and 2.48:1, which is unreadable.** ΔL rewards
+it for being separable from the paper; nobody was asking whether it was
+*separable*, they were asking whether it could be read. Vintage and muted
+palettes fail here routinely and the failure is invisible on a large bright
+display, which is where it gets signed off.
+
+(The same build's bars sit at ΔL 18.5 against their card — a straight failure of
+the ≥25 rule above, and the reason the chart evaporates at 200px.)
+
 Semantic colour (good / warning / critical) is separate from the accent and does
 not count against it.
 
@@ -323,6 +343,35 @@ it is a stat tile, not a chart.
 **Count rather than measure.** Under roughly 200, draw one mark per unit. A
 cluster of 120 dots reads as *a hundred and twenty things*; a bar of height 120
 reads as an abstraction.
+
+### ⛔ The mark must equal the number
+
+Every mark in one chart shares a single scale: **length ÷ value is constant
+across the series.** Compute the geometry from the datum — never draw marks that
+look about right and type the numbers on afterwards.
+
+```html
+<!-- the datum is the only source of length -->
+<div class="bar" style="--v: 62"></div>
+<style>.bar { width: calc(var(--v) * 1% * var(--plot-scale)); }</style>
+```
+
+This is not a pedantic check. It is the failure mode of the reference material
+itself: a measured Vox-style tutorial
+(`../motion-system/references/sources.md` §16) ships a bar chart in which the
+**85% bar is the shortest on the chart**, a third the length of the 43% bar, and
+a finished build whose three bars run at 8.4, 9.2 and 11.0 px per percent. Both
+look plausible at a glance. Both are wrong, and neither is wrong in a way a
+reader can catch.
+
+**Corollary: no axis without a scale.** Drawing a `0…100%` axis under marks that
+do not obey it is worse than drawing no axis, because the axis is a promise
+about how to read the marks. Either the ticks derive from the same scale as the
+geometry, or there are no ticks.
+
+**Corollary: a value label is not a substitute for a correct mark.** If the
+number has to be read to know the magnitude, the chart is doing nothing that a
+sentence would not do better.
 
 ### Marks persist — the central technique
 
@@ -649,7 +698,8 @@ beat — within the one-accent-one-ambient ceiling:
 
 | | Accent move (once, on entry) | Ambient move (looping, subtle) |
 |---|---|---|
-| **Bars** | Grow from the baseline, staggered ~58ms, then value chips lift in above each bar, then the annotation draws on | A soft blurred glow behind the accent bar breathing 0→32% over 2.4s |
+| **Bars, vertical** | Grow from the baseline, staggered ~58ms, then value chips lift in above each bar, then the annotation draws on | A soft blurred glow behind the accent bar breathing 0→32% over 2.4s |
+| **Bars, horizontal** | Grow from the left edge, staggered ~58ms, labels already in place above each bar, values arriving after the bar lands | As above |
 | **Units** | Dots cascade in reading order ~9ms apart while the total counts up beside them | One ring expanding and fading out of the highlighted unit every ~2.6s |
 
 Rules that keep this honest:
@@ -657,7 +707,24 @@ Rules that keep this honest:
 - **Ambient motion never touches the data.** Pulse a glow, a ring or an outline —
   never the bar's height, the dot's size or anything encoding a value. A mark
   that changes size is a mark that is lying.
-- `transform-origin: bottom` on bars, or they grow from the middle.
+- `transform-origin: bottom` on vertical bars, `left` on horizontal ones, or
+  they grow from the middle.
+- ⚠️ **A textured bar must be revealed, not scaled.** `scaleX`/`scaleY`
+  stretches everything inside the mark, so a grain, halftone or roughened fill
+  starts compressed and relaxes over the entrance — the bar reads as rubber, and
+  its texture stops matching the surface it sits on. The measured reference does
+  exactly this (`../motion-system/references/sources.md` §16: anchor point to
+  the left edge, Scale X 0→100%, over bars carrying Roughen Edges and a dot
+  fill). Reveal instead, so the texture holds its true density:
+
+  ```css
+  /* horizontal bar; the fill never moves, the window opens over it */
+  .bar { clip-path: inset(0 100% 0 0); animation: draw var(--beat) var(--ease-out) both; }
+  @keyframes draw { to { clip-path: inset(0 0 0 0); } }
+  ```
+
+  Animating `width` works too and is cheaper to reason about; it just costs
+  layout. Reserve `scaleX` for flat fills.
 - Let the sequence **replay when the chart re-enters the viewport**. A one-shot
   entrance is dead the second time someone scrolls past.
 - Value chips arrive *after* their bar lands (delay ≈ stagger + ~620ms), not
@@ -669,9 +736,18 @@ carve-out, if you want one, is narrow: the glyph must *be* the counted unit
 (ISOTYPE), not an icon decorating a mark it has no relationship to. Default to
 the ban.
 
-**Gridlines.** ⚠️ Solid hairlines only — dashed is banned — one shade off the
-ground, or none at all. Draw them *through* the marks so grid and data share one
-plane. Separate adjacent fills with a 2px ground-coloured gap, never a border.
+**Gridlines.** ⚠️ Solid hairlines only — **a dash *pattern* is banned** — one
+shade off the ground, or none at all. Draw them *through* the marks so grid and
+data share one plane. Separate adjacent fills with a 2px ground-coloured gap,
+never a border.
+
+The ban is on the *convention*: `stroke-dasharray` is a chart signal that means
+something (projected, excluded, below threshold), and spending it on decoration
+throws the signal away. **A solid hairline eroded by the surface is not a dashed
+line, and is encouraged** — it is the same ink failing on the same paper as
+everything else in the frame. Erode it with the composition's own grain mask,
+never with a dash array. The recipe is *Broken grid* in the **analog-surface**
+skill.
 
 **Label selectively.** The endpoint, the extreme, the one series that matters.
 Label directly on the mark; no legends. On a time axis, label only the two
@@ -827,6 +903,12 @@ dimmed photograph. Count it up on entrance — and only ever the hero figure.
 - **Scenes that destroy their marks and redraw new ones.** Marks persist — and
   so should everything else the two states have in common.
 - A number typed on before the quantity that proves it has been drawn.
+- **Marks that don't encode their values** — a bar whose length was chosen by
+  eye, a series with no constant px-per-unit, an axis the geometry ignores.
+- **A headline still typing itself while the chart underneath is already
+  growing.** The frame carries one thought; give it one entrance at a time.
+  Headline lands → beat → data draws → values arrive.
+- Body text that passes ΔL but fails 4.5:1.
 - Caption pills, platform end-cards, watermarks or any of the tutorial chrome
   the references arrive wrapped in.
 - Entrance animation standing in for motion graphics — the data must *move*,
@@ -841,6 +923,11 @@ dimmed photograph. Count it up on entrance — and only ever the hero figure.
 1. At **200px wide**, is the finding still legible?
 2. As a **still screenshot**, does it still work?
 3. Could someone **state the finding out loud** after two seconds?
+4. **Divide each mark's length by its value. Is it the same number every time?**
+   If the marks were computed from the data this is free; if it isn't the same
+   number, the chart is decoration with numbers on it.
+5. **Contrast ratio on every text role ≥4.5:1**, checked against the field it
+   actually sits on — not against the page ground it sits near.
 4. Could someone **name the publication it was copied from**? If yes, pull back.
 
 Any "no" on 1–3, or "yes" on 4, is a fix rather than a ship.

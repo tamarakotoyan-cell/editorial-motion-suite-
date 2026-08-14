@@ -108,20 +108,38 @@ structural; without it a stamped sequence reads as a flicker.
 
 ### The stepped finish
 
-The measured recipe (`references/sources.md` §12, §14) posterizes time to
+The measured recipe (`references/sources.md` §12, §14, §16) posterizes time to
 **12fps across the whole composition**, not only on hand-drawn elements, and
 lays a subtle chromatic fringe over everything. Stepping is what stops smooth
-interpolation reading as computer-generated.
+interpolation reading as computer-generated. Independently confirmed by frame
+differencing in §16: content updates every 4–6 frames of a 60fps capture.
 
-The web equivalent is `steps()` on the ambient moves, at 12 steps per second of
-duration:
+The web equivalent is `steps()` at 12 steps per second of duration. **Use the
+`--step-*` tokens in `assets/motion.css`** rather than computing counts by hand
+— duration × 12 is the arithmetic everyone gets wrong once, and a step count
+that doesn't match its duration produces a stutter that reads as a bug:
 
 ```css
-.stepped { animation: drift 8s steps(96, end) infinite alternate; }  /* 8s × 12 */
+.stepped { animation: drift var(--drift) var(--step-drift) infinite alternate; }
 ```
+
+**Stepping is a property of the piece, not of one element.** The measured recipe
+applies it as a single adjustment layer over the whole composition — entrances,
+ambient moves and grain on one clock. Stepping the ambient drift while the
+entrances stay smoothly interpolated is the tell that it was bolted on: two
+clocks running at once, and the eye picks up the mismatch immediately. Pick the
+register per artifact, the same way you pick one entrance type, then run
+everything on it.
 
 Reserve it for a piece that is deliberately hand-made in register. Stepping a
 UI-scale transition just makes it look dropped-frame.
+
+**Reveal short, hold long.** Measured in §16: a three-bar chart resolves in
+**~2.1s**, then holds still for **~3.9s** inside a 6.04s loop — roughly **1:2
+motion-to-hold**, sitting exactly on `--loop-tile`. A loop animating more than
+half its length never gives the reader the still frame the piece is actually
+judged on (*Before shipping* → "as a still screenshot, does it still work?").
+The hold is not dead time after the animation; it is what the animation was for.
 
 ## Rhythm — pace to the copy, not a clock
 
