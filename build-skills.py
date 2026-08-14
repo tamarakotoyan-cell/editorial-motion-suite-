@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build standalone, self-contained skill folders from the editorial-motion plugin.
 
-The plugin works as a bundle: a router plus nine skills that cite each other by
+The plugin works as a bundle: a router plus thirteen skills that cite each other by
 relative path (`../motion-system/references/sources.md`). Those paths resolve inside the
 plugin and dangle anywhere else. Any surface that takes skills one at a time —
 Claude Design among them — needs each skill to carry everything it cites.
@@ -28,7 +28,9 @@ DIST = ROOT.parent / "editorial-motion-dist"
 SKILLS = ["editorial-motion", "layout-composition", "motion-system",
           "design-motion-sound",
           "analog-surface", "editorial-explainer", "imagery-motion",
-          "type-treatment", "premium-product-motion", "format-adaptation"]
+          "type-treatment", "premium-product-motion", "format-adaptation",
+          "motion-project-scaffold", "storyboard-and-beat-sheet",
+          "programmatic-motion-renderer", "render-and-delivery-qa"]
 
 # Cross-skill citations → the file to vendor in, keyed by the literal path text.
 VENDOR = {
@@ -56,6 +58,16 @@ VENDOR_DEPS = {
     "references/house-rules.md":
         [(SRC / "motion-system" / "assets" / "motion.css", "assets/motion.css")],
 }
+
+# The scaffold uses sibling skills when installed as a plugin. Its standalone
+# zip has no siblings, so the build carries the same runtime under the skill's
+# assets/runtime directory. The generated project stays identical either way.
+SCAFFOLD_RUNTIME = [
+    (SRC / "motion-system" / "assets" / "render.py", "assets/runtime/render.py"),
+    (SRC / "motion-system" / "assets" / "motion.css", "assets/runtime/motion.css"),
+    (SRC / "motion-system" / "assets" / "sfx.js", "assets/runtime/sfx.js"),
+    (SRC / "design-motion-sound" / "scripts" / "mix_sfx.py", "assets/runtime/mix_sfx.py"),
+]
 
 VENDOR_NOTE = ("<!-- Vendored copy. Master: plugins/editorial-motion/skills/{origin}\n"
                "     Regenerate with build-skills.py; do not edit here. -->\n\n")
@@ -107,6 +119,14 @@ def build_skill(name, check=False):
     for old, new in PROSE.items():
         if old in text and not check:
             text = text.replace(old, new)
+
+    if name == "motion-project-scaffold":
+        for origin, local in SCAFFOLD_RUNTIME:
+            vendored.append(local)
+            if not check:
+                destination = out / local
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(origin, destination)
 
     if not check:
         skill_md.write_text(text, encoding="utf-8")

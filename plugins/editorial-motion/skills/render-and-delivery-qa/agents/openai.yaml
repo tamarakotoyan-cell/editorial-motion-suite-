@@ -1,0 +1,4 @@
+interface:
+  display_name: "Render and Delivery QA"
+  short_description: "Verify motion renders and delivery masters"
+  default_prompt: "Use $render-and-delivery-qa to inspect this render and produce a delivery report."

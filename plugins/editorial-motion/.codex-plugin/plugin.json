@@ -1,0 +1,33 @@
+{
+  "name": "editorial-motion",
+  "version": "1.10.0",
+  "description": "A standalone editorial motion production system for planning, designing, rendering and verifying animated visual work.",
+  "author": {
+    "name": "Essential Media"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Editorial Motion",
+    "shortDescription": "Plan, design, render and verify editorial motion",
+    "longDescription": "A dependency-free production system for editorial animation, data stories, social video and branded motion work.",
+    "developerName": "Essential Media",
+    "category": "Design",
+    "capabilities": [
+      "Motion planning",
+      "Editorial design",
+      "Deterministic HTML video rendering",
+      "Delivery QA"
+    ],
+    "defaultPrompt": "Use Editorial Motion to plan and produce this motion brief through the appropriate production, design, render and QA stages."
+  },
+  "repository": "https://github.com/tamarakotoyan-cell/emc-plugins",
+  "keywords": [
+    "motion",
+    "data-visualisation",
+    "editorial",
+    "animation",
+    "design",
+    "storyboard",
+    "video-production"
+  ]
+}

@@ -1,13 +1,38 @@
 # Changelog — editorial-motion
 
-Versions the plugin, not the repo. The newest heading here and the `version`
-field in `.claude-plugin/plugin.json` must agree; CI fails the build if they do
-not, and generated artifacts carry the same number in a
+Versions the plugin, not the repo. The newest heading here and the base `version`
+in both host manifests must agree; CI fails the build if they do not, and generated artifacts carry the same number in a
 `<meta name="editorial-motion">` stamp.
 
 Newest first. Dates are the release date, ISO.
 
 ---
+
+## 1.10.0 — 2026-08-14
+
+Foundation 0.1: one standalone production system for Codex and Claude.
+
+**Added**
+
+- Four production skills for project scaffolding, storyboard and beat planning,
+  deterministic implementation, and delivery QA.
+- A Codex plugin manifest and repo-local Codex marketplace beside the existing
+  Claude packaging. Both hosts discover the same skill source.
+- A dependency-free HTML/CSS/JavaScript starter, format-aware render command and
+  cross-host release validator.
+
+**Changed**
+
+- The router now covers the full production sequence from contract through QA.
+- Generated projects copy the existing deterministic Chrome/ffmpeg runtime and
+  require no package installation.
+- Version stamping and CI accept both host manifests while enforcing one shared
+  base version and portable skill frontmatter.
+
+**Removed**
+
+- The Remotion starter, React implementation guidance and Remotion-specific
+  project checker from the shipped workflow.
 
 ## 1.9.0 — 2026-08-14
 

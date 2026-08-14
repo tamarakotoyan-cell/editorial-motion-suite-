@@ -1,0 +1,20 @@
+{
+  "name": "emc-plugins",
+  "interface": {
+    "displayName": "Editorial Motion Plugins"
+  },
+  "plugins": [
+    {
+      "name": "editorial-motion",
+      "source": {
+        "source": "local",
+        "path": "./plugins/editorial-motion"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}
