@@ -48,6 +48,7 @@ a rule that fails a build beats a rule in a paragraph.
 - 3D or perspective
 - **Serif or display face on the hero figure**
 - Decorative background gradients that mean nothing
+- 🔒 **Mid-dot-separated footnotes or metadata chains**, such as `Source · Date · Sample`. Use line breaks, commas or plain labelled lines instead.
 - Icons or emoji used as data marks
 - 🔒 **`tabular-nums` on a large standalone number** — equal-width digits read loose
 

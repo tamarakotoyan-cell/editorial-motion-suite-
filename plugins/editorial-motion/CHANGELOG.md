@@ -14,6 +14,8 @@ Foundation 0.1: one standalone production system for Codex and Claude.
 
 **Added**
 
+- A house rule and linter check banning mid-dot-separated footnotes and metadata
+  chains such as `Source · Date · Sample`.
 - Four production skills for project scaffolding, storyboard and beat planning,
   deterministic implementation, and delivery QA.
 - A Codex plugin manifest and repo-local Codex marketplace beside the existing

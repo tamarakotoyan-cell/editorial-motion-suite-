@@ -151,6 +151,7 @@ class Ancestry(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.stack = []
         self.elements = []   # (tag, attrs dict, [(tag, classes)...], line)
+        self.text_nodes = []  # (visible text, line)
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -169,6 +170,11 @@ class Ancestry(HTMLParser):
                 del self.stack[i:]
                 return
 
+    def handle_data(self, data):
+        if data.strip() and not any(tag in {"script", "style"}
+                                    for tag, _ in self.stack):
+            self.text_nodes.append((data, self.getpos()[0]))
+
 
 IGNORE = re.compile(r"check-artifact-ignore\s*:\s*([^\n>]*)", re.I)
 RULE_TOKEN = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
@@ -177,7 +183,7 @@ ALL_RULES = {"no-pure-white", "no-pure-black", "homogenise-imagery",
              "fringe-on-glyphs", "reduced-motion", "roughen-hairlines",
              "house-easing", "texture-strength", "matte-alignment",
              "jump-cut", "version-stamp", "banned-title", "tabular-nums-hero",
-             "stagger-band", "source-line", "unparsed"}
+             "stagger-band", "source-line", "mid-dot-metadata", "unparsed"}
 
 
 def ignored_rules(text):
@@ -405,6 +411,16 @@ def check(text, name="<input>", version=None):
             "tell a survey finding from a product mockup. Under --strict it "
             "fails"))
 
+    # --- 15. Mid-dot-separated metadata ------------------------------------
+    for data, line in parser.text_nodes:
+        if data.count("·") >= 2:
+            snippet = " ".join(data.split())
+            findings.append(Finding(
+                "error", "mid-dot-metadata",
+                f'mid-dot-separated metadata "{snippet}"; use line breaks, '
+                "commas or plain labelled lines",
+                line))
+
     unknown = suppressed - ALL_RULES
     if unknown:
         findings.append(Finding(
@@ -440,6 +456,10 @@ GOOD = """<!doctype html>
 <h1 class="an-ink">Two in three renters skipped heating</h1>
 <p class="src">Essential Report, April 2026. Base: all participants (n=1,002).</p>"""
 
+MID_DOT_BAD = GOOD.replace(
+    "Essential Report, April 2026. Base: all participants (n=1,002).",
+    "Essential Report · April 2026 · Base: all participants (n=1,002).")
+
 BAD = """<!doctype html><style>
 :root{--tile:512px;--tex-strength:.35;--stagger:140ms}
 .card{background:#fff}
@@ -473,6 +493,15 @@ def self_test():
             print(f)
     else:
         print("pass: clean input produces no findings")
+
+    mid_dot_findings = check(MID_DOT_BAD, "MID_DOT_BAD", version=TEST_VERSION)
+    mid_dot_rules = {f.rule for f in mid_dot_findings}
+    if mid_dot_rules != {"mid-dot-metadata"}:
+        ok = False
+        print(f"FAIL: mid-dot input fired {sorted(mid_dot_rules)}; expected "
+              "['mid-dot-metadata']")
+    else:
+        print("pass: mid-dot metadata chain is rejected")
 
     fired = {f.rule for f in check(BAD, "BAD", version=TEST_VERSION)}
     missing = EXPECTED_BAD - fired
