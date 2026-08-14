@@ -1,6 +1,6 @@
 ---
 name: type-treatment
-description: How type is styled, textured, layered against imagery and animated in generated design — headlines over photos, titles on paper or concrete, kinetic text, hand-lettered captions, numbers that land. Use whenever text sits on top of a photograph, video frame, texture or colour field, whenever a headline needs to feel printed rather than pasted, and whenever text itself is the thing that animates. Covers the four layering registers (on / in / through / among), blend-mode texturing, grain masks and displacement, ink colour sampling, legibility plates, exclusion-blend emphasis, semantic face pairing, per-character reveals, two-stage arrival, fill sweeps, digit rolls and hand-drawn boil. Pair with motion-system for timing, imagery-motion for the picture, layout-composition for where it goes.
+description: How type is styled, textured, layered against imagery and animated in generated design — headlines over photos, titles on paper or concrete, kinetic text, hand-lettered captions, numbers that land. Use whenever text sits on top of a photograph, video frame, texture or colour field, whenever a headline needs to feel printed rather than pasted, and whenever text itself is the thing that animates. Covers the four layering registers (on / in / through / among), a print-process taxonomy (clean print, halftone, dry stamp, ink bleed, photocopy, misregistration, pattern fill and paper collage), blend-mode texturing, grain masks and displacement, ink colour sampling, legibility plates, exclusion-blend emphasis, semantic face pairing, per-character reveals, two-stage arrival, fill sweeps, digit rolls and hand-drawn boil. Pair with motion-system for timing, imagery-motion for the picture, layout-composition for where it goes.
 ---
 
 # Type treatment
@@ -18,6 +18,20 @@ Timing comes from **motion-system**. The picture itself comes from
 **imagery-motion**. Grid, placement and the type *scale* come from
 **layout-composition** — set those before styling a single letter. Colour and
 typeface come from the client's brand system, never from here.
+
+## Default and opt-in boundary
+
+**Regular typeface styling is the default.** Choose the face, size, weight,
+tracking, line height, colour and hierarchy first. Print-process and tactile
+classes are optional feature treatments layered onto that finished system; they
+never select or replace the typeface.
+
+Do not attach tactile or process classes to `body`, a root composition wrapper,
+a shared heading component or a global type selector. Add them explicitly to a
+selected display element when a physical or reproduction cue is editorially
+useful. If no deliberate material cue is needed, stop at regular type styling.
+Keep body copy, source lines, labels and most headings untreated so the feature
+has contrast and meaning when it appears.
 
 ## Precedence
 
@@ -50,6 +64,52 @@ build it there, don't rebuild it here.
 Mixing registers within one composition is fine and usually correct: a headline
 **in** the paper, a caption **on** a small plate. Mixing them on the *same
 string* is not.
+
+---
+
+## Pick a print process after the register
+
+The register answers **where the type sits**. The print process answers **how
+the mark was made**. Choose both only after the regular typography is resolved.
+Texture without a named process usually becomes generic grain or a stack of
+unrelated effects.
+
+| Process | Material cue | Use it for | Guardrail |
+|---|---|---|---|
+| **Clean print** | Even ink with the surface showing through | Default inside the optional process feature set | Standard typography remains the composition-wide default |
+| **Halftone** | A visible dot screen forming the strokes | One or two large, heavy words | Display type only; dots must survive at 200px wide |
+| **Dry stamp** | Incomplete pressure, edge loss and isolated voids | Evidence labels, verdicts, archival titles | Use a real or generated pressure mask; never uniform erosion |
+| **Ink bleed** | Ink wicks a short distance into porous stock | Large titles on absorbent paper | Roughly 100px and above; below that it reads as a shadow |
+| **Photocopy** | Toner dropout plus a slight directional drag | Documents, quotes and reproduced headlines | Display type only; retain a solid, readable core |
+| **Misregistered print** | Two spot-ink impressions fail to align | One short campaign word or accent | Keep offsets sub-stem and under `.025em`; never body copy or data marks |
+| **Pattern fill** | Lines or hatching sit inside the glyphs | One or two heavy words where the fill carries meaning | No fine photographic detail; preserve counters at thumbnail size |
+| **Paper collage** | Type belongs to a cut or torn paper object | Captions, labels and informal accent phrases | Treat it as a plate in front of the field, not as glyph texture |
+
+Use **one dominant process per string**. A shared plate grain may sit over the
+finished composition, but do not combine halftone, bleed, photocopy drag and
+misregistration on the same word. Keep body copy, source lines, chart labels and
+hero figures in clean print unless the material process itself is part of the
+finding.
+
+Use the matching primitives in `assets/type.css`. Read
+`references/print-processes.md` when implementing a textured process; it defines
+the markup contracts, variables, size limits and fallbacks for each class.
+
+### Make a selected process tactile
+
+Do not apply this subsection to the whole type system. On a selected display
+element, do not turn up digital noise when the type still feels flat. Tactility comes
+from material contact: the stock, the ink bite and the final fibre pass must be
+derived from the same surface tile. Use `.tt-tactile-surface` on the plate and
+wrap the process-bearing string in `.tt-tactile-ink`. This lets the paper fibres
+remove ink unevenly while the shared top pass continues across the ground and
+the mark. It is compatible with any one process because it sits outside that
+process's own mask.
+
+For the large, porous-stock treatment seen in tactile editorial references, add
+`.tt-tactile-ink--soft` to introduce a hair of zero-distance edge spread. Keep
+small type crisp. A rough background with a perfect vector edge is still a
+digital composite.
 
 ---
 
@@ -519,6 +579,13 @@ with at most one accent.
 - `assets/example.html` — a reference board showing all four registers, the
   boil, the fill sweep and the per-character reveal. A template: replace the
   four `{{IMG_*}}` placeholders with base64 data URIs.
+- `assets/processes.html` — a dependency-free board for the eight print
+  processes plus a tactile contact hero. Use it to compare full-size treatment
+  with the 200px-width check.
+- `assets/tactile-fibre.png` and `assets/tactile-fibre-matte.png` — a generated,
+  seamlessly tiling fibre overlay and its matched ink-contact luma matte.
+- `references/print-processes.md` — implementation contracts and minimal markup
+  for the process primitives. Read it when applying texture to type.
 
 **External:**
 
@@ -538,6 +605,9 @@ with at most one accent.
 ## What breaks it
 
 - Type faded into a texture with `opacity` instead of a blend mode.
+- Tactile or process classes applied globally, replacing the regular type system.
+- A texture with no named reproduction process.
+- Two or more print-process classes stacked on one string.
 - A clean vector edge sitting on a rough surface.
 - `#000` on a photograph, or `#FFF` on one.
 - Drop shadow, glow or a full-frame black scrim doing the work that placement,
@@ -558,10 +628,14 @@ with at most one accent.
 - Text that clears when it should have dimmed, resetting the reader's context.
 - `background-clip: text` with no fallback — the text is invisible where it fails.
 - Text split into spans with no `aria-label` on the parent.
+- `data-text` process copies with no matching `aria-label`, so assistive
+  technology announces the same word more than once.
 
 ## Before shipping
 
 - Which register is each text element in, and was that chosen?
+- Is regular type styling still the default, with tactile treatment explicitly opted in?
+- Which print process made each textured string, and is there only one?
 - Does it survive as a **still screenshot**? (Nothing else matters if not.)
 - Is it legible at **200px wide**, or has the grain turned it to mud?
 - Is the ink off pure black and off pure white, carrying the surface's hue?
