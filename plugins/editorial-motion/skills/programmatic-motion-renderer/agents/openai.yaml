@@ -1,0 +1,4 @@
+interface:
+  display_name: "Programmatic Motion Renderer"
+  short_description: "Implement deterministic HTML motion renders"
+  default_prompt: "Use $programmatic-motion-renderer to build this approved scene plan as a dependency-free HTML motion video."

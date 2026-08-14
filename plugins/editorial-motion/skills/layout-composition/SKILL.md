@@ -1,6 +1,6 @@
 ---
 name: layout-composition
-description: Layout, grid and proportion decisions for any generated design — before placing content, choosing sizes, or writing a type scale. Use whenever a composition needs structure: slides, tiles, posters, reports, dashboards, social graphics, infographics, carousels, landing pages, charts. Covers rule of thirds, modular grids, manuscript grids, root-rectangle proportions, proportional derivation, and the four type scales (Major Second 1.125, Major Third 1.25, Perfect Fourth 1.333, Golden Ratio 1.618). Apply proactively — the person asking usually has not specified a layout, and choosing one deliberately is the job.
+description: "Layout, grid and proportion decisions for any generated design — before placing content, choosing sizes, or writing a type scale. Use whenever a composition needs structure: slides, tiles, posters, reports, dashboards, social graphics, infographics, carousels, landing pages, charts. Covers rule of thirds, modular grids, manuscript grids, root-rectangle proportions, proportional derivation, and the four type scales (Major Second 1.125, Major Third 1.25, Perfect Fourth 1.333, Golden Ratio 1.618). Apply proactively — the person asking usually has not specified a layout, and choosing one deliberately is the job."
 ---
 
 # Layout and composition

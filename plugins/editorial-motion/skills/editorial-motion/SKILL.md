@@ -1,6 +1,6 @@
 ---
 name: editorial-motion
-description: Start here for any design, motion, sound-design or visual request — this skill decides which of the editorial-motion skills to load and in what order. Use whenever the work is a chart, graph, data visualisation, infographic, stat tile, slide, deck, poster, social graphic, carousel, report visual, landing page, hero section, product mockup, UI showcase, title sequence, animation, video cut, SFX plan, cue sheet, or any generated HTML artifact whose job is to be looked at. Also use when a piece needs transitional sound effects, a vertical, square or social version, or checking before it goes out. Dispatches and states precedence; teaches no design rules of its own.
+description: Start here for any editorial design, motion, sound-design or visual production request — this skill decides which editorial-motion skills to load and in what order. Use for motion briefs, production contracts, storyboards, beat sheets, programmatic video, delivery QA, charts, data visualisations, infographics, stat tiles, slides, decks, posters, social graphics, report visuals, landing pages, product mockups, UI showcases, title sequences, animations, video cuts, SFX plans, cue sheets, generated HTML artifacts, format adaptation or final checks. Dispatches and states precedence; teaches no design rules of its own.
 ---
 
 # editorial-motion — start here
@@ -12,33 +12,44 @@ first, load what it names, then work.
 ## Load order
 
 The order is not a preference. Each stage constrains the next, and a decision
-made out of order gets made twice.
+made out of order gets made twice. Skip production stages only when their
+approved outputs already exist.
 
-1. **layout-composition** — always, and first. Grid, focal point, proportion,
+1. **motion-project-scaffold** — first for a new motion job. Captures the
+   production contract, claims, assets, formats and review gates.
+2. **storyboard-and-beat-sheet** — before visual implementation when timing or
+   narrative is not already approved. Produces the renderer-neutral beat plan.
+3. **layout-composition** — always before visual implementation. Grid, focal point, proportion,
    type scale. Settled before anything is placed or styled.
-2. **motion-system** — whenever the piece moves, and most pieces should. Easing,
+4. **motion-system** — whenever the piece moves, and most pieces should. Easing,
    the two timing registers, stagger, exits, reduced motion.
-3. **design-motion-sound** — after choreography is settled, whenever the piece
+5. **design-motion-sound** — after choreography is settled, whenever the piece
    needs transitional or accent SFX. Whooshes and swishes, impacts and hits,
    risers and uplifters, interface cues and licensed comedy sounds.
-4. **analog-surface** — whenever there is a physical surface in it: paper,
+6. **analog-surface** — whenever there is a physical surface in it: paper,
    documents, maps, screenshots, archival or stock imagery, or a flat colour
    fill that would read better as a ground.
-5. **One look skill. Never both** — they are alternatives:
+7. **One look skill. Never both** — they are alternatives:
    - **editorial-explainer** when the job is to make a number or a finding
      land. Charts, data stories, report visuals, social data tiles.
    - **premium-product-motion** when the job is to make an object feel
      expensive. Product mockups, app UI showcases, feature reveals, titles.
-6. **Additive to either, when the content calls for it:**
+8. **Additive to either, when the content calls for it:**
    - **imagery-motion** — there is a photo, screenshot, video, cutout or scan.
      Owns the picture.
    - **type-treatment** — text sits on a picture, texture or colour field, or
      the text itself animates. Owns the words on it.
-7. **format-adaptation** — last, and only when the piece ships to more than one
-   aspect ratio. It re-composes per format; it is not a way to crop a master.
+9. **format-adaptation** — after the master is approved, when the piece ships to
+   more than one aspect ratio. It re-composes per format; it is not a way to crop a master.
+10. **programmatic-motion-renderer** — after the storyboard and visual system
+    are approved. Implements deterministic HTML, CSS and JavaScript frames.
+11. **render-and-delivery-qa** — after preview and again after final render.
+    Verifies the technical file, communication, accessibility and handoff.
 
-A bare request — "make me a chart about housing affordability" — resolves to
-layout-composition → motion-system → analog-surface → editorial-explainer.
+A bare design request — "make me a chart about housing affordability" — resolves
+to layout-composition → motion-system → analog-surface → editorial-explainer.
+A new video brief resolves to scaffold → storyboard → the design route →
+programmatic renderer → delivery QA.
 
 ## Precedence
 
@@ -56,10 +67,10 @@ Every generated artifact carries the version of the system that made it, in the
 head:
 
 ```html
-<meta name="editorial-motion" content="1.8.0">
+<meta name="editorial-motion" content="1.10.0">
 ```
 
-Take the number from the plugin manifest, `.claude-plugin/plugin.json`; if these
+Take the base number from either plugin manifest; if these
 skills were installed one at a time and there is no manifest, use the version
 they were published under. Without a stamp an output cannot be attributed to a
 version, and no change to these skills can be shown to have helped or hurt. The
@@ -81,5 +92,6 @@ banned title, `tabular-nums` on a hero figure, stagger outside the house band, a
 missing source and sample-size line. **Errors are not advisory.** A warning may
 be left in, but only with a reason.
 
-If the piece renders to video, render with the checker on — it refuses a
-silently frozen clip rather than writing a plausible-looking file.
+If the piece renders to video, use the programmatic renderer and finish with
+render-and-delivery-qa. The default frozen-frame check refuses a silently frozen
+clip rather than writing a plausible-looking file.

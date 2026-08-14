@@ -22,30 +22,11 @@ jobs:
       - name: Build validates — every cited path resolves inside its own skill
         run: python3 build-skills.py --check
 
-      # The manifest version is what artifacts get stamped with and what eval
-      # results are attributed to. A release the changelog says nothing about
-      # is a release nobody can reason about six months later.
-      - name: Manifest version matches the newest changelog entry
-        run: |
-          python3 - <<'PY'
-          import json, re, sys
-          from pathlib import Path
+      - name: Shared source is portable across Codex and Claude
+        run: python3 scripts/validate_cross_host.py
 
-          plugin = Path("plugins/editorial-motion")
-          version = json.loads(
-              (plugin / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
-          )["version"]
-          headings = re.findall(
-              r"^## +(\d+\.\d+\.\d+)\b",
-              (plugin / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
-
-          if not headings:
-              sys.exit("::error::CHANGELOG.md has no '## X.Y.Z' heading")
-          if headings[0] != version:
-              sys.exit(f"::error::plugin.json is {version} but the newest "
-                       f"CHANGELOG entry is {headings[0]}")
-          print(f"version {version} agrees with the changelog")
-          PY
+      - name: Foundation production path smoke test
+        run: python3 scripts/test_foundation.py
 
       # motion.css owns the house curve set. check-artifact.py keeps a second
       # copy because it has to lint artifacts with no plugin around it — the one

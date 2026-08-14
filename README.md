@@ -2,14 +2,26 @@
 
 | Plugin | What |
 |---|---|
-| `editorial-motion` | A router plus nine skills for animated, data-led design — layout, motion, transitional SFX, analog surface treatment, data-journalism structure, imagery, type, product motion and multi-format adaptation. Plus the tooling: texture generators, an artifact linter, SFX mixing and an HTML→MP4 renderer. |
+| `editorial-motion` | A router plus thirteen skills for planning, designing, rendering and verifying animated, data-led work. Includes a dependency-free HTML→MP4 production path. |
 
-## Install
+## Install in Claude Code
 
 ```
-/plugin marketplace add tamarakotoyan-cell/emc-plugins
+/plugin marketplace add tamarakotoyan-cell/editorial-motion-suite-
 /plugin install editorial-motion@emc-plugins
 ```
+
+## Install in Codex
+
+Clone this repository, then register its root as a local marketplace:
+
+```
+codex plugin marketplace add /path/to/emc-plugins
+codex plugin install editorial-motion@emc-plugins
+```
+
+Both hosts load the same `plugins/editorial-motion/skills/` source. Editorial
+Motion does not require Remotion or a Node package install.
 
 ## Maintain
 
@@ -33,10 +45,10 @@ generates standalone per-skill zips into `../editorial-motion-dist/`
    the half no script can grade. It drives the plugin **in the working tree**,
    so it tests what you just edited. It needs an authenticated `claude` CLI and
    costs tokens; CI only validates that the set is well-formed.
-2. Bump the version in `plugins/editorial-motion/.claude-plugin/plugin.json`
+2. Bump the base version in both plugin manifests
    **and add a matching entry at the top of
    `plugins/editorial-motion/CHANGELOG.md`.** CI fails the build if the two
    disagree, because that version is what every generated artifact gets stamped
    with.
-3. Commit and push. Installs update with
+3. Run `python3 scripts/validate_cross_host.py`, commit and push. Claude installs update with
    `/plugin update editorial-motion@emc-plugins`.

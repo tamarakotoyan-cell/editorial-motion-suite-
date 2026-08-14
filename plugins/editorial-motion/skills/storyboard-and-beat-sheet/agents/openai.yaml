@@ -1,0 +1,4 @@
+interface:
+  display_name: "Storyboard and Beat Sheet"
+  short_description: "Turn copy and evidence into timed scene plans"
+  default_prompt: "Use $storyboard-and-beat-sheet to turn this brief into a timed, reviewable beat sheet."

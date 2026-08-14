@@ -98,7 +98,7 @@ ATTRIBUTION = re.compile(r"\bn\s*=\s*[\d,]+|\bbase\s*:|\bsource\b|\bfieldwork\b"
 def plugin_version(start=None):
     """The version a stamp must match, read from the plugin manifest.
 
-    Walks up from this file looking for `.claude-plugin/plugin.json`. A
+    Walks up from this file looking for either host manifest. A
     standalone bundle has no manifest above it, in which case the stamp is
     still required but its value cannot be matched — which beats baking a
     constant in here that drifts the first time someone bumps plugin.json and
@@ -106,12 +106,15 @@ def plugin_version(start=None):
     """
     here = Path(start or __file__).resolve()
     for parent in here.parents:
-        manifest = parent / ".claude-plugin" / "plugin.json"
-        if manifest.is_file():
-            try:
-                return json.loads(manifest.read_text(encoding="utf-8")).get("version")
-            except (OSError, ValueError):
-                return None
+        for relative in (".claude-plugin/plugin.json", ".codex-plugin/plugin.json"):
+            manifest = parent / relative
+            if manifest.is_file():
+                try:
+                    version = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+                    # Codex development installs may add +codex.<cachebuster>.
+                    return version.split("+", 1)[0] if isinstance(version, str) else None
+                except (OSError, ValueError):
+                    return None
     return None
 
 

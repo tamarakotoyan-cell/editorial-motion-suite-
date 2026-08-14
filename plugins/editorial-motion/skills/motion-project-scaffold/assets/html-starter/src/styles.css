@@ -1,0 +1,122 @@
+:root {
+  --ground: #f2efe7;
+  --ink: #171714;
+  --muted: #625f58;
+  --accent: #e2491a;
+  --safe-inline: clamp(3rem, 8vw, 9rem);
+  --safe-block: clamp(3rem, 8vh, 8rem);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--ground);
+}
+
+body {
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+.stage {
+  container-type: size;
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  padding: var(--safe-block) var(--safe-inline);
+  place-items: end start;
+}
+
+.frame {
+  width: min(88cqw, 76rem);
+}
+
+.eyebrow,
+.source {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.8cqw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 12ch;
+  margin: 0.32em 0 0;
+  font-size: clamp(4rem, 10cqw, 11rem);
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+}
+
+h1 span { color: var(--accent); }
+
+.rule {
+  width: min(22rem, 38cqw);
+  height: clamp(0.4rem, 0.7cqw, 0.8rem);
+  margin: clamp(2rem, 4cqh, 4rem) 0 clamp(1.25rem, 2.5cqh, 2.5rem);
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+body[data-format="vertical"] {
+  --safe-inline: clamp(3.5rem, 9vw, 6rem);
+  --safe-block: clamp(5rem, 10vh, 12rem);
+}
+
+body[data-format="vertical"] .frame,
+body[data-format="portrait"] .frame {
+  width: 100%;
+}
+
+body[data-format="vertical"] h1,
+body[data-format="portrait"] h1 {
+  max-width: 9ch;
+  font-size: clamp(5rem, 15cqw, 10rem);
+}
+
+body[data-motion="full"] .eyebrow {
+  animation: em-enter 420ms var(--ease-out) both;
+}
+
+body[data-motion="full"] h1 {
+  animation: em-enter 540ms 90ms var(--ease-out) both;
+}
+
+body[data-motion="full"] .rule {
+  animation: em-rule 480ms 230ms var(--ease-out) both;
+}
+
+body[data-motion="full"] .source {
+  animation: em-enter 360ms 330ms var(--ease-out) both;
+}
+
+@keyframes em-enter {
+  from { opacity: 0; transform: translateY(1.1rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes em-rule {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+body[data-motion="reduced"] * {
+  animation: none !important;
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Motion Project Scaffold"
+  short_description: "Create dependency-free motion project foundations"
+  default_prompt: "Use $motion-project-scaffold to create a production-ready motion project from this brief."
