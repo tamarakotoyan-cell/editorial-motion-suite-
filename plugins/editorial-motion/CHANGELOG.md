@@ -38,6 +38,8 @@ Foundation 0.1: one standalone production system for Codex and Claude.
 
 - The shipped format-adaptation example now follows the mid-dot metadata rule it
   is used to demonstrate and passes the artifact linter.
+- Linux renders now complete the compositor pipeline with controlled BeginFrame
+  capture, preventing identical animation times from producing different frames.
 
 **Removed**
 

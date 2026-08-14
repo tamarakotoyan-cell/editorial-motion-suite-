@@ -9,8 +9,8 @@ approximation of it.
 How it works, and why this way
 ------------------------------
 One Chrome, driven over the DevTools protocol for the whole render. Each frame
-advances a virtual clock, pins every animation to that instant, and captures the
-surface.
+advances a virtual clock, pins every animation to that instant, completes the
+compositor pipeline with a controlled BeginFrame, and captures that frame.
 
 **The clock is driven two ways at once, and that is the whole design.** Neither
 mechanism is sufficient alone:
@@ -195,6 +195,22 @@ class Chrome:
                 "--no-first-run", "--no-default-browser-check",
                 "--force-color-profile=srgb", "--disable-lcd-text",
                 f"--user-data-dir={self.profile}", "about:blank"]
+        if sys.platform != "darwin":
+            # Chromium's own headless compositor tests use these switches
+            # with BeginFrame control. Without them, captureScreenshot can
+            # race the compositor immediately after an animation is pinned,
+            # producing different frames from identical clock values. Chrome
+            # does not support BeginFrame control on macOS, so that platform
+            # retains the portable captureScreenshot path below.
+            argv[1:1] = [
+                "--enable-begin-frame-control",
+                "--run-all-compositor-stages-before-draw",
+                "--disable-threaded-animation",
+                "--disable-threaded-scrolling",
+                "--disable-checker-imaging",
+                "--disable-image-animation-resync",
+                "--disable-new-content-rendering-timeout",
+            ]
         # Chrome is chatty on stderr about mach ports, page-load metrics and
         # allocators regardless of --log-level; none of it is actionable here
         # and all of it buries the render's own output.
@@ -211,6 +227,7 @@ class Chrome:
             "targetId": target["targetId"], "flatten": True})["sessionId"]
         self.call("Page.enable")
         self.call("Runtime.enable")
+        self._begin_frame_available = sys.platform != "darwin"
         self.call("Emulation.setDeviceMetricsOverride", {
             "width": width, "height": height,
             "deviceScaleFactor": 1, "mobile": False})
@@ -326,8 +343,22 @@ class Chrome:
         self.evaluate(PIN % repr(float(ms)))
 
     def screenshot(self, path):
-        data = self.call("Page.captureScreenshot",
-                         {"format": "png", "fromSurface": True})["data"]
+        data = None
+        if self._begin_frame_available:
+            try:
+                result = self.call("HeadlessExperimental.beginFrame", {
+                    "interval": 1000.0 / 60.0,
+                    "screenshot": {"format": "png"},
+                })
+                data = result.get("screenshotData")
+            except CDPError:
+                # BeginFrame control is unavailable in some Chrome builds,
+                # notably older macOS versions. Keep the renderer portable;
+                # Linux CI exercises the controlled path.
+                self._begin_frame_available = False
+        if not data:
+            data = self.call("Page.captureScreenshot",
+                             {"format": "png", "fromSurface": True})["data"]
         Path(path).write_bytes(base64.b64decode(data))
 
 
