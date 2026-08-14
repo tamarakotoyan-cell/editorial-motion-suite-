@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="editorial-motion" content="1.10.0">
+  <!-- check-artifact-ignore: source-line
+       A type-treatment process board, not a research artifact. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Type treatment — optional print-process features</title>
+  <link rel="stylesheet" href="type.css">
+  <style>
+    :root{
+      --ink:#26221E;
+      --paper:#EEE7DA;
+      --brand:#C4472D;
+      --rule:#C9BDAB;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      padding:32px;
+      color:var(--ink);
+      background:#D8D0C3;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+    main{max-width:520px}
+    header{max-width:500px;margin-bottom:28px}
+    h1{margin:0 0 8px;font-size:34px;letter-spacing:-.035em;line-height:1}
+    header p{margin:0;max-width:62ch;font-size:14px;line-height:1.45;color:#514A43}
+    .grid{display:grid;grid-template-columns:repeat(2,200px);gap:16px}
+    .tactile-hero{
+      --tt-stock:#9C54A8;
+      --tt-fibre-opacity:.78;
+      width:416px;
+      min-height:270px;
+      margin:0 0 16px;
+      padding:18px;
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      color:#292221;
+    }
+    .tactile-kicker{
+      margin:0;
+      color:#F3ECDE;
+      font-size:12px;
+      line-height:1;
+      font-weight:700;
+      letter-spacing:.11em;
+      text-transform:uppercase;
+    }
+    .tactile-hero-ink{align-self:center}
+    .tactile-word{
+      font-size:108px;
+      font-weight:900;
+      line-height:.78;
+      letter-spacing:-.085em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .tactile-caption{
+      justify-self:end;
+      margin:0;
+      padding:5px 7px 4px;
+      color:#F3ECDE;
+      background:#292221;
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+    .card{
+      --tt-stock:var(--paper);
+      --tt-fibre-opacity:.58;
+      width:200px;
+      min-height:242px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      overflow:hidden;
+    }
+    .process-name{
+      margin:0;
+      font-size:11px;
+      line-height:1.2;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#625A51;
+    }
+    .word{
+      max-width:100%;
+      font-size:52px;
+      font-weight:900;
+      line-height:.88;
+      letter-spacing:-.055em;
+      text-transform:uppercase;
+      white-space:nowrap;
+    }
+    .word--small{font-size:39px;letter-spacing:-.045em}
+    .word--narrow{font-size:44px}
+    .word--hero{font-size:78px}
+    .note{margin:0;font-size:11px;line-height:1.35;color:#625A51}
+    .stamp-demo{
+      --tt-stamp-mask:url("demo-pressure-mask.svg");
+      --tt-stamp-scale:3.4em 1.9em;
+    }
+    .bleed-demo{
+      --tt-bleed-1:rgba(153,48,35,.46);
+      --tt-bleed-2:rgba(153,48,35,.25);
+      --tt-bleed-3:rgba(153,48,35,.12);
+      color:#983023;
+    }
+    .register-demo{
+      --tt-register-a:#D12C52;
+      --tt-register-b:#16899B;
+      --tt-register-shift:.024em;
+    }
+    .pattern-demo{
+      --tt-process-ink:#2B4D54;
+      --tt-pattern-step:.08em;
+    }
+    .label-wrap{display:flex;align-items:center;justify-content:center;min-height:96px}
+    .label-demo{
+      font-size:30px;
+      font-weight:900;
+      line-height:1;
+      letter-spacing:-.04em;
+    }
+    footer{margin-top:22px;font-size:12px;color:#514A43}
+    @media(max-width:500px){
+      body{padding:20px}
+      .tactile-hero{width:200px;min-height:242px}
+      .tactile-word{font-size:58px}
+      .grid{grid-template-columns:200px}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Optional print-process features</h1>
+      <p>This board isolates opt-in treatments. Regular typeface styling remains
+        the default; apply one process only to a selected display element. Each
+        card is exactly 200px wide for the legibility check.</p>
+    </header>
+
+    <section class="tactile-hero tt-tactile-surface" aria-label="Tactile type example">
+      <p class="tactile-kicker">Surface + ink + fibre</p>
+      <div class="tactile-hero-ink tt-tactile-ink tt-tactile-ink--soft">
+        <span class="tactile-word tt-process tt-clean-print">Type</span>
+      </div>
+      <p class="tactile-caption">One physical surface</p>
+    </section>
+
+    <section class="grid" aria-label="Typography print-process examples">
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Clean print</p>
+        <div class="tt-tactile-ink"><span class="word tt-process tt-clean-print">Clear</span></div>
+        <p class="note">The default. Surface integration without invented wear.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Halftone</p>
+        <div class="tt-tactile-ink"><span class="word tt-process tt-halftone">Dot</span></div>
+        <p class="note">A coarse dot screen forming one heavy display word.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Dry stamp</p>
+        <div class="tt-tactile-ink"><span class="word word--narrow tt-process tt-stamp stamp-demo">Proof</span></div>
+        <p class="note">Pressure loss comes from a luma mask, not opacity.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Ink bleed</p>
+        <div class="tt-tactile-ink tt-tactile-ink--soft"><span class="word word--hero tt-process tt-bleed bleed-demo">Ink</span></div>
+        <p class="note">Zero-distance spread implies porous stock.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Photocopy</p>
+        <div class="tt-tactile-ink"><span class="word word--narrow tt-process tt-photocopy"
+             data-text="COPY" aria-label="Copy">Copy</span></div>
+        <p class="note">Toner dropout with one restrained directional drag.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Misregistered print</p>
+        <div class="tt-tactile-ink"><span class="word tt-process tt-misregister register-demo"
+             data-text="VIBE" aria-label="Vibe">Vibe</span></div>
+        <p class="note">Two spot inks fail to align by less than a stem.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Pattern fill</p>
+        <div class="tt-tactile-ink"><span class="word word--small tt-process tt-pattern-fill pattern-demo">System</span></div>
+        <p class="note">A calm line pattern stays inside the glyphs.</p>
+      </article>
+
+      <article class="card tt-tactile-surface">
+        <p class="process-name">Paper collage</p>
+        <div class="label-wrap"><span class="tt-paper-label tt-paper-label--dark label-demo"
+          style="--tt-label-texture:url('tactile-fibre.png')">Field note</span></div>
+        <p class="note">A foreground paper object, not another glyph effect.</p>
+      </article>
+    </section>
+
+    <footer>Regular typography stays untreated. Use these features selectively;
+      keep body copy, source lines, chart labels and hero figures in standard styling.</footer>
+  </main>
+</body>
+</html>

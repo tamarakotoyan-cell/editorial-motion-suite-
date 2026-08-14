@@ -21,6 +21,25 @@
   /* Hand-drawn boil: 3 frames per cycle. 0.27s ≈ 11fps.
      Working range is 8–12fps → 0.25s to 0.375s. */
   --boil-cycle: 0.27s;
+
+  /* Print-process defaults. Keep dimensions relative to the type so the
+     physical cue survives format changes. Override per composition. */
+  --tt-process-ink: var(--ink);
+  --tt-process-paper: var(--paper);
+  --tt-halftone-step: .085em;
+  --tt-halftone-dot: 40%;
+  --tt-register-shift: .018em;
+  --tt-copy-drag: .018em;
+  --tt-pattern-step: .095em;
+
+  /* Tactile contact stack. Use the matching surface tile and luma matte at
+     the same scale. The supplied assets are neutral, seamless and tint-safe. */
+  --tt-fibre-src: url("tactile-fibre.png");
+  --tt-fibre-matte: url("tactile-fibre-matte.png");
+  --tt-fibre-size: 512px;
+  --tt-fibre-position: center;
+  --tt-fibre-opacity: .34;
+  --tt-ink-contact-blend: multiply;
 }
 
 /* ---------- Register: In — printing type into a surface ---------- */
@@ -49,6 +68,211 @@
   -webkit-mask-image: var(--mask-src);  mask-image: var(--mask-src);
   -webkit-mask-size: 300px;             mask-size: 300px;
   -webkit-mask-mode: luminance;         mask-mode: luminance;
+}
+
+/* ---------- Optional tactile contact — substrate, ink bite, shared fibre ---------- */
+
+/* Put this class on the material plate. The same fibre pass crosses the ground,
+   ink and annotations, which is what makes the frame read as one photographed
+   object rather than several textured layers. This is an opt-in feature; never
+   apply it to a composition root or the regular type system. */
+.tt-tactile-surface {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--tt-stock, var(--paper));
+}
+.tt-tactile-surface > * {
+  position: relative;
+  z-index: 1;
+}
+.tt-tactile-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--tt-fibre-src) var(--tt-fibre-position) /
+              var(--tt-fibre-size) repeat;
+  mix-blend-mode: overlay;
+  opacity: var(--tt-fibre-opacity);
+}
+
+/* Wrap the process-bearing string in this contact layer. Keeping it separate
+   avoids overwriting the masks used by halftone, stamp and photocopy classes. */
+.tt-tactile-ink {
+  display: inline-block;
+  color: var(--tt-process-ink, var(--ink));
+  mix-blend-mode: var(--tt-ink-contact-blend);
+  -webkit-mask-image: var(--tt-fibre-matte);
+  mask-image: var(--tt-fibre-matte);
+  -webkit-mask-position: var(--tt-fibre-position);
+  mask-position: var(--tt-fibre-position);
+  -webkit-mask-size: var(--tt-fibre-size);
+  mask-size: var(--tt-fibre-size);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+}
+
+/* Large porous-stock titles can take a hair of edge spread. This is contact
+   softness, not a cast shadow; keep it off small labels and body copy. */
+.tt-tactile-ink--soft {
+  text-shadow: 0 0 .012em currentColor;
+}
+
+/* ---------- Optional print-process features — choose ONE per selected string ---------- */
+
+/* Registers say where the type sits. A process says how the mark was made.
+   Regular typography needs none of these classes. Pair one process with the
+   appropriate register only on an explicitly selected feature string; never
+   attach process or tactile classes to a global type selector. */
+.tt-process {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  color: var(--tt-process-ink, var(--ink));
+}
+
+/* Default process. The surface still shows through, but no decorative wear is
+   invented. Override --tt-process-blend:screen for light ink on dark ground. */
+.tt-clean-print {
+  mix-blend-mode: var(--tt-process-blend, multiply);
+}
+
+/* Dot screen forming the strokes. Large, heavy display type only; the step is
+   in em so the dots scale with the glyph rather than the canvas. */
+.tt-halftone {
+  -webkit-mask-image: radial-gradient(circle,
+    #000 0 var(--tt-halftone-dot, 40%),
+    transparent calc(var(--tt-halftone-dot, 40%) + 2%));
+  mask-image: radial-gradient(circle,
+    #000 0 var(--tt-halftone-dot, 40%),
+    transparent calc(var(--tt-halftone-dot, 40%) + 2%));
+  -webkit-mask-size: var(--tt-halftone-step, .085em) var(--tt-halftone-step, .085em);
+  mask-size: var(--tt-halftone-step, .085em) var(--tt-halftone-step, .085em);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+/* Dry stamp: a pressure mask creates isolated voids and edge loss. Supply a
+   generated or scanned luma mask; the solid fallback keeps the word readable. */
+.tt-stamp {
+  -webkit-mask-image: var(--tt-stamp-mask,
+    var(--mask-src, linear-gradient(#000, #000)));
+  mask-image: var(--tt-stamp-mask,
+    var(--mask-src, linear-gradient(#000, #000)));
+  -webkit-mask-size: var(--tt-stamp-scale, 3.25em);
+  mask-size: var(--tt-stamp-scale, 3.25em);
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+/* Porous-stock spread. Zero-distance shadows are ink expansion, not a cast
+   shadow. Keep this to roughly 100px and above. */
+.tt-bleed {
+  text-shadow:
+    0 0 .018em var(--tt-bleed-1, rgba(35,32,28,.44)),
+    0 0 .045em var(--tt-bleed-2, rgba(35,32,28,.24)),
+    0 0 .085em var(--tt-bleed-3, rgba(35,32,28,.12));
+}
+
+/* Toner dropout plus a short directional drag. Keep the real text as the
+   solid core; data-text supplies only the reproduced ghost. */
+.tt-photocopy {
+  -webkit-mask-image: repeating-linear-gradient(0deg,
+    #000 0 .05em, rgba(0,0,0,.62) .05em .064em);
+  mask-image: repeating-linear-gradient(0deg,
+    #000 0 .05em, rgba(0,0,0,.62) .05em .064em);
+}
+.tt-photocopy::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  color: currentColor;
+  transform: translateX(var(--tt-copy-drag, .018em));
+  filter: blur(.016em);
+  opacity: .30;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  -webkit-mask-image: repeating-linear-gradient(0deg,
+    transparent 0 .028em, #000 .028em .06em);
+  mask-image: repeating-linear-gradient(0deg,
+    transparent 0 .028em, #000 .028em .06em);
+}
+
+/* Two spot-ink impressions, not the analog-surface fringe filter. Use on one
+   short display word only and keep --tt-register-shift below .025em. */
+.tt-misregister::before,
+.tt-misregister::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--tt-register-opacity, .58);
+  mix-blend-mode: var(--tt-register-blend, multiply);
+  pointer-events: none;
+}
+.tt-misregister::before {
+  color: var(--tt-register-a, #D9274E);
+  transform: translateX(calc(var(--tt-register-shift, .018em) * -1));
+}
+.tt-misregister::after {
+  color: var(--tt-register-b, #168C9E);
+  transform: translateX(var(--tt-register-shift, .018em));
+}
+
+/* Repeating lines or hatching clipped inside heavy glyphs. The solid colour is
+   the fallback when background-clip:text is unavailable. */
+.tt-pattern-fill {
+  color: var(--tt-process-ink, var(--ink));
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .tt-pattern-fill {
+    background-image: var(--tt-pattern,
+      linear-gradient(90deg,
+        var(--tt-process-ink, var(--ink)) 0 45%, transparent 45%));
+    background-size: var(--tt-pattern-size, var(--tt-pattern-step, .095em) 100%);
+    background-position: var(--tt-pattern-position, 0 0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* Paper collage is a foreground object, not a glyph effect. The irregular
+   polygon is a no-asset fallback; supply --tt-label-texture for real fibre. */
+.tt-paper-label {
+  display: inline-block;
+  padding: .2em .38em .18em;
+  color: var(--tt-label-ink, var(--ink));
+  background-color: var(--tt-label-paper, #DDD1B9);
+  background-image: var(--tt-label-texture, none);
+  background-position: center;
+  background-size: cover;
+  background-blend-mode: multiply;
+  clip-path: polygon(1% 7%, 13% 2%, 27% 5%, 42% 1%, 58% 4%, 73% 2%,
+                     87% 6%, 99% 3%, 97% 23%, 100% 39%, 97% 57%, 99% 76%,
+                     96% 97%, 82% 94%, 68% 99%, 52% 96%, 37% 99%, 21% 95%,
+                     7% 98%, 2% 91%, 4% 73%, 1% 55%, 4% 36%);
+  transform: rotate(var(--tt-label-tilt, -1deg));
+}
+
+/* Paper collage contrast is explicit. The base class remains a light-stock
+   fallback, while these modifiers travel with the label across compositions. */
+.tt-paper-label--light {
+  --tt-label-paper: #DDD1B9;
+  --tt-label-ink: var(--ink);
+  background-blend-mode: multiply;
+}
+.tt-paper-label--dark {
+  --tt-label-paper: #292221;
+  --tt-label-ink: var(--paper);
+  background-blend-mode: overlay;
 }
 
 /* ---------- Register: Through — image inside the letterforms ---------- */
