@@ -38,6 +38,22 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def frame_fingerprints(ffmpeg: str, media: Path) -> list[str]:
+    result = run(
+        ffmpeg,
+        "-v",
+        "error",
+        "-i",
+        media,
+        "-map",
+        "0:v:0",
+        "-f",
+        "framemd5",
+        "-",
+    )
+    return [line for line in result.stdout.splitlines() if line and not line.startswith("#")]
+
+
 def probe(ffprobe: str, media: Path) -> dict:
     result = run(
         ffprobe,
@@ -101,12 +117,23 @@ def main() -> int:
                 "--no-audio",
             )
 
-        hashes = [sha256(path) for path in outputs]
-        if hashes[0] != hashes[1]:
-            raise SystemExit(
-                "render is not deterministic: "
-                f"first {hashes[0]}, second {hashes[1]}"
+        frames = [frame_fingerprints(ffmpeg, path) for path in outputs]
+        if frames[0] != frames[1]:
+            mismatch = next(
+                (
+                    index
+                    for index, pair in enumerate(zip(frames[0], frames[1]))
+                    if pair[0] != pair[1]
+                ),
+                min(len(frames[0]), len(frames[1])),
             )
+            raise SystemExit(
+                "decoded frames are not deterministic: "
+                f"first mismatch at frame {mismatch}; "
+                f"counts {len(frames[0])} and {len(frames[1])}"
+            )
+
+        hashes = [sha256(path) for path in outputs]
 
         metadata = probe(ffprobe, outputs[0])
         video = next(
@@ -135,8 +162,8 @@ def main() -> int:
             raise SystemExit("render metadata mismatch: " + json.dumps(wrong, sort_keys=True))
 
     print(
-        f"OK: two identical {DURATION}s H.264 renders, {WIDTH}x{HEIGHT} at "
-        f"{FPS}fps, sha256 {hashes[0]}"
+        f"OK: two frame-identical {DURATION}s H.264 renders, {WIDTH}x{HEIGHT} "
+        f"at {FPS}fps; container sha256 {hashes[0]} and {hashes[1]}"
     )
     return 0
 

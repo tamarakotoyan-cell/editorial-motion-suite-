@@ -53,7 +53,7 @@ Chrome and ffmpeg are delivery tools, not framework dependencies. Generated sour
 - every skill passes `quick_validate.py`
 - the Codex plugin passes `validate_plugin.py`
 - the scaffold creates a new project non-destructively and its render preflight passes
-- `python3 scripts/test_render_determinism.py` produces two byte-identical H.264
+- `python3 scripts/test_render_determinism.py` produces two frame-identical H.264
   renders with the expected dimensions, frame rate, frame count and duration
 - the storyboard validator accepts a valid beat sheet and rejects invalid timing
 - the existing linter, eval dry-run and render regression checks remain green
