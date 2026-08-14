@@ -22,6 +22,8 @@ Foundation 0.1: one standalone production system for Codex and Claude.
   Claude packaging. Both hosts discover the same skill source.
 - A dependency-free HTML/CSS/JavaScript starter, format-aware render command and
   cross-host release validator.
+- An end-to-end CI regression that renders the starter twice through Chrome and
+  ffmpeg, verifies the encoded media and requires byte-identical output.
 
 **Changed**
 
@@ -30,6 +32,11 @@ Foundation 0.1: one standalone production system for Codex and Claude.
   require no package installation.
 - Version stamping and CI accept both host manifests while enforcing one shared
   base version and portable skill frontmatter.
+
+**Fixed**
+
+- The shipped format-adaptation example now follows the mid-dot metadata rule it
+  is used to demonstrate and passes the artifact linter.
 
 **Removed**
 
