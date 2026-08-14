@@ -22,13 +22,19 @@ MIN_FRAME_PSNR = 45.0
 
 
 def run(*command: object, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [str(value) for value in command],
-        cwd=cwd,
-        check=True,
-        text=True,
-        capture_output=True,
+    command_line = [str(value) for value in command]
+    result = subprocess.run(
+        command_line, cwd=cwd, text=True, capture_output=True
     )
+    if result.returncode:
+        detail = "\n".join(
+            value.strip() for value in (result.stdout, result.stderr) if value.strip()
+        )
+        raise SystemExit(
+            f"command failed ({result.returncode}): {' '.join(command_line)}"
+            + (f"\n{detail}" if detail else "")
+        )
+    return result
 
 
 def sha256(path: Path) -> str:
