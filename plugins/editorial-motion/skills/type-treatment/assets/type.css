@@ -127,11 +127,43 @@
 .tt-boil > *:nth-child(3) { animation-delay: calc(var(--boil-cycle) / 3 * 2); }
 @keyframes tt-boil-flick { 0%, 33.32% { opacity: 1; } 33.33%, 100% { opacity: 0; } }
 
+
+/* ---------- Underlines and emphasis marks ---------- */
+/* Behind the glyphs, never across them: a rule painted over the type
+   slices its descenders and reads as a strike-through. The mark is
+   positioned, so DOM order cannot put it behind in-flow text — it needs
+   a negative z-index, and the wrapper needs isolation so that index
+   stays contained rather than escaping to an ancestor. */
+
+.tt-uw { position: relative; display: inline-block; isolation: isolate; }
+.tt-ul { position: absolute; left: 0; width: 100%; bottom: -.14em;
+         height: .3em; overflow: visible; z-index: -1; }
+.tt-ul path { fill: none; stroke: var(--accent, currentColor);
+              stroke-width: 5; stroke-linecap: round; }
+
+/* Printed emphasis mark — the register that belongs under set type.
+   Wiped on, not drawn on: hard edges, house 380ms emphasis timing.
+   The hand-drawn equivalent belongs over DATA, never under a headline. */
+.tt-uw::after{
+  content:""; position:absolute; z-index:-1;
+  left:-.05em; right:-.05em; bottom:.055em; height:.135em;
+  background: var(--accent, currentColor);
+  clip-path: inset(0 100% 0 0);
+  animation: tt-wipe 380ms var(--ease-out) both;
+}
+@keyframes tt-wipe{ to{ clip-path: inset(0 0 0 0) } }
+
+
 /* ---------- Non-negotiable ---------- */
 /* Preserves end states: text still arrives, it just arrives now.
    Boil stops on its first frame rather than disappearing. */
 
 @media (prefers-reduced-motion: reduce) {
+  /* The mark's resting state is CLOSED, so cancelling the wipe would hide it
+     outright. Land it open instead — content never sits behind an animation
+     that reduced motion turns off. */
+  .tt-uw::after { animation: none !important; clip-path: inset(0 0 0 0) !important; }
+
   .tt-by-char > span, .tt-odo ul {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

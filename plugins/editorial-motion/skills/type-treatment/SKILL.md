@@ -247,6 +247,90 @@ bright cloud.
 
 ---
 
+## Underlines and emphasis marks go behind the type
+
+An underline, highlight, circle or brace is **ink already on the page that the
+word was set over.** It goes *behind* the glyphs, never across them.
+
+A rule painted on top slices every descender it meets — the `y` in "you", the
+`g` in "growing" — and the eye reads that as a strike-through, not an
+underline. Behind the type, the descender interrupts the stroke, which is what
+a real mark under real type looks like.
+
+**DOM order will not do this on its own.** The mark is almost always
+absolutely positioned, so it paints in the positioned-descendant layer, which
+sits above in-flow inline text no matter where the element appears in the
+markup. Moving the SVG before the text changes nothing. It needs a negative
+`z-index`, and the wrapper needs its own stacking context so that index stays
+contained instead of escaping to an ancestor and disappearing behind a field:
+
+```css
+.tt-uw { position: relative; display: inline-block; isolation: isolate; }
+.tt-ul { position: absolute; left: 0; width: 100%; bottom: -.14em;
+         height: .3em; overflow: visible; z-index: -1; }
+```
+
+`isolation: isolate` is the part that is easy to drop and expensive to debug:
+without it the `-1` resolves against whichever ancestor last created a
+stacking context, and the mark either vanishes behind a colour field or
+survives by luck.
+
+### Pick the register before the mark
+
+An emphasis mark has to belong to the same world as the type it marks. The
+choice is not decorative and it is the one people get wrong:
+
+| The type is | The mark is | Because |
+|---|---|---|
+| Printed — a set headline on paper or a field | A **printed rule or block**: hard edges, wiped on | It is ink laid down by the same press |
+| Data — marks on a chart, a figure in a plot | A **hand-drawn circle, brace or arrow** | It is a person annotating a printout |
+| Handwritten or lettered | A **drawn mark** in the same hand | One instrument, one surface |
+
+**The handmade mark belongs over data, not under a headline.** The
+editorial-explainer skill puts it there deliberately — "circle the important
+part" sits in *Chart patterns*, while text emphasis sits in *Editorial
+devices* as "a block of colour behind the key phrase, wiped on left-to-right
+over ~380ms". Reaching for the wobble under a grotesque headline borrows a
+device from the chart section and lands a different piece of work inside your
+own frame: the scribble says *someone marked this up later*, while everything
+around it says *this was printed on purpose*.
+
+⚠️ **Searching a motion library for "underline" will not fix this.** That
+category is almost entirely one register — the free Lottie underline set is
+dominated by squiggle, wiggle, wavy and marker-swoosh, several described by
+their own authors as "hand-drawn underline annotation". Browsing it yields a
+*different* handmade underline, not a better-registered one. Decide the
+register from the type, then build the mark; do not shop for it.
+
+The printed form, wiped on rather than drawn on:
+
+```css
+.tt-uw::after{
+  content:""; position:absolute; z-index:-1;
+  left:-.05em; right:-.05em; bottom:.055em; height:.135em;
+  background: var(--accent);
+  clip-path: inset(0 100% 0 0);                  /* closed until it runs */
+  animation: tt-wipe 380ms var(--ease-out) both; /* the house emphasis timing */
+}
+@keyframes tt-wipe{ to{ clip-path: inset(0 0 0 0) } }
+```
+
+Sizing in `em` matters more here than it looks: a mark specified in pixels is
+correct at one type size and wrong at every other, and the closing frame of a
+vertical piece is rarely set at the same size as the body.
+
+The same rule covers a highlight block behind a phrase, a circled annotation
+over a chart label, and a brace under a figure. **The only marks that belong
+in front of type are ones that are meant to occlude it** — a torn strip, a
+sticker, a redaction — and those are objects, not emphasis.
+
+⚠️ Verify it rendered rather than assuming. A clipped `page.screenshot({clip})`
+in headless Chrome silently drops negatively-stacked SVG; capture the full
+page and crop afterwards, or you will "fix" a bug that was only ever in the
+screenshot.
+
+---
+
 ## Type and the layout
 
 Where the type goes is a layout decision made against the *image's* content, not
@@ -459,6 +543,10 @@ with at most one accent.
 - Drop shadow, glow or a full-frame black scrim doing the work that placement,
   a local grade or a real plate should do.
 - A headline centred over a face.
+- An underline, highlight or annotation painted **over** the type instead of
+  behind it, slicing the descenders.
+- A hand-drawn mark under printed type. The wobble belongs over data; a set
+  headline takes a printed rule or block.
 - Grain on the plate but not on the type.
 - `feDisplacementMap` on small text — it pixelates the stems.
 - More than one text animation running at once.
@@ -481,5 +569,8 @@ with at most one accent.
 - Is contrast checked in the region the type occupies, not the image average?
 - Is exactly one text animation running at any moment?
 - Is there one optical centre — image or type, not both?
+- Does every underline or emphasis mark sit *behind* the glyphs?
+- Does the mark's register match the type's — printed mark on printed type,
+  drawn mark over data?
 - Does `prefers-reduced-motion` leave the text present and readable?
 - Is the text still readable by a screen reader after any splitting?
