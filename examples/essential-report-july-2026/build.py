@@ -55,10 +55,17 @@ DATA = {
     # accent goes on the mark that proves the finding, and on nothing else.
     "accent": "wrong",
 
-    # Leave headline/subline as None to derive them from the numbers, or write
-    # them yourself — a headline is editorial judgement, not arithmetic.
-    "headline": None,
-    "subline": None,
+    # What the hero figure IS — the one number the tile exists to deliver.
+    #   "level"  the accent group's own share this month
+    #   "gap"    how far the leading group sits clear of the other
+    #   "change" the accent group's movement on June
+    # Everything else is support, and is sized to look like support.
+    "hero": "level",
+
+    # Leave these as None to derive them from the numbers, or write them
+    # yourself — the takeaway is editorial judgement, not arithmetic.
+    "hero_label": None,
+    "change_line": None,
 }
 
 LABELS = {
@@ -209,6 +216,16 @@ def fmt_pct(v: float) -> str:
     return f"{v:g}%"
 
 
+def hero_markup(figure: str) -> str:
+    """Set the per cent sign and any sign glyph down against the digits. At
+    270px a full-size `%` takes about a third of the width and the figure stops
+    reading as a number at a glance."""
+    out = figure
+    for glyph in ("%", "+", "−"):
+        out = out.replace(glyph, f'<span class="unit">{glyph}</span>')
+    return out
+
+
 def fmt_delta(now: float, then: float) -> str:
     d = round(now - then, 1)
     if d == 0:
@@ -217,27 +234,59 @@ def fmt_delta(now: float, then: float) -> str:
     return f"{sign}{abs(d):g} since June"
 
 
-def derive_copy(data: dict) -> tuple[str, str]:
-    """A default finding, stated as a sentence. Override it in DATA when the
-    month has a better story than the arithmetic can see."""
-    july, june = data["july"], data["june"]
-    if data["headline"] and data["subline"]:
-        return data["headline"], data["subline"]
+def derive_hero(data: dict) -> tuple[str, str, str]:
+    """The one number the tile delivers, its sentence, and the single line of
+    movement — in that order of weight.
 
-    lead = "wrong" if july["wrong"] >= july["right"] else "right"
-    gap = round(abs(july["wrong"] - july["right"]), 1)
-    moves = {k: round(july[k] - june[k], 1) for k in july}
-    biggest = max(moves, key=lambda k: abs(moves[k]))
+    An earlier draft set three values and three deltas at one size, and the
+    result carried eight numbers of equal rank and no takeaway. Everything
+    except the hero is deliberately demoted here; the other shares still
+    appear, small, in the key beneath the marks.
+    """
+    july, june, accent = data["july"], data["june"], data["accent"]
+    mode = data["hero"]
+    other = "right" if accent == "wrong" else "wrong"
 
-    headline = (f"{LABELS[lead]} leads by "
-                f"{gap:g} points in {data['month']}")
-    if abs(moves[biggest]) >= 2:
-        direction = "up" if moves[biggest] > 0 else "down"
-        subline = (f"{LABELS[biggest]} is {direction} "
-                   f"{abs(moves[biggest]):g} points on June.")
+    if mode == "level":
+        figure = fmt_pct(july[accent])
+        if accent == "unsure":
+            label = "are unsure which direction the country is heading"
+        else:
+            label = ("say the country is heading in the "
+                     f"{LABELS[accent].lower()}")
+    elif mode == "gap":
+        lead = max(("right", "wrong"), key=lambda k: july[k])
+        figure = f"{round(abs(july['wrong'] - july['right']), 1):g}"
+        label = (f"points clear — {LABELS[lead].lower()} over "
+                 f"{LABELS['right' if lead == 'wrong' else 'wrong'].lower()}")
+    elif mode == "change":
+        move = round(july[accent] - june[accent], 1)
+        figure = f"{'+' if move > 0 else '−'}{abs(move):g}"
+        label = (f"point move in {LABELS[accent].lower()} "
+                 "in a single month")
     else:
-        subline = "Little movement on June."
-    return data["headline"] or headline, data["subline"] or subline
+        raise SystemExit(f'unknown hero mode {mode!r}')
+
+    # One movement sentence, carrying both main groups. Three separate delta
+    # chips is what made the first version unreadable.
+    a_move = round(july[accent] - june[accent], 1)
+    o_move = round(july[other] - june[other], 1)
+
+    def phrase(move: float) -> str:
+        if move == 0:
+            return "unchanged"
+        return f"{'up' if move > 0 else 'down'} {abs(move):g}"
+
+    if a_move == 0 and o_move == 0:
+        change = f"{data['month']}, unchanged on June."
+    elif o_move == 0:
+        change = (f"{data['month']}, {phrase(a_move)} points on June. "
+                  f"{LABELS[other]} unchanged.")
+    else:
+        change = (f"{data['month']}, {phrase(a_move)} points on June. "
+                  f"{LABELS[other]} {phrase(o_move)}.")
+
+    return figure, data["hero_label"] or label, data["change_line"] or change
 
 
 def grid_svg(dots: dict[str, int], accent_key: str) -> str:
@@ -279,24 +328,24 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
             + "".join(marks) + "</svg>"), fills
 
 
-def key_row(data: dict, dots: dict[str, int], fills: dict) -> str:
+def key_row(data: dict, fills: dict) -> str:
+    """Names the three colours and gives their shares — small, on one line
+    each. This is support, not a second headline: no deltas here, and nothing
+    at a size that could compete with the hero figure."""
     cells = []
     for key in ORDER:
         form, colour = fills[key]
         if form == "fill":
-            swatch = (f'<svg class="sw" viewBox="0 0 24 24" width="15" '
-                      f'height="15"><circle cx="12" cy="12" r="11" '
+            swatch = ('<svg class="sw" viewBox="0 0 24 24" width="14" '
+                      f'height="14"><circle cx="12" cy="12" r="11" '
                       f'fill="{colour}"/></svg>')
         else:
-            swatch = (f'<svg class="sw" viewBox="0 0 24 24" width="15" '
-                      f'height="15"><circle cx="12" cy="12" r="9" fill="none" '
+            swatch = ('<svg class="sw" viewBox="0 0 24 24" width="14" '
+                      f'height="14"><circle cx="12" cy="12" r="9" fill="none" '
                       f'stroke="{colour}" stroke-width="4"/></svg>')
         cells.append(
-            f'<div class="k">'
-            f'<p class="k-name">{swatch}<span>{LABELS[key]}</span></p>'
-            f'<p class="k-val">{fmt_pct(data["july"][key])}</p>'
-            f'<p class="k-delta">{fmt_delta(data["july"][key], data["june"][key])}</p>'
-            f'</div>')
+            f'<p class="k">{swatch}<span class="k-name">{LABELS[key]}</span>'
+            f'<span class="k-val">{fmt_pct(data["july"][key])}</span></p>')
     return '<div class="keys">' + "".join(cells) + "</div>"
 
 
@@ -305,9 +354,10 @@ def key_row(data: dict, dots: dict[str, int], fills: dict) -> str:
 # --------------------------------------------------------------------------
 def build_html(data: dict) -> str:
     dots, adjusted = allocate(data["july"])
-    headline, subline = derive_copy(data)
+    figure, hero_label, change = derive_hero(data)
+    hero_fig = hero_markup(figure)
     svg, fills = grid_svg(dots, data["accent"])
-    keys = key_row(data, dots, fills)
+    keys = key_row(data, fills)
     faces, stack = font_css()
 
     logo = (HERE.parents[1] / "plugins/editorial-motion/skills/"
@@ -359,19 +409,28 @@ body::after{{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-h1,.sub,.keys,.foot{{flex:none}}
+.hero,.hero-label,.change,.keys,.foot{{flex:none}}
 
-h1{{
-  font-weight:700;font-size:82px;line-height:1.02;letter-spacing:-.02em;
-  max-width:14ch;
+/* The hero carries the accent because it and the accent dots state the same
+   fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
+   nothing smaller may be set in it — see the palette note above. */
+.hero{{
+  font-weight:700;font-size:280px;line-height:.84;letter-spacing:-.035em;
+  color:{ACCENT};
+}}
+.unit{{font-size:.5em;letter-spacing:-.01em}}
+.hero-label{{
+  margin-top:30px;font-weight:400;font-size:46px;line-height:1.14;
+  letter-spacing:-.01em;max-width:19ch;
 }}
 /* Archivo renders a period as a hard square; the brand full stop is round. */
-.dot-mark{{display:inline-block;width:.24em;height:.24em;border-radius:50%;
-  background:{ACCENT};margin-left:.06em;vertical-align:baseline}}
+.dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
+  background:{ACCENT};margin-left:.07em;vertical-align:baseline}}
 
-.sub{{
-  margin-top:26px;font-weight:300;font-size:31px;line-height:1.28;
-  color:{MUTED};max-width:26ch;
+/* One movement line, not three delta chips. */
+.change{{
+  margin-top:26px;font-weight:300;font-size:27px;line-height:1.3;
+  color:{MUTED};max-width:30ch;
 }}
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
@@ -381,17 +440,15 @@ h1{{
    slack collects in one break between the statement and the evidence instead
    of splitting into two gaps that leave the marks floating. */
 .plot{{flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;
-  justify-content:flex-start;padding:40px 0 46px}}
+  justify-content:flex-start;padding:40px 0 34px}}
 .grid{{width:100%;height:auto;max-height:100%}}
 
-.keys{{display:flex;gap:34px;margin-top:8px}}
-.k{{flex:1}}
-.k-name{{display:flex;align-items:center;gap:9px;font-size:19px;
+.keys{{display:flex;gap:30px;margin-top:22px}}
+.k{{flex:1;display:flex;align-items:center;gap:10px;font-size:20px;
   line-height:1.2;color:{INK}}}
 .sw{{flex:none}}
-.k-val{{margin-top:12px;font-weight:700;font-size:52px;line-height:1;
-  letter-spacing:-.02em}}
-.k-delta{{margin-top:8px;font-weight:300;font-size:19px;color:{MUTED}}}
+.k-name{{color:{MUTED}}}
+.k-val{{font-weight:700;letter-spacing:-.01em}}
 
 .foot{{margin-top:46px;display:flex;align-items:flex-end;
   justify-content:space-between;gap:40px}}
@@ -406,8 +463,9 @@ h1{{
 </head>
 <body>
 {warning}
-<h1>{headline}<span class="dot-mark"></span></h1>
-<p class="sub">{subline}</p>
+<p class="hero">{hero_fig}</p>
+<h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
+<p class="change">{change}</p>
 
 <div class="plot">{svg}</div>
 

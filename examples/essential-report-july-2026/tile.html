@@ -33,19 +33,28 @@ body::after{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-h1,.sub,.keys,.foot{flex:none}
+.hero,.hero-label,.change,.keys,.foot{flex:none}
 
-h1{
-  font-weight:700;font-size:82px;line-height:1.02;letter-spacing:-.02em;
-  max-width:14ch;
+/* The hero carries the accent because it and the accent dots state the same
+   fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
+   nothing smaller may be set in it — see the palette note above. */
+.hero{
+  font-weight:700;font-size:280px;line-height:.84;letter-spacing:-.035em;
+  color:#E2491A;
+}
+.unit{font-size:.5em;letter-spacing:-.01em}
+.hero-label{
+  margin-top:30px;font-weight:400;font-size:46px;line-height:1.14;
+  letter-spacing:-.01em;max-width:19ch;
 }
 /* Archivo renders a period as a hard square; the brand full stop is round. */
-.dot-mark{display:inline-block;width:.24em;height:.24em;border-radius:50%;
-  background:#E2491A;margin-left:.06em;vertical-align:baseline}
+.dot-mark{display:inline-block;width:.22em;height:.22em;border-radius:50%;
+  background:#E2491A;margin-left:.07em;vertical-align:baseline}
 
-.sub{
-  margin-top:26px;font-weight:300;font-size:31px;line-height:1.28;
-  color:#636366;max-width:26ch;
+/* One movement line, not three delta chips. */
+.change{
+  margin-top:26px;font-weight:300;font-size:27px;line-height:1.3;
+  color:#636366;max-width:30ch;
 }
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
@@ -55,17 +64,15 @@ h1{
    slack collects in one break between the statement and the evidence instead
    of splitting into two gaps that leave the marks floating. */
 .plot{flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;
-  justify-content:flex-start;padding:40px 0 46px}
+  justify-content:flex-start;padding:40px 0 34px}
 .grid{width:100%;height:auto;max-height:100%}
 
-.keys{display:flex;gap:34px;margin-top:8px}
-.k{flex:1}
-.k-name{display:flex;align-items:center;gap:9px;font-size:19px;
+.keys{display:flex;gap:30px;margin-top:22px}
+.k{flex:1;display:flex;align-items:center;gap:10px;font-size:20px;
   line-height:1.2;color:#4E4E50}
 .sw{flex:none}
-.k-val{margin-top:12px;font-weight:700;font-size:52px;line-height:1;
-  letter-spacing:-.02em}
-.k-delta{margin-top:8px;font-weight:300;font-size:19px;color:#636366}
+.k-name{color:#636366}
+.k-val{font-weight:700;letter-spacing:-.01em}
 
 .foot{margin-top:46px;display:flex;align-items:flex-end;
   justify-content:space-between;gap:40px}
@@ -80,12 +87,13 @@ h1{
 </head>
 <body>
 <p class="placeholder">Placeholder figures — not Essential Report results</p>
-<h1>Wrong direction leads by 19 points in July<span class="dot-mark"></span></h1>
-<p class="sub">Right direction is down 4 points on June.</p>
+<p class="hero">52<span class="unit">%</span></p>
+<h1 class="hero-label">say the country is heading in the wrong direction<span class="dot-mark"></span></h1>
+<p class="change">July, up 3 points on June. Right direction down 4.</p>
 
 <div class="plot"><svg class="grid" viewBox="0 0 1160 290" width="1160" height="290" role="img" aria-label="One hundred dots, one dot for each per cent"><circle cx="29" cy="29" r="20.5" fill="#4E4E50"/><circle cx="87" cy="29" r="20.5" fill="#4E4E50"/><circle cx="145" cy="29" r="20.5" fill="#4E4E50"/><circle cx="203" cy="29" r="20.5" fill="#4E4E50"/><circle cx="261" cy="29" r="20.5" fill="#4E4E50"/><circle cx="319" cy="29" r="20.5" fill="#4E4E50"/><circle cx="377" cy="29" r="20.5" fill="#4E4E50"/><circle cx="435" cy="29" r="20.5" fill="#4E4E50"/><circle cx="493" cy="29" r="20.5" fill="#4E4E50"/><circle cx="551" cy="29" r="20.5" fill="#4E4E50"/><circle cx="609" cy="29" r="20.5" fill="#4E4E50"/><circle cx="667" cy="29" r="20.5" fill="#4E4E50"/><circle cx="725" cy="29" r="20.5" fill="#4E4E50"/><circle cx="783" cy="29" r="20.5" fill="#4E4E50"/><circle cx="841" cy="29" r="20.5" fill="#4E4E50"/><circle cx="899" cy="29" r="20.5" fill="#4E4E50"/><circle cx="957" cy="29" r="20.5" fill="#4E4E50"/><circle cx="1015" cy="29" r="20.5" fill="#4E4E50"/><circle cx="1073" cy="29" r="20.5" fill="#4E4E50"/><circle cx="1131" cy="29" r="20.5" fill="#4E4E50"/><circle cx="29" cy="87" r="20.5" fill="#4E4E50"/><circle cx="87" cy="87" r="20.5" fill="#4E4E50"/><circle cx="145" cy="87" r="20.5" fill="#4E4E50"/><circle cx="203" cy="87" r="20.5" fill="#4E4E50"/><circle cx="261" cy="87" r="20.5" fill="#4E4E50"/><circle cx="319" cy="87" r="20.5" fill="#4E4E50"/><circle cx="377" cy="87" r="20.5" fill="#4E4E50"/><circle cx="435" cy="87" r="20.5" fill="#4E4E50"/><circle cx="493" cy="87" r="20.5" fill="#4E4E50"/><circle cx="551" cy="87" r="20.5" fill="#4E4E50"/><circle cx="609" cy="87" r="20.5" fill="#4E4E50"/><circle cx="667" cy="87" r="20.5" fill="#4E4E50"/><circle cx="725" cy="87" r="20.5" fill="#4E4E50"/><circle cx="783" cy="87" r="20.5" fill="#E2491A"/><circle cx="841" cy="87" r="20.5" fill="#E2491A"/><circle cx="899" cy="87" r="20.5" fill="#E2491A"/><circle cx="957" cy="87" r="20.5" fill="#E2491A"/><circle cx="1015" cy="87" r="20.5" fill="#E2491A"/><circle cx="1073" cy="87" r="20.5" fill="#E2491A"/><circle cx="1131" cy="87" r="20.5" fill="#E2491A"/><circle cx="29" cy="145" r="20.5" fill="#E2491A"/><circle cx="87" cy="145" r="20.5" fill="#E2491A"/><circle cx="145" cy="145" r="20.5" fill="#E2491A"/><circle cx="203" cy="145" r="20.5" fill="#E2491A"/><circle cx="261" cy="145" r="20.5" fill="#E2491A"/><circle cx="319" cy="145" r="20.5" fill="#E2491A"/><circle cx="377" cy="145" r="20.5" fill="#E2491A"/><circle cx="435" cy="145" r="20.5" fill="#E2491A"/><circle cx="493" cy="145" r="20.5" fill="#E2491A"/><circle cx="551" cy="145" r="20.5" fill="#E2491A"/><circle cx="609" cy="145" r="20.5" fill="#E2491A"/><circle cx="667" cy="145" r="20.5" fill="#E2491A"/><circle cx="725" cy="145" r="20.5" fill="#E2491A"/><circle cx="783" cy="145" r="20.5" fill="#E2491A"/><circle cx="841" cy="145" r="20.5" fill="#E2491A"/><circle cx="899" cy="145" r="20.5" fill="#E2491A"/><circle cx="957" cy="145" r="20.5" fill="#E2491A"/><circle cx="1015" cy="145" r="20.5" fill="#E2491A"/><circle cx="1073" cy="145" r="20.5" fill="#E2491A"/><circle cx="1131" cy="145" r="20.5" fill="#E2491A"/><circle cx="29" cy="203" r="20.5" fill="#E2491A"/><circle cx="87" cy="203" r="20.5" fill="#E2491A"/><circle cx="145" cy="203" r="20.5" fill="#E2491A"/><circle cx="203" cy="203" r="20.5" fill="#E2491A"/><circle cx="261" cy="203" r="20.5" fill="#E2491A"/><circle cx="319" cy="203" r="20.5" fill="#E2491A"/><circle cx="377" cy="203" r="20.5" fill="#E2491A"/><circle cx="435" cy="203" r="20.5" fill="#E2491A"/><circle cx="493" cy="203" r="20.5" fill="#E2491A"/><circle cx="551" cy="203" r="20.5" fill="#E2491A"/><circle cx="609" cy="203" r="20.5" fill="#E2491A"/><circle cx="667" cy="203" r="20.5" fill="#E2491A"/><circle cx="725" cy="203" r="20.5" fill="#E2491A"/><circle cx="783" cy="203" r="20.5" fill="#E2491A"/><circle cx="841" cy="203" r="20.5" fill="#E2491A"/><circle cx="899" cy="203" r="20.5" fill="#E2491A"/><circle cx="957" cy="203" r="20.5" fill="#E2491A"/><circle cx="1015" cy="203" r="20.5" fill="#E2491A"/><circle cx="1073" cy="203" r="20.5" fill="#E2491A"/><circle cx="1131" cy="203" r="20.5" fill="#E2491A"/><circle cx="29" cy="261" r="20.5" fill="#E2491A"/><circle cx="87" cy="261" r="20.5" fill="#E2491A"/><circle cx="145" cy="261" r="20.5" fill="#E2491A"/><circle cx="203" cy="261" r="20.5" fill="#E2491A"/><circle cx="261" cy="261" r="20.5" fill="#E2491A"/><circle cx="319" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="377" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="435" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="493" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="551" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="609" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="667" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="725" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="783" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="841" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="899" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="957" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="1015" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="1073" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/><circle cx="1131" cy="261" r="18" fill="none" stroke="#9A9490" stroke-width="5"/></svg></div>
 
-<div class="keys"><div class="k"><p class="k-name"><svg class="sw" viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="11" fill="#4E4E50"/></svg><span>Right direction</span></p><p class="k-val">33%</p><p class="k-delta">−4 since June</p></div><div class="k"><p class="k-name"><svg class="sw" viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="11" fill="#E2491A"/></svg><span>Wrong direction</span></p><p class="k-val">52%</p><p class="k-delta">+3 since June</p></div><div class="k"><p class="k-name"><svg class="sw" viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9" fill="none" stroke="#9A9490" stroke-width="4"/></svg><span>Unsure</span></p><p class="k-val">15%</p><p class="k-delta">+1 since June</p></div></div>
+<div class="keys"><p class="k"><svg class="sw" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="11" fill="#4E4E50"/></svg><span class="k-name">Right direction</span><span class="k-val">33%</span></p><p class="k"><svg class="sw" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="11" fill="#E2491A"/></svg><span class="k-name">Wrong direction</span><span class="k-val">52%</span></p><p class="k"><svg class="sw" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="9" fill="none" stroke="#9A9490" stroke-width="4"/></svg><span class="k-name">Unsure</span><span class="k-val">15%</span></p></div>
 
 <div class="foot">
   <p class="src">

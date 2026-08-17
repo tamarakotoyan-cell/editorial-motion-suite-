@@ -19,11 +19,28 @@ fieldwork dates and the base, then set `"placeholder": False` and re-run.
 
 ## What the tile does
 
-One frame, one fact. A hundred dots, one dot per percentage point, so the
-proportion is countable against a denominator that is on screen. Right
-direction and wrong direction are filled; unsure is drawn as open rings.
+One frame, one fact — and the hierarchy is the whole design.
 
-Three decisions worth knowing about before editing:
+The first version set three percentages and three change figures at the same
+size. That is eight numbers of equal rank, which is the same as no takeaway:
+a reader scrolling past has nothing to carry away. The tile now leads with a
+single hero figure, states one movement line beneath it, and demotes everything
+else to a small key under the marks. Nothing but the hero is sized to be read
+first.
+
+`DATA["hero"]` picks which number that is:
+
+| Value | Hero figure |
+|---|---|
+| `"level"` | the accent group's own share this month (default) |
+| `"gap"` | how far the leading group sits clear of the other |
+| `"change"` | the accent group's movement on June |
+
+Beneath it, a hundred dots — one dot per percentage point — so the proportion
+is countable against a denominator that is on screen. Right direction and wrong
+direction are filled; unsure is drawn as open rings.
+
+Three further decisions worth knowing about before editing:
 
 **The marks are computed from the data.** `allocate()` turns the published
 percentages into exactly 100 dots by largest remainder, and the build fails if
@@ -41,17 +58,20 @@ all three categories 25 L\* apart, so unsure is drawn as an open ring. Measured
 in greyscale the four values come out at 79 / 114 / 167 / 231 — distinct by
 luminance as well as by shape.
 
-The headline and sub-line derive from the numbers if left as `None`. A headline
-is editorial judgement, so write your own when the month has a better story than
-the arithmetic can see.
+`hero_label` and `change_line` derive from the numbers if left as `None`. The
+takeaway is editorial judgement, so write your own when the month has a better
+story than the arithmetic can see.
 
 ## Checks this passes
 
 - `check-artifact.py --strict` — clean
 - Text contrast on the warm ground: ink 6.73:1, muted 4.85:1. The muted grey is
   one step darker than the `--text-secondary` token, which measures 4.18:1 and
-  fails the 4.5:1 floor
-- Legible at 200px wide, and as a still
+  fails the 4.5:1 floor. The hero figure is set in the accent at 3.27:1, which
+  clears the 3:1 large-text floor and nothing smaller may use it
+- Greyscale luminance of the marks: ink 78, accent 113, ring 149, field 231
+- Legible at 200px wide, and as a still — at thumbnail size the hero figure and
+  its label are what survive, which is the point
 
 ## Rendering
 
