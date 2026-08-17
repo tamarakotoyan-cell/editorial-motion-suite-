@@ -7,3 +7,6 @@ dist/
 editorial-motion-dist/
 # eval run output — artifacts, transcripts and lint logs, regenerated per run
 evals/runs/
+
+# webfont cache for examples/ — fetched on demand by build.py
+.fontcache/
