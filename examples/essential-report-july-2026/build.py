@@ -64,8 +64,9 @@ DATA = {
 
     # Leave these as None to derive them from the numbers, or write them
     # yourself — the takeaway is editorial judgement, not arithmetic.
-    "hero_label": None,
-    "change_line": None,
+    "hero_label": None,   # what the figure counts, in the poll's own terms
+    "takeaway": None,     # what it means, in plain terms — see derive_hero
+    "change_line": None,  # how it moved
 }
 
 LABELS = {
@@ -234,14 +235,22 @@ def fmt_delta(now: float, then: float) -> str:
     return f"{sign}{abs(d):g} since June"
 
 
-def derive_hero(data: dict) -> tuple[str, str, str]:
-    """The one number the tile delivers, its sentence, and the single line of
-    movement — in that order of weight.
+def derive_hero(data: dict) -> tuple[str, str, str, str]:
+    """Four rungs, in descending weight: the figure, what it counts, what it
+    means, and how it moved.
 
     An earlier draft set three values and three deltas at one size, and the
     result carried eight numbers of equal rank and no takeaway. Everything
     except the hero is deliberately demoted here; the other shares still
     appear, small, in the key beneath the marks.
+
+    The third rung is the one that stops the tile being a number with no
+    reading. "52% say wrong direction" is a poll result; "more Australians are
+    feeling negative than positive about the country's future" is what it
+    tells you, and it is the sentence a reader repeats. It is a gloss on the
+    question rather than a second measurement, so it is derived only as far as
+    which side leads — override `takeaway` whenever the month needs a
+    different reading.
     """
     july, june, accent = data["july"], data["june"], data["accent"]
     mode = data["hero"]
@@ -280,13 +289,28 @@ def derive_hero(data: dict) -> tuple[str, str, str]:
     if a_move == 0 and o_move == 0:
         change = f"{data['month']}, unchanged on June."
     elif o_move == 0:
-        change = (f"{data['month']}, {phrase(a_move)} points on June. "
-                  f"{LABELS[other]} unchanged.")
+        change = (f"{data['month']}, {phrase(a_move)} points on June, "
+                  f"with {LABELS[other].lower()} unchanged on "
+                  f"{fmt_pct(july[other])}.")
     else:
-        change = (f"{data['month']}, {phrase(a_move)} points on June. "
-                  f"{LABELS[other]} {phrase(o_move)}.")
+        change = (f"{data['month']}, {phrase(a_move)} points on June, "
+                  f"with {LABELS[other].lower()} {phrase(o_move)} to "
+                  f"{fmt_pct(july[other])}.")
 
-    return figure, data["hero_label"] or label, data["change_line"] or change
+    # What the result means, rather than what it counts.
+    if july["wrong"] > july["right"]:
+        takeaway = ("More Australians are feeling negative than positive "
+                    "about the country’s future.")
+    elif july["right"] > july["wrong"]:
+        takeaway = ("More Australians are feeling positive than negative "
+                    "about the country’s future.")
+    else:
+        takeaway = "Australians are split on the country’s future."
+
+    return (figure,
+            data["hero_label"] or label,
+            data["takeaway"] or takeaway,
+            data["change_line"] or change)
 
 
 def grid_svg(dots: dict[str, int], accent_key: str) -> str:
@@ -354,7 +378,7 @@ def key_row(data: dict, fills: dict) -> str:
 # --------------------------------------------------------------------------
 def build_html(data: dict) -> str:
     dots, adjusted = allocate(data["july"])
-    figure, hero_label, change = derive_hero(data)
+    figure, hero_label, takeaway, change = derive_hero(data)
     hero_fig = hero_markup(figure)
     svg, fills = grid_svg(dots, data["accent"])
     keys = key_row(data, fills)
@@ -409,19 +433,26 @@ body::after{{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-.hero,.hero-label,.change,.keys,.foot{{flex:none}}
+.hero,.hero-label,.takeaway,.change,.keys,.foot{{flex:none}}
 
 /* The hero carries the accent because it and the accent dots state the same
    fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
    nothing smaller may be set in it — see the palette note above. */
 .hero{{
-  font-weight:700;font-size:280px;line-height:.84;letter-spacing:-.035em;
+  font-weight:700;font-size:264px;line-height:.84;letter-spacing:-.035em;
   color:{ACCENT};
 }}
 .unit{{font-size:.5em;letter-spacing:-.01em}}
 .hero-label{{
-  margin-top:30px;font-weight:400;font-size:46px;line-height:1.14;
-  letter-spacing:-.01em;max-width:19ch;
+  margin-top:28px;font-weight:400;font-size:44px;line-height:1.14;
+  letter-spacing:-.01em;max-width:20ch;
+}}
+
+/* The reading of the result, not a second measurement. Ink, so it ranks above
+   the movement line, but well below the figure it explains. */
+.takeaway{{
+  margin-top:30px;font-weight:400;font-size:31px;line-height:1.26;
+  max-width:33ch;
 }}
 /* Archivo renders a period as a hard square; the brand full stop is round. */
 .dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
@@ -429,8 +460,8 @@ body::after{{
 
 /* One movement line, not three delta chips. */
 .change{{
-  margin-top:26px;font-weight:300;font-size:27px;line-height:1.3;
-  color:{MUTED};max-width:30ch;
+  margin-top:20px;font-weight:300;font-size:25px;line-height:1.32;
+  color:{MUTED};max-width:34ch;
 }}
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
@@ -465,6 +496,7 @@ body::after{{
 {warning}
 <p class="hero">{hero_fig}</p>
 <h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
+<p class="takeaway">{takeaway}</p>
 <p class="change">{change}</p>
 
 <div class="plot">{svg}</div>

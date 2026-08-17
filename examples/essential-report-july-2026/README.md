@@ -28,7 +28,24 @@ single hero figure, states one movement line beneath it, and demotes everything
 else to a small key under the marks. Nothing but the hero is sized to be read
 first.
 
-`DATA["hero"]` picks which number that is:
+The copy runs as four rungs in descending weight, and each does a different
+job:
+
+| Rung | Job | Example |
+|---|---|---|
+| hero figure | the number | `52%` |
+| `hero_label` | what it counts, in the poll's own terms | say the country is heading in the wrong direction |
+| `takeaway` | **what it means, in plain terms** | More Australians are feeling negative than positive about the country's future |
+| `change_line` | how it moved | July, up 3 points on June, with right direction down 4 to 33% |
+
+The third rung is the one that stops the tile being a number with no reading.
+A percentage and a question wording is a poll result; the sentence a reader
+actually repeats is the one that says what the result means. It is a gloss on
+the question rather than a second measurement, so it is derived only as far as
+which side leads — override `takeaway` whenever the month needs a different
+reading, and check it still says what you mean before publishing.
+
+`DATA["hero"]` picks which number the figure is:
 
 | Value | Hero figure |
 |---|---|
@@ -58,9 +75,9 @@ all three categories 25 L\* apart, so unsure is drawn as an open ring. Measured
 in greyscale the four values come out at 79 / 114 / 167 / 231 — distinct by
 luminance as well as by shape.
 
-`hero_label` and `change_line` derive from the numbers if left as `None`. The
-takeaway is editorial judgement, so write your own when the month has a better
-story than the arithmetic can see.
+All three copy rungs derive from the numbers if left as `None`. The reading is
+editorial judgement, so write your own when the month has a better story than
+the arithmetic can see.
 
 ## Checks this passes
 
