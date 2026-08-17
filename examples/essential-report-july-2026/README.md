@@ -36,7 +36,7 @@ job:
 | hero figure | the number | `52%` |
 | `hero_label` | what it counts, in the poll's own terms | say the country is heading in the wrong direction |
 | `takeaway` | **what it means, in plain terms** | More Australians are feeling negative than positive about the country's future |
-| `change_line` | how it moved | July, up 3 points on June, with right direction down 4 to 33% |
+| `change_line` | how it moved | superseded by the arrow — see below |
 
 The third rung is the one that stops the tile being a number with no reading.
 A percentage and a question wording is a poll result; the sentence a reader
@@ -53,9 +53,51 @@ reading, and check it still says what you mean before publishing.
 | `"gap"` | how far the leading group sits clear of the other |
 | `"change"` | the accent group's movement on June |
 
-Beneath it, a hundred dots — one dot per percentage point — so the proportion
-is countable against a denominator that is on screen. Right direction and wrong
-direction are filled; unsure is drawn as open rings.
+## The arrow
+
+The trend is drawn as a heavy arrow, because a shape registers before any
+word does. It is not a stock icon dropped on top — the house list bans icons
+used as data marks, and a generic downward arrow asserts a slide the figures
+may not support. Every elbow here is a real monthly reading: x is evenly
+spaced by month, y is a linear scale over the series, so pixels-per-point is
+constant across the whole line. Geometric rather than rounded — miter joins,
+butt caps, one flat fill, no gradient or shadow.
+
+Two rules keep it honest:
+
+- **The last two points must equal `june` and `july`.** The build stops if they
+  don't, so the arrow can never contradict the key beneath it.
+- **Fewer than four readings and it is a straight segment**, which reads as a
+  change rather than a trend. Supply real months.
+
+**The arrow's shape is the data's, not the design's.** `DATA["trend"]` currently
+holds a placeholder series that happens to decline. If the real readings don't,
+the arrow won't, and the tile's premise has to be rethought rather than the
+arrow bent to fit.
+
+## The arrow and the accent are the same colour, so they must mean the same thing
+
+A tile gets one accent. The arrow therefore tracks whichever group
+`DATA["accent"]` names, and the hero figure reports that group too — otherwise
+orange would mean one thing in the figure and another in the line, which is the
+fastest way to make a chart lie.
+
+That makes it a single switch with two coherent settings:
+
+| `accent` | Hero | Arrow |
+|---|---|---|
+| `"right"` | the share saying right direction | **falls** — positive sentiment draining away |
+| `"wrong"` | the share saying wrong direction | **climbs** — negativity building |
+
+Same story, different picture. Pick the one that matches the month.
+
+## The dot band
+
+Beneath the arrow, a hundred dots — one dot per percentage point — so the
+proportion is countable against a denominator that is on screen. Right
+direction and wrong direction are filled; unsure is drawn as open rings. It is
+25 × 4 rather than 20 × 5 because the arrow now takes the height the band used
+to have: the band is the supporting evidence, the arrow is the impression.
 
 Three further decisions worth knowing about before editing:
 
@@ -75,9 +117,13 @@ all three categories 25 L\* apart, so unsure is drawn as an open ring. Measured
 in greyscale the four values come out at 79 / 114 / 167 / 231 — distinct by
 luminance as well as by shape.
 
-All three copy rungs derive from the numbers if left as `None`. The reading is
+The copy rungs derive from the numbers if left as `None`. The reading is
 editorial judgement, so write your own when the month has a better story than
 the arithmetic can see.
+
+The movement sentence is gone from the layout — the arrow states the change
+before anyone reads a word, and repeating it in prose was the copy the tile
+could most afford to lose.
 
 ## Checks this passes
 
@@ -87,8 +133,9 @@ the arithmetic can see.
   fails the 4.5:1 floor. The hero figure is set in the accent at 3.27:1, which
   clears the 3:1 large-text floor and nothing smaller may use it
 - Greyscale luminance of the marks: ink 78, accent 113, ring 149, field 231
-- Legible at 200px wide, and as a still — at thumbnail size the hero figure and
-  its label are what survive, which is the point
+- Legible at 200px wide, and as a still — at thumbnail size the hero figure,
+  its label and the arrow's descent are what survive, which is the point. The
+  descent still reads with the colour stripped out
 
 ## Rendering
 

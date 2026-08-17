@@ -53,7 +53,21 @@ DATA = {
 
     # Which group carries the accent. This is the editorial decision: the
     # accent goes on the mark that proves the finding, and on nothing else.
-    "accent": "wrong",
+    #
+    # The arrow tracks this same group, because the accent may only mean one
+    # thing on a tile. "right" gives a falling arrow (positive sentiment
+    # draining away); "wrong" gives a climbing one (negativity building).
+    # Both are the same story; they are not the same picture.
+    "accent": "right",
+
+    # The trend the arrow draws — ordered oldest to newest, values for the
+    # accent group. The last two entries must match "june" and "july" or the
+    # build stops, so the arrow can never contradict the key beneath it.
+    # ⚠️ PLACEHOLDER SERIES. Replace with the real monthly readings; with
+    # fewer than four points the arrow is a single straight segment and reads
+    # as a change rather than a trend.
+    "trend": [("Feb", 41), ("Mar", 39), ("Apr", 40),
+              ("May", 36), ("Jun", 37), ("Jul", 33)],
 
     # What the hero figure IS — the one number the tile exists to deliver.
     #   "level"  the accent group's own share this month
@@ -105,15 +119,15 @@ ACCENT = "#E2491A"
 MID = "#9A9490"
 
 W, H = 1080, 1350
-# 20 x 5 rather than 10 x 10: the band then runs the full text measure, so the
-# marks, the headline and the key row all share one left edge. A square hundred
-# would have to shrink to about half the measure to fit the portrait canvas and
-# would float free of the type.
-COLS, ROWS = 20, 5
+# A wide band rather than a square hundred: it runs the full text measure, so
+# the marks, the copy and the key all share one left edge. 25 x 4 rather than
+# 20 x 5 because the arrow now takes the height the band used to have — the
+# band is the supporting evidence, the arrow is the impression.
+COLS, ROWS = 25, 4
 CELL = 58
-DOT_R = 20.5
-RING_R = 18.0
-RING_W = 5.0
+DOT_R = 15.5
+RING_R = 13.5
+RING_W = 4.0
 
 ARCHIVO = "https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;700"
 GLYPHS = ("abcdefghijklmnopqrstuvwxyz"
@@ -352,6 +366,87 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
             + "".join(marks) + "</svg>"), fills
 
 
+def trend_arrow(data: dict) -> str:
+    """The trend, drawn as an arrow.
+
+    A stock downward arrow dropped onto a tile is an icon used as a data mark,
+    which the house list bans, and it asserts a slide the figures may not
+    support. This one is the same shape but every elbow is a real reading:
+    x is evenly spaced by month, y is a linear scale over the series, so
+    pixels-per-point is constant across the whole line. The impression is
+    immediate and it is also true.
+
+    Geometric rather than rounded — miter joins and butt caps, one flat fill,
+    no gradient or shadow. That is the brand's register and it happens to be
+    the sharper drawing anyway.
+    """
+    series = data["trend"]
+    metric = data["accent"]
+    if len(series) < 2:
+        raise SystemExit("trend needs at least two readings")
+
+    # The arrow may not disagree with the numbers printed beneath it.
+    for label, month in ((series[-1], "july"), (series[-2], "june")):
+        if label[1] != data[month][metric]:
+            raise SystemExit(
+                f'trend ends {series[-2][1]}, {series[-1][1]} but '
+                f'{metric} reads {data["june"][metric]}, '
+                f'{data["july"][metric]} — fix DATA["trend"]')
+
+    VW, VH = 1000.0, 300.0
+    PAD_X, TOP, BOT = 8.0, 74.0, 58.0     # room for the endpoint labels
+    HEAD_L, HEAD_W, STROKE = 74.0, 52.0, 26.0
+
+    values = [v for _, v in series]
+    lo, hi = min(values), max(values)
+    span = (hi - lo) or 1.0
+    plot_w = VW - 2 * PAD_X - HEAD_L
+    plot_h = VH - TOP - BOT
+
+    pts = []
+    for i, (_, v) in enumerate(series):
+        x = PAD_X + plot_w * i / (len(series) - 1)
+        y = TOP + (hi - v) / span * plot_h        # constant px per point
+        pts.append((x, y))
+
+    # Extend past the last reading by one step so the head sits clear of it,
+    # holding the direction the final segment already established.
+    (x0, y0), (x1, y1) = pts[-2], pts[-1]
+    dx, dy = x1 - x0, y1 - y0
+    length = (dx * dx + dy * dy) ** .5 or 1.0
+    ux, uy = dx / length, dy / length
+    tip = (x1 + ux * HEAD_L, y1 + uy * HEAD_L)
+    base = (tip[0] - ux * HEAD_L, tip[1] - uy * HEAD_L)
+    px_, py_ = -uy, ux                                   # perpendicular
+
+    line = pts + [(base[0] + ux * 2, base[1] + uy * 2)]
+    path = " ".join(f"{x:.1f},{y:.1f}" for x, y in line)
+    head = (f"{tip[0]:.1f},{tip[1]:.1f} "
+            f"{base[0] + px_ * HEAD_W:.1f},{base[1] + py_ * HEAD_W:.1f} "
+            f"{base[0] - px_ * HEAD_W:.1f},{base[1] - py_ * HEAD_W:.1f}")
+
+    # Endpoint labels only. Drawn in the same coordinate space as the line, so
+    # they cannot drift off it when the data or the canvas changes.
+    first, last = series[0], series[-1]
+    labels = (
+        f'<text x="{pts[0][0]:.1f}" y="{pts[0][1] - 34:.1f}" '
+        f'class="tl">{first[0]} {fmt_pct(first[1])}</text>'
+        f'<text x="{tip[0]:.1f}" y="{tip[1] + 46:.1f}" text-anchor="end" '
+        f'class="tl tl-end">{last[0]} {fmt_pct(last[1])}</text>')
+
+    direction = "falling" if values[-1] < values[0] else "rising"
+    return (
+        f'<svg class="trend" viewBox="0 0 {VW:g} {VH:g}" role="img" '
+        f'aria-label="{LABELS[metric]}, {direction} from '
+        f'{fmt_pct(values[0])} in {first[0]} to {fmt_pct(values[-1])} in '
+        f'{last[0]}">'
+        f'<polyline points="{path}" fill="none" stroke="{ACCENT}" '
+        f'stroke-width="{STROKE:g}" stroke-linejoin="miter" '
+        f'stroke-linecap="butt"/>'
+        f'<polygon points="{head}" fill="{ACCENT}"/>'
+        f'{labels}</svg>')
+
+
 def key_row(data: dict, fills: dict) -> str:
     """Names the three colours and gives their shares — small, on one line
     each. This is support, not a second headline: no deltas here, and nothing
@@ -382,6 +477,7 @@ def build_html(data: dict) -> str:
     hero_fig = hero_markup(figure)
     svg, fills = grid_svg(dots, data["accent"])
     keys = key_row(data, fills)
+    arrow = trend_arrow(data)
     faces, stack = font_css()
 
     logo = (HERE.parents[1] / "plugins/editorial-motion/skills/"
@@ -433,7 +529,7 @@ body::after{{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-.hero,.hero-label,.takeaway,.change,.keys,.foot{{flex:none}}
+.hero,.hero-label,.takeaway,.keys,.foot{{flex:none}}
 
 /* The hero carries the accent because it and the accent dots state the same
    fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
@@ -458,11 +554,12 @@ body::after{{
 .dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
   background:{ACCENT};margin-left:.07em;vertical-align:baseline}}
 
-/* One movement line, not three delta chips. */
-.change{{
-  margin-top:20px;font-weight:300;font-size:25px;line-height:1.32;
-  color:{MUTED};max-width:34ch;
-}}
+/* The arrow carries the movement, so the sentence that used to state it is
+   gone. Less copy, and the change is legible before anything is read. */
+.arrow{{flex:1 1 auto;min-height:0;display:flex;align-items:center;
+  padding:34px 0 10px}}
+.trend{{width:100%;height:auto;max-height:100%;overflow:visible}}
+.tl{{font-family:inherit;font-size:30px;font-weight:700;fill:{INK}}}
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
    the browser takes the overflow out of the copy blocks instead. min-height:0
@@ -470,8 +567,8 @@ body::after{{
 /* The band sits with its key rather than centred in the leftover space: the
    slack collects in one break between the statement and the evidence instead
    of splitting into two gaps that leave the marks floating. */
-.plot{{flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;
-  justify-content:flex-start;padding:40px 0 34px}}
+.plot{{flex:none;display:flex;align-items:flex-end;
+  justify-content:flex-start;padding:26px 0 30px}}
 .grid{{width:100%;height:auto;max-height:100%}}
 
 .keys{{display:flex;gap:30px;margin-top:22px}}
@@ -497,7 +594,8 @@ body::after{{
 <p class="hero">{hero_fig}</p>
 <h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
 <p class="takeaway">{takeaway}</p>
-<p class="change">{change}</p>
+
+<div class="arrow">{arrow}</div>
 
 <div class="plot">{svg}</div>
 
