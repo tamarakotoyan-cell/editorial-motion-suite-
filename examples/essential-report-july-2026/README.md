@@ -17,119 +17,120 @@ Everything that changes month to month is the `DATA` dict at the top of
 makes the build print a warning. Replace the July and June percentages, the
 fieldwork dates and the base, then set `"placeholder": False` and re-run.
 
-## What the tile does
+## ⚠️ The arrow carries no data
 
-One frame, one fact — and the hierarchy is the whole design.
+The arrow is an illustration of mood, not a plotted series. It always points
+down, standing for "the future is going down the drain". Nothing on it can be
+read off.
 
-The first version set three percentages and three change figures at the same
-size. That is eight numbers of equal rank, which is the same as no takeaway:
-a reader scrolling past has nothing to carry away. The tile now leads with a
-single hero figure, states one movement line beneath it, and demotes everything
-else to a small key under the marks. Nothing but the hero is sized to be read
-first.
+This is a deliberate change from an earlier version, which drew the real monthly
+readings so the arrow's shape was theirs. Two things keep the current one from
+becoming a lie, and both matter if it is ever edited:
 
-The copy runs as four rungs in descending weight, and each does a different
-job:
+- **No labels, no endpoints, no axis.** An unlabelled arrow states a mood. The
+  moment a value is attached to either end it becomes a chart — and this chart
+  would be wrong, because the accent group is *rising*, not falling.
+- **It sits in the right-hand column with the interpretive line**, not hard
+  against the hero figure. Beside the number it would assert that the number
+  itself is falling, which is the opposite of true.
+
+To make the arrow mean something again, restore the data-driven version from git
+history rather than adding labels to this one.
+
+## Hierarchy
+
+One frame, one fact. The first version set three percentages and three change
+figures at the same size — eight numbers of equal rank, which is the same as no
+takeaway. The tile now leads with a single hero figure and demotes everything
+else.
 
 | Rung | Job | Example |
 |---|---|---|
 | hero figure | the number | `52%` |
 | `hero_label` | what it counts, in the poll's own terms | say the country is heading in the wrong direction |
 | `takeaway` | **what it means, in plain terms** | More Australians are feeling negative than positive about the country's future |
-| `change_line` | how it moved | superseded by the arrow — see below |
 
-The third rung is the one that stops the tile being a number with no reading.
-A percentage and a question wording is a poll result; the sentence a reader
-actually repeats is the one that says what the result means. It is a gloss on
-the question rather than a second measurement, so it is derived only as far as
-which side leads — override `takeaway` whenever the month needs a different
-reading, and check it still says what you mean before publishing.
+The third rung is what stops the tile being a number with no reading. A
+percentage plus a question wording is a poll result; the sentence a reader
+repeats is the one saying what it means. It is a gloss on the question rather
+than a second measurement, so it derives only as far as which side leads —
+override `takeaway` whenever the month needs a different reading.
 
-`DATA["hero"]` picks which number the figure is:
+`DATA["hero"]` picks which number the figure is: `"level"` (the accent group's
+share, the default), `"gap"` (how far the leading group sits clear), or
+`"change"` (its movement on June).
 
-| Value | Hero figure |
-|---|---|
-| `"level"` | the accent group's own share this month (default) |
-| `"gap"` | how far the leading group sits clear of the other |
-| `"change"` | the accent group's movement on June |
+## Everything points at one number
 
-## The arrow
+`DATA["accent"]` names the group the tile is about, and the hero figure, the
+emphasis block and the leading mass of the dot field all report it. The
+repetition is reinforcement; the size difference between them is what stops it
+being competition.
 
-The trend is drawn as a heavy arrow, sitting beside the hero figure, because a
-shape registers before any word does — and because the number and its
-direction read as one gesture when they share a line. It is not a stock icon dropped on top — the house list bans icons
-used as data marks, and a generic downward arrow asserts a slide the figures
-may not support. Every elbow here is a real monthly reading: x is evenly
-spaced by month, y is a linear scale over the series, so pixels-per-point is
-constant across the whole line. Geometric rather than rounded — miter joins,
-butt caps, one flat fill, no gradient or shadow.
+## Layout
 
-Two rules keep it honest:
+Decided in the order `layout-composition` sets out, before anything was styled.
 
-- **The last two points must equal `june` and `july`.** The build stops if they
-  don't, so the arrow can never contradict the key beneath it.
-- **Fewer than four readings and it is a straight segment**, which reads as a
-  change rather than a trend. Supply real months.
+**Canvas** 4:5 (1080×1350) — Instagram feed at maximum height.
 
-**The arrow's shape is the data's, not the design's.** `DATA["trend"]` currently
-holds a placeholder series that happens to decline. If the real readings don't,
-the arrow won't, and the tile's premise has to be rethought rather than the
-arrow bent to fit.
+**Grid** 12-column modular for alignment, rule of thirds for the focal point.
+Base unit 8px, which is also the brand's spacing rhythm; every gap derives from
+it rather than being picked individually.
 
-## The arrow and the accent are the same colour, so they must mean the same thing
+**Two rails, not one.** An earlier version ran the figure, the label, the
+reading, the marks and the source all off the same left margin — five elements
+on one line, which reads as a list rather than a composition. The left column
+now carries the evidence (figure, label, marks); the right column carries the
+reading (arrow, interpretation, key). Largest vertical gap is 62px.
 
-A tile gets one accent. The arrow therefore tracks whichever group
-`DATA["accent"]` names, and the hero figure reports that group too — otherwise
-orange would mean one thing in the figure and another in the line, which is the
-fastest way to make a chart lie.
+**Type scale** Perfect Fourth (1.333) from an 18px base: 18 source, 24 key,
+32 reading, 43 label, 319 figure. Display → heading → body as three distinct
+registers, which is what a campaign graphic wants. Every size is a step on that
+scale; none is picked freehand.
 
-That makes it a single switch with two coherent settings:
+## The emphasis block
 
-| `accent` | Hero | Arrow |
-|---|---|---|
-| `"right"` | the share saying right direction | **falls** — positive sentiment draining away |
-| `"wrong"` | the share saying wrong direction | **climbs** — negativity building |
+The key phrase in the label sits in a block of the accent colour, knocked out in
+warm white. It covers only the words that matter — a full-width band is a
+highlighter pen and reads as decoration. `box-decoration-break: clone` keeps the
+block intact when the phrase wraps.
 
-Same story, different picture. Pick the one that matches the month.
+`DATA["highlight"]` sets the phrase; it defaults to the accent group's own name,
+so the highlighted words and the accent marks always say the same thing.
+Knockout measures 3.87:1 against the accent, which clears the 3:1 large-text
+floor at 43px and would not clear 4.5:1 at any smaller size.
 
-## The dot band
+## Texture
 
-Beneath the arrow, a hundred dots — one dot per percentage point — so the
-proportion is countable against a denominator that is on screen. Right
-direction and wrong direction are filled; unsure is drawn as open rings. It runs
-20 × 5 at the full measure.
+Two layers doing different jobs: laid paper for structure at large scale, fine
+grain so the surface is not flat at small scale. The paper tile is generated by
+`analog-surface/assets/make-paper.py` — seamless, stdlib-only, no redistributed
+scan.
 
-An earlier version stacked the arrow below the copy and paid for its height by
-shrinking the band to 25 × 4 — while roughly 500 × 400px of canvas sat empty
-beside a three-glyph hero figure. Putting the arrow in that space costs
-nothing and gives the band its height back. If a block needs room, look for
-unused canvas before taking it from a neighbour.
+It is blended with `overlay`, not `multiply`. The generated tile is greyscale
+centred on mid-grey, so multiplying it darkens the whole field by roughly half
+and the paper stops reading as texture and starts reading as dirt.
 
-Three further decisions worth knowing about before editing:
+## The dot grid
+
+A hundred dots, one per percentage point, so the proportion is countable against
+a denominator that is on screen. The accent group leads the field, putting the
+mass the tile is about where reading starts. Filled for the two main groups,
+open rings for unsure.
+
+It is 10 × 10 with the key stacked beside it. A wide 20 × 5 band was only 228px
+tall at the full measure, which left about 150px of dead canvas above and below
+it however the slack was pushed around.
 
 **The marks are computed from the data.** `allocate()` turns the published
 percentages into exactly 100 dots by largest remainder, and the build fails if
 they don't sum to roughly 100. There is no path by which the dots and the
 printed numbers can disagree.
 
-**The accent goes on one group only.** `DATA["accent"]` picks it. That is the
-editorial decision — the accent belongs on the mark that proves the finding and
-on nothing else, so changing it is a change of story, not of styling.
-
 **The third category is separated by form, not just colour.** Essential's orange
 sits at L\* 53, between the dark ink (33) and any mid grey light enough to read
 against the warm ground (62). No single-accent palette on a light field can hold
-all three categories 25 L\* apart, so unsure is drawn as an open ring. Measured
-in greyscale the four values come out at 79 / 114 / 167 / 231 — distinct by
-luminance as well as by shape.
-
-The copy rungs derive from the numbers if left as `None`. The reading is
-editorial judgement, so write your own when the month has a better story than
-the arithmetic can see.
-
-The movement sentence is gone from the layout — the arrow states the change
-before anyone reads a word, and repeating it in prose was the copy the tile
-could most afford to lose.
+all three categories 25 L\* apart, so unsure is drawn as an open ring.
 
 ## Checks this passes
 
@@ -138,10 +139,11 @@ could most afford to lose.
   one step darker than the `--text-secondary` token, which measures 4.18:1 and
   fails the 4.5:1 floor. The hero figure is set in the accent at 3.27:1, which
   clears the 3:1 large-text floor and nothing smaller may use it
-- Greyscale luminance of the marks: ink 78, accent 113, ring 149, field 231
-- Legible at 200px wide, and as a still — at thumbnail size the hero figure,
-  its label and the arrow's descent are what survive, which is the point. The
-  descent still reads with the colour stripped out
+- Greyscale luminance of the marks: ink 78, accent 113, ring 149, field 231 —
+  distinct by luminance as well as by shape
+- Legible at 200px wide, and as a still. At thumbnail size the figure, the
+  emphasis block, the arrow's plunge and the orange mass of the field are what
+  survive, which is the point
 
 ## Rendering
 
