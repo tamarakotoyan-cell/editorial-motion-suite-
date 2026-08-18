@@ -54,11 +54,11 @@ DATA = {
     # Which group carries the accent. This is the editorial decision: the
     # accent goes on the mark that proves the finding, and on nothing else.
     #
-    # The arrow tracks this same group, because the accent may only mean one
-    # thing on a tile. "right" gives a falling arrow (positive sentiment
-    # draining away); "wrong" gives a climbing one (negativity building).
-    # Both are the same story; they are not the same picture.
-    "accent": "right",
+    # The arrow, the hero figure, the emphasis block and the dot band all
+    # report this group, so every element on the tile pushes the same number.
+    # "wrong" gives a climbing arrow (negativity building); "right" gives a
+    # falling one (positive sentiment draining away).
+    "accent": "wrong",
 
     # The trend the arrow draws — ordered oldest to newest, values for the
     # accent group. The last two entries must match "june" and "july" or the
@@ -66,8 +66,8 @@ DATA = {
     # ⚠️ PLACEHOLDER SERIES. Replace with the real monthly readings; with
     # fewer than four points the arrow is a single straight segment and reads
     # as a change rather than a trend.
-    "trend": [("Feb", 41), ("Mar", 39), ("Apr", 40),
-              ("May", 36), ("Jun", 37), ("Jul", 33)],
+    "trend": [("Feb", 44), ("Mar", 46), ("Apr", 45),
+              ("May", 48), ("Jun", 49), ("Jul", 52)],
 
     # What the hero figure IS — the one number the tile exists to deliver.
     #   "level"  the accent group's own share this month
@@ -81,6 +81,11 @@ DATA = {
     "hero_label": None,   # what the figure counts, in the poll's own terms
     "takeaway": None,     # what it means, in plain terms — see derive_hero
     "change_line": None,  # how it moved
+
+    # The words the emphasis block sits behind. Defaults to the accent group's
+    # own name, so the highlighted phrase and the accent marks say the same
+    # thing. Only ever a phrase, never the whole line.
+    "highlight": None,
 }
 
 LABELS = {
@@ -89,6 +94,14 @@ LABELS = {
     "unsure": "Unsure",
 }
 ORDER = ["right", "wrong", "unsure"]
+
+
+def band_order(accent: str) -> list[str]:
+    """Accent group first, then the other filled group, with unsure last as
+    the residual. Leading with the accent puts the mass the tile is about at
+    the top of the field, where reading starts."""
+    rest = [k for k in ORDER if k not in (accent, "unsure")]
+    return [accent] + rest + (["unsure"] if accent != "unsure" else [])
 
 # --------------------------------------------------------------------------
 # Palette — Essential tokens, with the measured separations that justify them.
@@ -124,11 +137,11 @@ W, H = 1080, 1350
 # mid-canvas because the arrow sits beside the hero figure rather than below
 # it — an earlier version paid for the arrow out of the band's height while
 # 500 x 400px of canvas sat empty next to a three-glyph number.
-COLS, ROWS = 20, 5
-CELL = 58
-DOT_R = 20.5
-RING_R = 18.0
-RING_W = 5.0
+COLS, ROWS = 10, 10
+CELL = 45
+DOT_R = 16.0
+RING_R = 14.0
+RING_W = 4.0
 
 ARCHIVO = "https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;700"
 GLYPHS = ("abcdefghijklmnopqrstuvwxyz"
@@ -230,6 +243,20 @@ def allocate(pct: dict[str, float]) -> tuple[dict[str, int], bool]:
 
 def fmt_pct(v: float) -> str:
     return f"{v:g}%"
+
+
+def emphasise(text: str, phrase: str | None) -> str:
+    """Put the emphasis block behind the words that matter, and only those.
+
+    The house device is a block of colour covering the key phrase, never the
+    whole line — a full-width band is a highlighter pen, which reads as
+    decoration. box-decoration-break keeps the block intact when the phrase
+    wraps, or the second line loses its ground.
+    """
+    if not phrase or phrase not in text:
+        return text
+    head, _, tail = text.partition(phrase)
+    return f'{head}<span class="hl">{phrase}</span>{tail}'
 
 
 def hero_markup(figure: str) -> str:
@@ -345,7 +372,7 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
         fills["right"] = ("ring", MID)
 
     sequence = []
-    for key in ORDER:
+    for key in band_order(accent_key):
         sequence.extend([key] * dots[key])
 
     marks = []
@@ -367,8 +394,8 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
             + "".join(marks) + "</svg>"), fills
 
 
-def trend_arrow(data: dict, box_w: float = 470.0,
-                box_h: float = 276.0) -> str:
+def trend_arrow(data: dict, box_w: float = 356.0,
+                box_h: float = 208.0) -> str:
     """The trend, drawn as an arrow, sized for the slot beside the hero figure.
 
     A stock downward arrow dropped onto a tile is an icon used as a data mark,
@@ -399,8 +426,7 @@ def trend_arrow(data: dict, box_w: float = 470.0,
                 f'{metric} reads {data["june"][metric]}, '
                 f'{data["july"][metric]} — fix DATA["trend"]')
 
-    PAD_X, TOP, BOT = 4.0, 40.0, 42.0        # room for the endpoint labels
-    HEAD_L, HEAD_W, STROKE, LABEL = 46.0, 31.0, 19.0, 23.0
+    HEAD_L, HEAD_W, STROKE, LABEL = 42.0, 29.0, 19.0, 20.0
 
     values = [v for _, v in series]
     lo, hi = min(values), max(values)
@@ -411,13 +437,11 @@ def trend_arrow(data: dict, box_w: float = 470.0,
     lo, hi = lo - span * .30, hi + span * .30
     span = hi - lo
 
-    plot_w = box_w - 2 * PAD_X - HEAD_L
-    plot_h = box_h - TOP - BOT
-
+    plot_w, plot_h = box_w, box_h
     pts = []
     for i, (_, v) in enumerate(series):
-        x = PAD_X + plot_w * i / (len(series) - 1)
-        y = TOP + (hi - v) / span * plot_h        # constant px per point
+        x = plot_w * i / (len(series) - 1)
+        y = (hi - v) / span * plot_h              # constant px per point
         pts.append((x, y))
 
     # Extend past the last reading so the head sits clear of it, holding the
@@ -429,26 +453,47 @@ def trend_arrow(data: dict, box_w: float = 470.0,
     tip = (x1 + ux * HEAD_L, y1 + uy * HEAD_L)
     base = (tip[0] - ux * HEAD_L, tip[1] - uy * HEAD_L)
     px_, py_ = -uy, ux                                   # perpendicular
+    wing_a = (base[0] + px_ * HEAD_W, base[1] + py_ * HEAD_W)
+    wing_b = (base[0] - px_ * HEAD_W, base[1] - py_ * HEAD_W)
 
     line = pts + [(base[0] + ux * 2, base[1] + uy * 2)]
     path = " ".join(f"{x:.1f},{y:.1f}" for x, y in line)
-    head = (f"{tip[0]:.1f},{tip[1]:.1f} "
-            f"{base[0] + px_ * HEAD_W:.1f},{base[1] + py_ * HEAD_W:.1f} "
-            f"{base[0] - px_ * HEAD_W:.1f},{base[1] - py_ * HEAD_W:.1f}")
+    head = (f"{tip[0]:.1f},{tip[1]:.1f} {wing_a[0]:.1f},{wing_a[1]:.1f} "
+            f"{wing_b[0]:.1f},{wing_b[1]:.1f}")
 
-    # Endpoint labels only, drawn in the same coordinate space as the line so
-    # they cannot drift off it when the data or the canvas changes.
+    # Labels go on the outside of the line's travel, so a rising series does
+    # not park its end label under its own arrowhead. Earlier the two collided
+    # whenever the trend turned upward.
+    rising = values[-1] > values[0]
     first, last = series[0], series[-1]
-    end_y = min(tip[1] + LABEL * 1.5, box_h - 6)
+    start_txt = f"{first[0]} {fmt_pct(first[1])}"
+    end_txt = f"{last[0]} {fmt_pct(last[1])}"
+    start_y = pts[0][1] + (LABEL * 1.55 if rising else -LABEL * .9)
+    end_y = tip[1] + (-LABEL * .9 if rising else LABEL * 1.55)
     labels = (
-        f'<text x="{pts[0][0]:.1f}" y="{max(pts[0][1] - 22, LABEL):.1f}" '
-        f'class="tl">{first[0]} {fmt_pct(first[1])}</text>'
-        f'<text x="{box_w - 2:.1f}" y="{end_y:.1f}" text-anchor="end" '
-        f'class="tl">{last[0]} {fmt_pct(last[1])}</text>')
+        f'<text x="{pts[0][0]:.1f}" y="{start_y:.1f}" class="tl">'
+        f'{start_txt}</text>'
+        f'<text x="{tip[0]:.1f}" y="{end_y:.1f}" text-anchor="end" '
+        f'class="tl">{end_txt}</text>')
+
+    # Derive the viewBox from what is actually drawn — line, head and both
+    # labels — rather than reserving guessed padding. Hand-tuned insets held
+    # for a falling series and clipped the head the moment it rose.
+    CW = LABEL * .60                                  # mean glyph advance
+    boxes = [(x, y) for x, y in line] + [tip, wing_a, wing_b]
+    xs = [x for x, _ in boxes]
+    ys = [y for _, y in boxes]
+    xs += [pts[0][0], pts[0][0] + len(start_txt) * CW,
+           tip[0] - len(end_txt) * CW, tip[0]]
+    ys += [start_y, start_y - LABEL, end_y, end_y - LABEL]
+    pad = STROKE / 2 + 4
+    vx, vy = min(xs) - pad, min(ys) - pad
+    vw, vh = max(xs) - vx + pad, max(ys) - vy + pad
 
     direction = "falling" if values[-1] < values[0] else "rising"
     return (
-        f'<svg class="trend" viewBox="0 0 {box_w:g} {box_h:g}" role="img" '
+        f'<svg class="trend" viewBox="{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}" '
+        f'role="img" '
         f'aria-label="{LABELS[metric]}, {direction} from '
         f'{fmt_pct(values[0])} in {first[0]} to {fmt_pct(values[-1])} in '
         f'{last[0]}">'
@@ -487,6 +532,8 @@ def build_html(data: dict) -> str:
     dots, adjusted = allocate(data["july"])
     figure, hero_label, takeaway, change = derive_hero(data)
     hero_fig = hero_markup(figure)
+    phrase = data["highlight"] or LABELS[data["accent"]].lower()
+    hero_label = emphasise(hero_label, phrase)
     svg, fills = grid_svg(dots, data["accent"])
     keys = key_row(data, fills)
     arrow = trend_arrow(data)
@@ -495,6 +542,12 @@ def build_html(data: dict) -> str:
     logo = (HERE.parents[1] / "plugins/editorial-motion/skills/"
             "editorial-explainer/assets/logo-nourl.png")
     logo_b64 = base64.b64encode(logo.read_bytes()).decode()
+
+    # Two texture layers doing different jobs: laid paper for structure at
+    # large scale, fine grain so the surface is not flat at small scale.
+    # Generated by analog-surface/assets/make-paper.py, seamlessly tiling.
+    paper = CACHE / "paper-overlay.png"
+    paper_b64 = base64.b64encode(paper.read_bytes()).decode() if paper.exists() else ""
 
     note = (" Percentages are rounded, so the dots are allocated to the "
             "nearest whole point." if adjusted else "")
@@ -529,10 +582,21 @@ body{{
   font-weight:400;
   -webkit-font-smoothing:antialiased;
   display:flex;flex-direction:column;
-  padding:84px 84px 72px;
+  padding:78px 84px 66px;
   position:relative;overflow:hidden;
 }}
-/* Texture, not decoration. One layer. */
+/* Paper sits above the colour field and below every mark and letterform —
+   over the top it would darken whichever glyphs a fibre happened to cross.
+   Overlay blend, not multiply: the tile is greyscale centred on mid-grey, so
+   multiplying it darkens the whole field by half and the paper reads as dirt. */
+body::before{{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  opacity:.13;mix-blend-mode:overlay;
+  background-image:url(data:image/png;base64,{paper_b64});
+  background-size:384px 384px;
+}}
+body>*{{position:relative;z-index:1}}
+/* Grain over everything, fine scale. */
 body::after{{
   content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
   opacity:.05;mix-blend-mode:overlay;background-image:{grain};
@@ -541,28 +605,33 @@ body::after{{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-.top,.hero-label,.takeaway,.keys,.foot{{flex:none}}
+.top,.hero-label,.takeaway,.foot{{flex:none}}
 
 /* The hero carries the accent because it and the accent dots state the same
    fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
    nothing smaller may be set in it — see the palette note above. */
 .hero{{
-  flex:none;font-weight:700;font-size:312px;line-height:.84;
+  flex:none;font-weight:700;font-size:344px;line-height:.82;
   letter-spacing:-.035em;color:{ACCENT};
 }}
 .unit{{font-size:.5em;letter-spacing:-.01em}}
 .hero-label{{
-  margin-top:30px;font-weight:400;font-size:46px;line-height:1.14;
-  letter-spacing:-.01em;max-width:20ch;
+  margin-top:34px;font-weight:400;font-size:48px;line-height:1.2;
+  letter-spacing:-.01em;max-width:21ch;
 }}
 
 /* The reading of the result, not a second measurement. Ink, so it ranks above
    the movement line, but well below the figure it explains. */
 .takeaway{{
-  margin-top:32px;font-weight:400;font-size:32px;line-height:1.26;
+  margin-top:30px;font-weight:400;font-size:31px;line-height:1.28;
   max-width:33ch;
 }}
 /* Archivo renders a period as a hard square; the brand full stop is round. */
+.hl{{
+  background:{ACCENT};color:#FDFAF3;
+  padding:.06em .14em .1em;margin:0 -.02em;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}}
 .dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
   background:{ACCENT};margin-left:.07em;vertical-align:baseline}}
 
@@ -570,10 +639,10 @@ body::after{{
    stacking the arrow underneath left ~500 x 400px of canvas empty beside it
    and pushed the marks down; side by side, the number and its direction also
    read as one gesture. */
-.top{{display:flex;align-items:center;gap:38px}}
+.top{{display:flex;align-items:center;gap:30px}}
 .arrow{{flex:1 1 auto;min-width:0}}
 .trend{{display:block;width:100%;height:auto}}
-.tl{{font-family:inherit;font-size:23px;font-weight:700;fill:{INK}}}
+.tl{{font-family:inherit;font-size:20px;font-weight:700;fill:{INK}}}
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
    the browser takes the overflow out of the copy blocks instead. min-height:0
@@ -581,18 +650,19 @@ body::after{{
 /* The band sits with its key rather than centred in the leftover space: the
    slack collects in one break between the statement and the evidence instead
    of splitting into two gaps that leave the marks floating. */
-.plot{{flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;
-  justify-content:flex-start;padding:40px 0 36px}}
-.grid{{width:100%;height:auto;max-height:100%}}
+.plot{{flex:1 1 auto;min-height:0;display:flex;align-items:center;
+  gap:54px;padding:34px 0 22px}}
+.grid{{flex:none;height:100%;width:auto;max-width:56%}}
 
-.keys{{display:flex;gap:30px;margin-top:22px}}
-.k{{flex:1;display:flex;align-items:center;gap:10px;font-size:20px;
+.keys{{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
+  gap:30px;padding-left:8px}}
+.k{{display:flex;align-items:center;gap:12px;font-size:25px;
   line-height:1.2;color:{INK}}}
 .sw{{flex:none}}
 .k-name{{color:{MUTED}}}
 .k-val{{font-weight:700;letter-spacing:-.01em}}
 
-.foot{{margin-top:46px;display:flex;align-items:flex-end;
+.foot{{margin-top:40px;display:flex;align-items:flex-end;
   justify-content:space-between;gap:40px}}
 .src{{font-size:16px;line-height:1.42;color:{MUTED};max-width:44ch}}
 .src .q{{display:block;margin-bottom:7px}}
@@ -612,9 +682,7 @@ body::after{{
 <h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
 <p class="takeaway">{takeaway}</p>
 
-<div class="plot">{svg}</div>
-
-{keys}
+<div class="plot">{svg}{keys}</div>
 
 <div class="foot">
   <p class="src">
