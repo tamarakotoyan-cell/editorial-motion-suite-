@@ -496,9 +496,11 @@ delay instead of flashing at full opacity first.
 - `assets/sfx-test.html` — renders every voice offline and measures the peak
   that actually comes out. Run it after editing `sfx.js`: a gain value is not
   an output level, and the filters attenuate each voice differently.
-- `assets/render.py` — renders an animated artifact to MP4, frame by frame, at
-  the house 12fps, and mixes in the piece's sound cues. Needs Chrome and
-  ffmpeg, nothing else.
+- `../programmatic-motion-renderer/assets/render.py` — renders an animated
+  artifact to MP4, frame by frame, at the house 12fps, and mixes in the piece's
+  sound cues. Needs Chrome and ffmpeg, nothing else. The renderer skill owns it
+  and its contract: it is the shared render runtime and serves every output
+  format, not motion alone.
 
 **It refuses to produce a frozen video, and does so by default** — frozen is the
 failure mode you will not notice until someone else watches it. `--no-check`
@@ -509,7 +511,7 @@ because no single clock reaches everything. `transform` and `opacity`
 animations run on the compositor thread and ignore virtual time, so Web
 Animations are pinned by setting `currentTime` directly. `requestAnimationFrame`
 is invisible to that call, and Chrome services rAF on its own cadence in
-headless, so `render.py` replaces rAF with a queue it drains at an exact
+headless, so the renderer replaces rAF with a queue it drains at an exact
 timestamp — without that, a canvas piece renders at roughly half speed and at a
 different speed on every machine, which still passes a does-it-move check.
 `<video>` follows neither and is seeked directly. **You do not need to do

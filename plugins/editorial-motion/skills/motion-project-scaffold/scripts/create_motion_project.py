@@ -62,7 +62,7 @@ def main() -> int:
 
     local_runtime = skill_root / "assets" / "runtime"
     plugin_runtime = {
-        "render.py": skills_root / "motion-system" / "assets" / "render.py",
+        "render.py": skills_root / "programmatic-motion-renderer" / "assets" / "render.py",
         "motion.css": skills_root / "motion-system" / "assets" / "motion.css",
         "sfx.js": skills_root / "motion-system" / "assets" / "sfx.js",
         "mix_sfx.py": skills_root / "design-motion-sound" / "scripts" / "mix_sfx.py",
