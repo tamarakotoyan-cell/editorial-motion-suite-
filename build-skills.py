@@ -48,6 +48,8 @@ PROSE = {
     "`../motion-system/assets/motion.css`": "the motion-system skill's `motion.css`",
     "`../analog-surface/assets/check-artifact.py`":
         "the analog-surface skill's `check-artifact.py`",
+    "`../programmatic-motion-renderer/assets/render.py`":
+        "the programmatic-motion-renderer skill's `render.py`",
 }
 
 # A vendored file can have dependencies of its own. house-rules.md names the
@@ -63,7 +65,8 @@ VENDOR_DEPS = {
 # zip has no siblings, so the build carries the same runtime under the skill's
 # assets/runtime directory. The generated project stays identical either way.
 SCAFFOLD_RUNTIME = [
-    (SRC / "motion-system" / "assets" / "render.py", "assets/runtime/render.py"),
+    (SRC / "programmatic-motion-renderer" / "assets" / "render.py",
+     "assets/runtime/render.py"),
     (SRC / "motion-system" / "assets" / "motion.css", "assets/runtime/motion.css"),
     (SRC / "motion-system" / "assets" / "sfx.js", "assets/runtime/sfx.js"),
     (SRC / "design-motion-sound" / "scripts" / "mix_sfx.py", "assets/runtime/mix_sfx.py"),

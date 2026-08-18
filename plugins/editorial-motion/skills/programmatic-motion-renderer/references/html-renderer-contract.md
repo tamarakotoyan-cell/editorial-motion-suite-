@@ -1,6 +1,6 @@
 # HTML renderer contract
 
-Editorial Motion's default video path is local HTML, CSS and JavaScript rendered frame by frame with `motion-system/assets/render.py`.
+Editorial Motion's default video path is local HTML, CSS and JavaScript rendered frame by frame with `assets/render.py`, which this skill owns.
 
 ## Runtime boundary
 

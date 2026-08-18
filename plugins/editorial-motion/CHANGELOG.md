@@ -8,6 +8,44 @@ Newest first. Dates are the release date, ISO.
 
 ---
 
+## 1.10.1 — 2026-08-18
+
+The render runtime moves to the skill that documents it. No design rule changed
+and no rendered output changed.
+
+**Changed**
+
+- **`render.py` now lives in `programmatic-motion-renderer/assets/`.** It sat in
+  `motion-system`, a rules skill, while the contract describing it sat in the
+  renderer skill. The runtime is tooling, and it serves every output format
+  rather than motion alone — a still-image path is coming that needs the
+  renderer without the motion rules, so the runtime moves to its contract
+  before that lands. `motion-system` keeps the explanation of why the clock
+  holds still and now cites the sibling path; `build-skills.py` rewrites that
+  citation for standalone bundles, where a sibling path would dangle.
+- **The rule-ownership table gains a row for the render runtime.** The renderer
+  skill owns the runtime and its contract, `motion-system` cites it, and
+  `motion-project-scaffold` vendors it into generated projects. Without the row
+  the next rendering rule has no obvious home.
+- **The version bump is a script, `scripts/bump_version.py`.** Ten places carry
+  the release version — two host manifests, the newest changelog heading and
+  seven artifact stamps — and CI catches a missed one late, one check at a
+  time, after the first few files are already edited. `--check` reports the
+  drift and writes nothing. Both modes leave a captured `content="X.Y.Z"`
+  alone: the changelog and the renderer contract each print one to show the
+  shape of a stamp, and rewriting it turns instructional text into a version
+  number.
+
+**Unchanged**
+
+- `render.py` itself — moved with no edit, and recorded as a rename. The
+  determinism regression produces the same container hash either side of the
+  move.
+- `motion.css` and `sfx.js` stay in `motion-system`. Those are rules, not
+  tooling.
+- Generated projects. The scaffold still copies the same four runtime files to
+  the same four places, from the new source path.
+
 ## 1.10.0 — 2026-08-14
 
 Foundation 0.1: one standalone production system for Codex and Claude.

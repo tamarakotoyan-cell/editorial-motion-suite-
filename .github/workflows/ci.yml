@@ -29,6 +29,13 @@ jobs:
       - name: Foundation production path smoke test
         run: python3 scripts/test_foundation.py
 
+      # The manifests, the changelog heading and every artifact stamp carry the
+      # same release version. This names all of them at once, instead of the
+      # cross-host check finding the manifests and the artifact linter finding
+      # the stamps two steps apart.
+      - name: Release version agrees everywhere it is written down
+        run: python3 scripts/bump_version.py --check
+
       - name: Install ffmpeg for the render regression
         run: |
           sudo apt-get update

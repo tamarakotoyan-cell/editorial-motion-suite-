@@ -48,6 +48,7 @@ it. If you are adding a rule, find its area here first.
 | Footage homogenisation — whether one shared treatment is required | `analog-surface` §5 | `imagery-motion` §Duotone owns the grading recipe, not the policy |
 | Type scale ratios and the maths | `layout-composition` §Type scales | `editorial-explainer` and `type-treatment` cite it |
 | Typographic roles in a data piece — display, body, utility, hero figure | `editorial-explainer` §Typography, as roles | `type-treatment` owns styling and layering against imagery, not role assignment |
+| The render runtime — the HTML-to-MP4 path and its determinism rules | `programmatic-motion-renderer/assets/render.py` and `references/html-renderer-contract.md` | `motion-system` explains why the clock holds still and cites it; `motion-project-scaffold` vendors it into generated projects |
 
 Two of these were genuine duplicates with the values written out twice, and they
 had already drifted: spring overshoot read "~4%" in one document and "~5%" in
@@ -69,7 +70,7 @@ and only for the last two.
 | `analog-surface/assets/check-artifact.py` | Lints generated HTML against the mechanically checkable house rules |
 | `motion-system/assets/sfx.js` | Procedural sound design, muted by default |
 | `design-motion-sound/scripts/mix_sfx.py` | Mix timecoded SFX cues into a video with ffmpeg |
-| `motion-system/assets/render.py` | Renders an animated artifact to MP4 at 12fps, with its `sfx.js` cues mixed in |
+| `programmatic-motion-renderer/assets/render.py` | Renders an animated artifact to MP4 at 12fps, with its `sfx.js` cues mixed in |
 
 Textures are generated rather than sourced because the stock libraries the
 reference tutorials use forbid redistribution inside a plugin — and because at
