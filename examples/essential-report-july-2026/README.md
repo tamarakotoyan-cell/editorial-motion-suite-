@@ -55,8 +55,9 @@ reading, and check it still says what you mean before publishing.
 
 ## The arrow
 
-The trend is drawn as a heavy arrow, because a shape registers before any
-word does. It is not a stock icon dropped on top — the house list bans icons
+The trend is drawn as a heavy arrow, sitting beside the hero figure, because a
+shape registers before any word does — and because the number and its
+direction read as one gesture when they share a line. It is not a stock icon dropped on top — the house list bans icons
 used as data marks, and a generic downward arrow asserts a slide the figures
 may not support. Every elbow here is a real monthly reading: x is evenly
 spaced by month, y is a linear scale over the series, so pixels-per-point is
@@ -95,9 +96,14 @@ Same story, different picture. Pick the one that matches the month.
 
 Beneath the arrow, a hundred dots — one dot per percentage point — so the
 proportion is countable against a denominator that is on screen. Right
-direction and wrong direction are filled; unsure is drawn as open rings. It is
-25 × 4 rather than 20 × 5 because the arrow now takes the height the band used
-to have: the band is the supporting evidence, the arrow is the impression.
+direction and wrong direction are filled; unsure is drawn as open rings. It runs
+20 × 5 at the full measure.
+
+An earlier version stacked the arrow below the copy and paid for its height by
+shrinking the band to 25 × 4 — while roughly 500 × 400px of canvas sat empty
+beside a three-glyph hero figure. Putting the arrow in that space costs
+nothing and gives the band its height back. If a block needs room, look for
+unused canvas before taking it from a neighbour.
 
 Three further decisions worth knowing about before editing:
 

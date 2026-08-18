@@ -120,14 +120,15 @@ MID = "#9A9490"
 
 W, H = 1080, 1350
 # A wide band rather than a square hundred: it runs the full text measure, so
-# the marks, the copy and the key all share one left edge. 25 x 4 rather than
-# 20 x 5 because the arrow now takes the height the band used to have — the
-# band is the supporting evidence, the arrow is the impression.
-COLS, ROWS = 25, 4
+# the marks, the copy and the key all share one left edge. It gets the full
+# mid-canvas because the arrow sits beside the hero figure rather than below
+# it — an earlier version paid for the arrow out of the band's height while
+# 500 x 400px of canvas sat empty next to a three-glyph number.
+COLS, ROWS = 20, 5
 CELL = 58
-DOT_R = 15.5
-RING_R = 13.5
-RING_W = 4.0
+DOT_R = 20.5
+RING_R = 18.0
+RING_W = 5.0
 
 ARCHIVO = "https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;700"
 GLYPHS = ("abcdefghijklmnopqrstuvwxyz"
@@ -366,8 +367,9 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
             + "".join(marks) + "</svg>"), fills
 
 
-def trend_arrow(data: dict) -> str:
-    """The trend, drawn as an arrow.
+def trend_arrow(data: dict, box_w: float = 470.0,
+                box_h: float = 276.0) -> str:
+    """The trend, drawn as an arrow, sized for the slot beside the hero figure.
 
     A stock downward arrow dropped onto a tile is an icon used as a data mark,
     which the house list bans, and it asserts a slide the figures may not
@@ -379,6 +381,10 @@ def trend_arrow(data: dict) -> str:
     Geometric rather than rounded — miter joins and butt caps, one flat fill,
     no gradient or shadow. That is the brand's register and it happens to be
     the sharper drawing anyway.
+
+    The viewBox is in real pixels at the intended render size, so stroke
+    weights and label sizes mean what they say. Scaling one drawing into a
+    different-shaped box is how a chunky arrow silently becomes a thin one.
     """
     series = data["trend"]
     metric = data["accent"]
@@ -386,22 +392,27 @@ def trend_arrow(data: dict) -> str:
         raise SystemExit("trend needs at least two readings")
 
     # The arrow may not disagree with the numbers printed beneath it.
-    for label, month in ((series[-1], "july"), (series[-2], "june")):
-        if label[1] != data[month][metric]:
+    for point, month in ((series[-1], "july"), (series[-2], "june")):
+        if point[1] != data[month][metric]:
             raise SystemExit(
                 f'trend ends {series[-2][1]}, {series[-1][1]} but '
                 f'{metric} reads {data["june"][metric]}, '
                 f'{data["july"][metric]} — fix DATA["trend"]')
 
-    VW, VH = 1000.0, 300.0
-    PAD_X, TOP, BOT = 8.0, 74.0, 58.0     # room for the endpoint labels
-    HEAD_L, HEAD_W, STROKE = 74.0, 52.0, 26.0
+    PAD_X, TOP, BOT = 4.0, 40.0, 42.0        # room for the endpoint labels
+    HEAD_L, HEAD_W, STROKE, LABEL = 46.0, 31.0, 19.0, 23.0
 
     values = [v for _, v in series]
     lo, hi = min(values), max(values)
     span = (hi - lo) or 1.0
-    plot_w = VW - 2 * PAD_X - HEAD_L
-    plot_h = VH - TOP - BOT
+    # Breathe the scale out past the extremes. Fitting the series edge to edge
+    # makes any series look like a cliff, whatever its actual range — the
+    # steepest possible reading of the same numbers.
+    lo, hi = lo - span * .30, hi + span * .30
+    span = hi - lo
+
+    plot_w = box_w - 2 * PAD_X - HEAD_L
+    plot_h = box_h - TOP - BOT
 
     pts = []
     for i, (_, v) in enumerate(series):
@@ -409,8 +420,8 @@ def trend_arrow(data: dict) -> str:
         y = TOP + (hi - v) / span * plot_h        # constant px per point
         pts.append((x, y))
 
-    # Extend past the last reading by one step so the head sits clear of it,
-    # holding the direction the final segment already established.
+    # Extend past the last reading so the head sits clear of it, holding the
+    # direction the final segment already established.
     (x0, y0), (x1, y1) = pts[-2], pts[-1]
     dx, dy = x1 - x0, y1 - y0
     length = (dx * dx + dy * dy) ** .5 or 1.0
@@ -425,18 +436,19 @@ def trend_arrow(data: dict) -> str:
             f"{base[0] + px_ * HEAD_W:.1f},{base[1] + py_ * HEAD_W:.1f} "
             f"{base[0] - px_ * HEAD_W:.1f},{base[1] - py_ * HEAD_W:.1f}")
 
-    # Endpoint labels only. Drawn in the same coordinate space as the line, so
+    # Endpoint labels only, drawn in the same coordinate space as the line so
     # they cannot drift off it when the data or the canvas changes.
     first, last = series[0], series[-1]
+    end_y = min(tip[1] + LABEL * 1.5, box_h - 6)
     labels = (
-        f'<text x="{pts[0][0]:.1f}" y="{pts[0][1] - 34:.1f}" '
+        f'<text x="{pts[0][0]:.1f}" y="{max(pts[0][1] - 22, LABEL):.1f}" '
         f'class="tl">{first[0]} {fmt_pct(first[1])}</text>'
-        f'<text x="{tip[0]:.1f}" y="{tip[1] + 46:.1f}" text-anchor="end" '
-        f'class="tl tl-end">{last[0]} {fmt_pct(last[1])}</text>')
+        f'<text x="{box_w - 2:.1f}" y="{end_y:.1f}" text-anchor="end" '
+        f'class="tl">{last[0]} {fmt_pct(last[1])}</text>')
 
     direction = "falling" if values[-1] < values[0] else "rising"
     return (
-        f'<svg class="trend" viewBox="0 0 {VW:g} {VH:g}" role="img" '
+        f'<svg class="trend" viewBox="0 0 {box_w:g} {box_h:g}" role="img" '
         f'aria-label="{LABELS[metric]}, {direction} from '
         f'{fmt_pct(values[0])} in {first[0]} to {fmt_pct(values[-1])} in '
         f'{last[0]}">'
@@ -529,37 +541,39 @@ body::after{{
 /* Every block but the plot is flex:none. Without it they share the shrink when
    copy runs long, and the source line silently loses its last row — which is
    the one carrying the sample size. The plot absorbs it all instead. */
-.hero,.hero-label,.takeaway,.keys,.foot{{flex:none}}
+.top,.hero-label,.takeaway,.keys,.foot{{flex:none}}
 
 /* The hero carries the accent because it and the accent dots state the same
    fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
    nothing smaller may be set in it — see the palette note above. */
 .hero{{
-  font-weight:700;font-size:264px;line-height:.84;letter-spacing:-.035em;
-  color:{ACCENT};
+  flex:none;font-weight:700;font-size:312px;line-height:.84;
+  letter-spacing:-.035em;color:{ACCENT};
 }}
 .unit{{font-size:.5em;letter-spacing:-.01em}}
 .hero-label{{
-  margin-top:28px;font-weight:400;font-size:44px;line-height:1.14;
+  margin-top:30px;font-weight:400;font-size:46px;line-height:1.14;
   letter-spacing:-.01em;max-width:20ch;
 }}
 
 /* The reading of the result, not a second measurement. Ink, so it ranks above
    the movement line, but well below the figure it explains. */
 .takeaway{{
-  margin-top:30px;font-weight:400;font-size:31px;line-height:1.26;
+  margin-top:32px;font-weight:400;font-size:32px;line-height:1.26;
   max-width:33ch;
 }}
 /* Archivo renders a period as a hard square; the brand full stop is round. */
 .dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
   background:{ACCENT};margin-left:.07em;vertical-align:baseline}}
 
-/* The arrow carries the movement, so the sentence that used to state it is
-   gone. Less copy, and the change is legible before anything is read. */
-.arrow{{flex:1 1 auto;min-height:0;display:flex;align-items:center;
-  padding:34px 0 10px}}
-.trend{{width:100%;height:auto;max-height:100%;overflow:visible}}
-.tl{{font-family:inherit;font-size:30px;font-weight:700;fill:{INK}}}
+/* Hero and arrow share the top row. The figure is three glyphs wide, so
+   stacking the arrow underneath left ~500 x 400px of canvas empty beside it
+   and pushed the marks down; side by side, the number and its direction also
+   read as one gesture. */
+.top{{display:flex;align-items:center;gap:38px}}
+.arrow{{flex:1 1 auto;min-width:0}}
+.trend{{display:block;width:100%;height:auto}}
+.tl{{font-family:inherit;font-size:23px;font-weight:700;fill:{INK}}}
 
 /* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
    the browser takes the overflow out of the copy blocks instead. min-height:0
@@ -567,8 +581,8 @@ body::after{{
 /* The band sits with its key rather than centred in the leftover space: the
    slack collects in one break between the statement and the evidence instead
    of splitting into two gaps that leave the marks floating. */
-.plot{{flex:none;display:flex;align-items:flex-end;
-  justify-content:flex-start;padding:26px 0 30px}}
+.plot{{flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;
+  justify-content:flex-start;padding:40px 0 36px}}
 .grid{{width:100%;height:auto;max-height:100%}}
 
 .keys{{display:flex;gap:30px;margin-top:22px}}
@@ -591,11 +605,12 @@ body::after{{
 </head>
 <body>
 {warning}
-<p class="hero">{hero_fig}</p>
+<div class="top">
+  <p class="hero">{hero_fig}</p>
+  <div class="arrow">{arrow}</div>
+</div>
 <h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
 <p class="takeaway">{takeaway}</p>
-
-<div class="arrow">{arrow}</div>
 
 <div class="plot">{svg}</div>
 
