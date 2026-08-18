@@ -54,20 +54,10 @@ DATA = {
     # Which group carries the accent. This is the editorial decision: the
     # accent goes on the mark that proves the finding, and on nothing else.
     #
-    # The arrow, the hero figure, the emphasis block and the dot band all
-    # report this group, so every element on the tile pushes the same number.
-    # "wrong" gives a climbing arrow (negativity building); "right" gives a
-    # falling one (positive sentiment draining away).
+    # The hero figure, the emphasis block and the leading mass of the dot
+    # field all report this group, so every element pushes the same number.
+    # The arrow no longer tracks it — see descent_arrow.
     "accent": "wrong",
-
-    # The trend the arrow draws — ordered oldest to newest, values for the
-    # accent group. The last two entries must match "june" and "july" or the
-    # build stops, so the arrow can never contradict the key beneath it.
-    # ⚠️ PLACEHOLDER SERIES. Replace with the real monthly readings; with
-    # fewer than four points the arrow is a single straight segment and reads
-    # as a change rather than a trend.
-    "trend": [("Feb", 44), ("Mar", 46), ("Apr", 45),
-              ("May", 48), ("Jun", 49), ("Jul", 52)],
 
     # What the hero figure IS — the one number the tile exists to deliver.
     #   "level"  the accent group's own share this month
@@ -394,114 +384,65 @@ def grid_svg(dots: dict[str, int], accent_key: str) -> str:
             + "".join(marks) + "</svg>"), fills
 
 
-def trend_arrow(data: dict, box_w: float = 356.0,
-                box_h: float = 208.0) -> str:
-    """The trend, drawn as an arrow, sized for the slot beside the hero figure.
+def descent_arrow(box_w: float = 340.0, box_h: float = 400.0) -> str:
+    """A descending arrow — an illustration of mood, not a plotted series.
 
-    A stock downward arrow dropped onto a tile is an icon used as a data mark,
-    which the house list bans, and it asserts a slide the figures may not
-    support. This one is the same shape but every elbow is a real reading:
-    x is evenly spaced by month, y is a linear scale over the series, so
-    pixels-per-point is constant across the whole line. The impression is
-    immediate and it is also true.
+    WARNING: this carries no data. An earlier version drew the real monthly
+    readings and the arrow's shape was theirs; at the client's direction it is
+    now a designed shape that always points down, standing for "the future is
+    going down the drain" rather than for any measured decline.
 
-    Geometric rather than rounded — miter joins and butt caps, one flat fill,
-    no gradient or shadow. That is the brand's register and it happens to be
-    the sharper drawing anyway.
+    Two things keep that from becoming a lie, and both matter if this is ever
+    edited:
 
-    The viewBox is in real pixels at the intended render size, so stroke
-    weights and label sizes mean what they say. Scaling one drawing into a
-    different-shaped box is how a chunky arrow silently becomes a thin one.
+    * **No labels, no endpoints, no axis.** Nothing here can be read off. An
+      unlabelled arrow states a mood; the moment a value is attached to either
+      end it becomes a chart, and this chart would be wrong — the accent group
+      is rising, not falling.
+    * **It sits in the right-hand column with the interpretive line, not
+      beside the hero figure.** Hard against the number it would assert that
+      the number is falling, which is the opposite of true.
+
+    To make the arrow mean something again, restore the data-driven version
+    from git history rather than adding labels to this one.
     """
-    series = data["trend"]
-    metric = data["accent"]
-    if len(series) < 2:
-        raise SystemExit("trend needs at least two readings")
+    # Normalised waypoints: a stepped decline, each recovery smaller than the
+    # fall before it. Fixed by hand rather than randomised, so the shape is
+    # identical across rebuilds.
+    shape = [(0.00, 0.05), (0.17, 0.21), (0.30, 0.12), (0.45, 0.38),
+             (0.57, 0.28), (0.72, 0.58), (0.83, 0.49), (1.00, 0.88)]
+    STROKE, HEAD_L, HEAD_W = 26.0, 60.0, 41.0
 
-    # The arrow may not disagree with the numbers printed beneath it.
-    for point, month in ((series[-1], "july"), (series[-2], "june")):
-        if point[1] != data[month][metric]:
-            raise SystemExit(
-                f'trend ends {series[-2][1]}, {series[-1][1]} but '
-                f'{metric} reads {data["june"][metric]}, '
-                f'{data["july"][metric]} — fix DATA["trend"]')
-
-    HEAD_L, HEAD_W, STROKE, LABEL = 42.0, 29.0, 19.0, 20.0
-
-    values = [v for _, v in series]
-    lo, hi = min(values), max(values)
-    span = (hi - lo) or 1.0
-    # Breathe the scale out past the extremes. Fitting the series edge to edge
-    # makes any series look like a cliff, whatever its actual range — the
-    # steepest possible reading of the same numbers.
-    lo, hi = lo - span * .30, hi + span * .30
-    span = hi - lo
-
-    plot_w, plot_h = box_w, box_h
-    pts = []
-    for i, (_, v) in enumerate(series):
-        x = plot_w * i / (len(series) - 1)
-        y = (hi - v) / span * plot_h              # constant px per point
-        pts.append((x, y))
-
-    # Extend past the last reading so the head sits clear of it, holding the
-    # direction the final segment already established.
+    pts = [(x * box_w, y * box_h) for x, y in shape]
     (x0, y0), (x1, y1) = pts[-2], pts[-1]
     dx, dy = x1 - x0, y1 - y0
     length = (dx * dx + dy * dy) ** .5 or 1.0
     ux, uy = dx / length, dy / length
     tip = (x1 + ux * HEAD_L, y1 + uy * HEAD_L)
     base = (tip[0] - ux * HEAD_L, tip[1] - uy * HEAD_L)
-    px_, py_ = -uy, ux                                   # perpendicular
+    px_, py_ = -uy, ux
     wing_a = (base[0] + px_ * HEAD_W, base[1] + py_ * HEAD_W)
     wing_b = (base[0] - px_ * HEAD_W, base[1] - py_ * HEAD_W)
 
-    line = pts + [(base[0] + ux * 2, base[1] + uy * 2)]
+    line = pts[:-1] + [(base[0] + ux * 2, base[1] + uy * 2)]
     path = " ".join(f"{x:.1f},{y:.1f}" for x, y in line)
     head = (f"{tip[0]:.1f},{tip[1]:.1f} {wing_a[0]:.1f},{wing_a[1]:.1f} "
             f"{wing_b[0]:.1f},{wing_b[1]:.1f}")
 
-    # Labels go on the outside of the line's travel, so a rising series does
-    # not park its end label under its own arrowhead. Earlier the two collided
-    # whenever the trend turned upward.
-    rising = values[-1] > values[0]
-    first, last = series[0], series[-1]
-    start_txt = f"{first[0]} {fmt_pct(first[1])}"
-    end_txt = f"{last[0]} {fmt_pct(last[1])}"
-    start_y = pts[0][1] + (LABEL * 1.55 if rising else -LABEL * .9)
-    end_y = tip[1] + (-LABEL * .9 if rising else LABEL * 1.55)
-    labels = (
-        f'<text x="{pts[0][0]:.1f}" y="{start_y:.1f}" class="tl">'
-        f'{start_txt}</text>'
-        f'<text x="{tip[0]:.1f}" y="{end_y:.1f}" text-anchor="end" '
-        f'class="tl">{end_txt}</text>')
-
-    # Derive the viewBox from what is actually drawn — line, head and both
-    # labels — rather than reserving guessed padding. Hand-tuned insets held
-    # for a falling series and clipped the head the moment it rose.
-    CW = LABEL * .60                                  # mean glyph advance
-    boxes = [(x, y) for x, y in line] + [tip, wing_a, wing_b]
-    xs = [x for x, _ in boxes]
-    ys = [y for _, y in boxes]
-    xs += [pts[0][0], pts[0][0] + len(start_txt) * CW,
-           tip[0] - len(end_txt) * CW, tip[0]]
-    ys += [start_y, start_y - LABEL, end_y, end_y - LABEL]
-    pad = STROKE / 2 + 4
+    # viewBox from what is actually drawn, so the head cannot clip.
+    xs = [x for x, _ in line] + [tip[0], wing_a[0], wing_b[0]]
+    ys = [y for _, y in line] + [tip[1], wing_a[1], wing_b[1]]
+    pad = STROKE / 2 + 2
     vx, vy = min(xs) - pad, min(ys) - pad
     vw, vh = max(xs) - vx + pad, max(ys) - vy + pad
 
-    direction = "falling" if values[-1] < values[0] else "rising"
     return (
-        f'<svg class="trend" viewBox="{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}" '
-        f'role="img" '
-        f'aria-label="{LABELS[metric]}, {direction} from '
-        f'{fmt_pct(values[0])} in {first[0]} to {fmt_pct(values[-1])} in '
-        f'{last[0]}">'
+        f'<svg class="arrow-mark" viewBox="{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}" '
+        f'role="img" aria-hidden="true">'
         f'<polyline points="{path}" fill="none" stroke="{ACCENT}" '
         f'stroke-width="{STROKE:g}" stroke-linejoin="miter" '
         f'stroke-linecap="butt"/>'
-        f'<polygon points="{head}" fill="{ACCENT}"/>'
-        f'{labels}</svg>')
+        f'<polygon points="{head}" fill="{ACCENT}"/></svg>')
 
 
 def key_row(data: dict, fills: dict) -> str:
@@ -536,7 +477,7 @@ def build_html(data: dict) -> str:
     hero_label = emphasise(hero_label, phrase)
     svg, fills = grid_svg(dots, data["accent"])
     keys = key_row(data, fills)
-    arrow = trend_arrow(data)
+    arrow = descent_arrow()
     faces, stack = font_css()
 
     logo = (HERE.parents[1] / "plugins/editorial-motion/skills/"
@@ -574,6 +515,34 @@ def build_html(data: dict) -> str:
 <style>
 {faces}
 *{{margin:0;padding:0;box-sizing:border-box}}
+
+/* ---- layout-composition: the grid is chosen before anything is placed ----
+   Canvas 4:5 (1080x1350) — Instagram feed at maximum height, per the format
+   table. Grid: 12-column modular for alignment, rule of thirds for the focal
+   point. Base unit 8px, which is also the brand's spacing rhythm; every gap
+   below derives from it rather than being picked individually.
+
+   Two rails, not one. An earlier version ran the figure, the label, the
+   reading, the marks and the source all off the same left margin — five
+   elements on one line, which reads as a list rather than a composition.
+   Now the left column carries the evidence (figure, label, marks) and the
+   right column carries the reading (arrow, interpretation, key). --------- */
+:root{{
+  --u: 8px;
+  --gap: calc(var(--u) * 3);            /* 24 — column gutter        */
+  --row: calc(var(--u) * 4);            /* 32 — row rhythm           */
+  --band: calc(var(--u) * 6);           /* 48 — major section break  */
+
+  /* Perfect Fourth, 1.333, base 18. Display -> heading -> body as three
+     distinct registers, which is what a campaign graphic wants. Every size
+     on the tile is a step on this scale and nothing is picked freehand. */
+  --f0: 18px;                           /* source line               */
+  --f1: 24px;                           /* key entries               */
+  --f2: 32px;                           /* the reading               */
+  --f3: 43px;                           /* what the figure counts    */
+  --f9: 319px;                          /* the figure                */
+}}
+
 html,body{{width:{W}px;height:{H}px}}
 body{{
   background:{FIELD};
@@ -581,10 +550,16 @@ body{{
   font-family:{stack};
   font-weight:400;
   -webkit-font-smoothing:antialiased;
-  display:flex;flex-direction:column;
-  padding:78px 84px 66px;
+  padding:calc(var(--u) * 10) calc(var(--u) * 10.5) calc(var(--u) * 8);
   position:relative;overflow:hidden;
+
+  display:grid;
+  grid-template-columns:repeat(12, 1fr);
+  column-gap:var(--gap);
+  grid-template-rows:auto auto 1fr auto;
+  align-content:start;
 }}
+
 /* Paper sits above the colour field and below every mark and letterform —
    over the top it would darken whichever glyphs a fibre happened to cross.
    Overlay blend, not multiply: the tile is greyscale centred on mid-grey, so
@@ -602,72 +577,61 @@ body::after{{
   opacity:.05;mix-blend-mode:overlay;background-image:{grain};
 }}
 
-/* Every block but the plot is flex:none. Without it they share the shrink when
-   copy runs long, and the source line silently loses its last row — which is
-   the one carrying the sample size. The plot absorbs it all instead. */
-.top,.hero-label,.takeaway,.foot{{flex:none}}
+/* ---- placement -------------------------------------------------------- */
+/* The focal point sits on the upper-left third, not jammed into the corner
+   and not centred by default. */
+.hero      {{grid-column:1 / 9;  grid-row:1; align-self:start}}
+.arrow     {{grid-column:9 / 13; grid-row:1 / 3; align-self:start;
+             justify-self:end; padding-top:var(--row)}}
+.hero-label{{grid-column:1 / 9;  grid-row:2; margin-top:var(--row)}}
+.takeaway  {{grid-column:5 / 13; grid-row:3; margin-top:var(--band);
+             align-self:start}}
+.plot      {{grid-column:1 / 13; grid-row:4; margin-top:var(--band);
+             display:flex;align-items:center;gap:calc(var(--gap) * 2)}}
+.foot      {{grid-column:1 / 13; grid-row:5; margin-top:var(--band);
+             display:flex;align-items:flex-end;
+             justify-content:space-between;gap:var(--band)}}
 
-/* The hero carries the accent because it and the accent dots state the same
-   fact. At this size it clears the 3:1 large-text floor (measured 3.27:1);
-   nothing smaller may be set in it — see the palette note above. */
+/* ---- type ------------------------------------------------------------- */
 .hero{{
-  flex:none;font-weight:700;font-size:344px;line-height:.82;
+  font-weight:700;font-size:var(--f9);line-height:.82;
   letter-spacing:-.035em;color:{ACCENT};
 }}
 .unit{{font-size:.5em;letter-spacing:-.01em}}
-.hero-label{{
-  margin-top:34px;font-weight:400;font-size:48px;line-height:1.2;
-  letter-spacing:-.01em;max-width:21ch;
-}}
 
-/* The reading of the result, not a second measurement. Ink, so it ranks above
-   the movement line, but well below the figure it explains. */
-.takeaway{{
-  margin-top:30px;font-weight:400;font-size:31px;line-height:1.28;
-  max-width:33ch;
+.hero-label{{
+  font-weight:400;font-size:var(--f3);line-height:1.2;
+  letter-spacing:-.01em;
 }}
-/* Archivo renders a period as a hard square; the brand full stop is round. */
+/* The emphasis block covers the words that matter and no more — a full-width
+   band is a highlighter pen. clone keeps it whole when the phrase wraps. */
 .hl{{
   background:{ACCENT};color:#FDFAF3;
   padding:.06em .14em .1em;margin:0 -.02em;
   -webkit-box-decoration-break:clone;box-decoration-break:clone;
 }}
+/* Archivo renders a period as a hard square; the brand full stop is round. */
 .dot-mark{{display:inline-block;width:.22em;height:.22em;border-radius:50%;
-  background:{ACCENT};margin-left:.07em;vertical-align:baseline}}
+  background:{ACCENT};margin-left:.16em;vertical-align:baseline}}
 
-/* Hero and arrow share the top row. The figure is three glyphs wide, so
-   stacking the arrow underneath left ~500 x 400px of canvas empty beside it
-   and pushed the marks down; side by side, the number and its direction also
-   read as one gesture. */
-.top{{display:flex;align-items:center;gap:30px}}
-.arrow{{flex:1 1 auto;min-width:0}}
-.trend{{display:block;width:100%;height:auto}}
-.tl{{font-family:inherit;font-size:20px;font-weight:700;fill:{INK}}}
+.takeaway{{font-weight:400;font-size:var(--f2);line-height:1.28}}
 
-/* flex-basis auto, not 0 — a basis of 0 gives the plot no shrink weight, so
-   the browser takes the overflow out of the copy blocks instead. min-height:0
-   lets it shrink past the SVG's intrinsic size when the headline runs long. */
-/* The band sits with its key rather than centred in the leftover space: the
-   slack collects in one break between the statement and the evidence instead
-   of splitting into two gaps that leave the marks floating. */
-.plot{{flex:1 1 auto;min-height:0;display:flex;align-items:center;
-  gap:54px;padding:34px 0 22px}}
-.grid{{flex:none;height:100%;width:auto;max-width:56%}}
+.arrow-mark{{display:block;width:100%;height:auto;max-height:100%}}
 
+/* ---- marks ------------------------------------------------------------ */
+.grid{{flex:none;height:auto;width:52%}}
 .keys{{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
-  gap:30px;padding-left:8px}}
-.k{{display:flex;align-items:center;gap:12px;font-size:25px;
-  line-height:1.2;color:{INK}}}
+  gap:var(--band)}}
+.k{{display:flex;align-items:center;gap:calc(var(--u) * 1.5);
+  font-size:var(--f1);line-height:1.2;color:{INK}}}
 .sw{{flex:none}}
 .k-name{{color:{MUTED}}}
 .k-val{{font-weight:700;letter-spacing:-.01em}}
 
-.foot{{margin-top:40px;display:flex;align-items:flex-end;
-  justify-content:space-between;gap:40px}}
-.src{{font-size:16px;line-height:1.42;color:{MUTED};max-width:44ch}}
-.src .q{{display:block;margin-bottom:7px}}
-.logo{{width:186px;height:auto;flex:none;mix-blend-mode:multiply;
-  opacity:.94}}
+/* ---- attribution ------------------------------------------------------ */
+.src{{font-size:var(--f0);line-height:1.4;color:{MUTED};max-width:42ch}}
+.src .q{{display:block;margin-bottom:calc(var(--u) * .875)}}
+.logo{{width:196px;height:auto;flex:none;mix-blend-mode:multiply;opacity:.94}}
 .placeholder{{position:absolute;top:0;left:0;right:0;padding:9px 0;
   text-align:center;font-size:17px;font-weight:700;letter-spacing:.04em;
   color:#FFF1EC;background:{ACCENT}}}
@@ -675,10 +639,8 @@ body::after{{
 </head>
 <body>
 {warning}
-<div class="top">
-  <p class="hero">{hero_fig}</p>
-  <div class="arrow">{arrow}</div>
-</div>
+<p class="hero">{hero_fig}</p>
+<div class="arrow">{arrow}</div>
 <h1 class="hero-label">{hero_label}<span class="dot-mark"></span></h1>
 <p class="takeaway">{takeaway}</p>
 
