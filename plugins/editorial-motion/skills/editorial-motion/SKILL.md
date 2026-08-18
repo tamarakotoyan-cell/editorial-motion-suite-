@@ -67,7 +67,7 @@ Every generated artifact carries the version of the system that made it, in the
 head:
 
 ```html
-<meta name="editorial-motion" content="1.10.0">
+<meta name="editorial-motion" content="1.10.1">
 ```
 
 Take the base number from either plugin manifest; if these
