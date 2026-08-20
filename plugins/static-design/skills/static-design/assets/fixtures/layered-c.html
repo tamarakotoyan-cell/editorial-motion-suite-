@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="static-design" content="0.6.0">
+<!--
+  Right on purpose, in four specific ways. Must stay quiet on V, S, E and I.
+
+  A Structure C frame in outline (08-layered-editorial, ground-mass build):
+  one photographic subject and one treated mass — two <img>s, inside C's
+  ceiling, so V must not fire — and a ghosted artefact behind: a giant
+  low-contrast copy of the hero, set in type, running into the top safe
+  zone. It carries aria-hidden="true", so it is a mark and not copy: S must
+  not report it in the safe zone, E must not count it as a fourth register,
+  I must not measure its contrast. Take the attribute off and all three fire.
+
+  Everything else the linter says about this file is tolerated; it proves
+  the carve-outs, not that it is a good tile.
+-->
+<title>Layered editorial outline</title>
+<style>
+  body{ margin:0; font-family:"Helvetica Neue"; }
+  .frame{ position:relative; width:1080px; height:1350px; background:#E9E7E5; overflow:hidden; }
+  .ghost{ position:absolute; left:-20px; top:60px; font-size:520px; line-height:1;
+          font-weight:700; color:#D7D4D1; opacity:.55; }
+  img{ position:absolute; display:block; }
+  .subject{ left:470px; top:120px; width:600px; height:760px; }
+  .mass{ left:-40px; top:640px; width:1160px; height:300px; }
+  .type{ position:absolute; left:76px; right:76px; bottom:152px; }
+  .hero{ font-size:170px; line-height:.9; font-weight:700; color:#4E4E50; }
+  .sentence{ font-size:54px; line-height:1.06; font-weight:700; color:#4E4E50; }
+  .src{ margin-top:26px; font-size:17px; color:#5F5F62; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="ghost" aria-hidden="true">75</div>
+    <img class="subject" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" alt="">
+    <img class="mass" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" alt="">
+    <div class="type">
+      <div class="hero">75%</div>
+      <div class="sentence">of Australians want the algorithm regulated</div>
+      <div class="src">Essential Report, July 2026. All participants, n=1,060.</div>
+    </div>
+  </div>
+</body>
+</html>

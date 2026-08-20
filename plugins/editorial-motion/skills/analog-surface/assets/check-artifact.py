@@ -87,10 +87,32 @@ HERO_MIN = {"rem": 3.0, "em": 3.0, "px": 48.0, "vw": 6.0, "vmin": 6.0, "vh": 6.0
 
 STAGGER = re.compile(r"--stagger\s*:\s*([\d.]+)\s*(ms|s)\b", re.I)
 
+# Small letter-spaced caps — the label, legend, axis, chip and eyebrow
+# register. It reads as somebody else's product chrome rather than as a
+# newsroom graphic, and it is the register several AI assistants use for their
+# own interface, so on client work it mis-attributes the piece to the tool.
+#
+# Scoped to *positive tracking*, deliberately. A display line set in caps with
+# negative tracking is a poster or stamp treatment that type-treatment owns,
+# and it is already governed by the sentence-case rule for headings; firing on
+# it here would be a different rule wearing this one's name. small-caps is
+# always this register, so it fires unconditionally.
+CAPS = re.compile(r"text-transform\s*:\s*uppercase", re.I)
+SMALLCAPS = re.compile(r"font-variant(?:-caps)?\s*:[^;{}]*small-caps", re.I)
+TRACKING = re.compile(r"letter-spacing\s*:\s*(-?[\d.]+)", re.I)
+
 # Attribution is rarely the literal word "source" — the house pattern is a
-# `.src` block reading "Essential Report · Base: all participants (n=1,002)".
-# Matching only on "source" would have failed the system's own best data
-# example, which is how this check found its shape.
+# `.src` block carrying the study and the base on separate labelled lines:
+#
+#     Essential Report, March 2026
+#     Base: all participants (n=1,002)
+#
+# Not a mid-dot chain. The earlier exemplar here was written as
+# "Essential Report · Base: all participants (n=1,002)", which house-rules.md
+# bans in the same breath as it requires the line: a mid-dot ranks nothing, so
+# three facts of different importance get one weight and one line. Matching
+# only on the literal word "source" would still have failed the system's own
+# best data example, which is how this check found its shape.
 ATTRIBUTION = re.compile(r"\bn\s*=\s*[\d,]+|\bbase\s*:|\bsource\b|\bfieldwork\b",
                          re.I)
 
@@ -174,7 +196,21 @@ ALL_RULES = {"no-pure-white", "no-pure-black", "homogenise-imagery",
              "fringe-on-glyphs", "reduced-motion", "roughen-hairlines",
              "house-easing", "texture-strength", "matte-alignment",
              "jump-cut", "version-stamp", "banned-title", "tabular-nums-hero",
-             "stagger-band", "source-line", "unparsed"}
+             "stagger-band", "source-line", "sentence-case-labels", "unparsed"}
+
+# --- profiles --------------------------------------------------------------
+# Some rules are only non-negotiable for some kinds of work. `source-line` is
+# the case that forced this: attribution is mandatory for research output and
+# meaningless on a product mockup, and this checker cannot tell them apart from
+# the HTML. Rather than pick one severity and be wrong half the time, the
+# caller names the profile and the rule is promoted for the profiles that need
+# it. A profile only ever raises severity; it never lowers one.
+PROFILES = {
+    "research": {"source-line"},
+    "editorial": {"source-line"},
+    "product": set(),
+    "static": set(),
+}
 
 
 def ignored_rules(text):
@@ -199,7 +235,7 @@ def ignored_rules(text):
     return rules
 
 
-def check(text, name="<input>", version=None):
+def check(text, name="<input>", version=None, profile=None):
     findings = []
     suppressed = ignored_rules(text)
     clean = strip_comments(text)
@@ -389,7 +425,31 @@ def check(text, name="<input>", version=None):
                 f"siblings read as simultaneous, above 90ms the sequence drags",
                 line_of(m.start())))
 
-    # --- 14. Source and sample size -----------------------------------------
+    # --- 14. Sentence case on labels ----------------------------------------
+    def _block_at(pos):
+        open_brace = clean.rfind("{", 0, pos)
+        close_brace = clean.find("}", pos)
+        return clean[open_brace + 1:close_brace if close_brace != -1 else len(clean)]
+
+    caps_hits = [(m, True) for m in SMALLCAPS.finditer(clean)]
+    for m in CAPS.finditer(clean):
+        track = TRACKING.search(_block_at(m.start()))
+        # positive tracking is the tell; negative tracking is a display stamp
+        if track and float(track.group(1)) > 0:
+            caps_hits.append((m, False))
+    for m, is_smallcaps in caps_hits:
+        findings.append(Finding(
+            "error", "sentence-case-labels",
+            ("small-caps type" if is_smallcaps else
+             "letter-spaced uppercase type") +
+            ". Data labels, legend keys, axis labels, chip text, table column "
+            "heads and captions are sentence case — this register reads as "
+            "product chrome rather than a newsroom graphic, and it is the "
+            "label style several AI assistants use for their own interface, "
+            "which mis-attributes client work to the tool that made it",
+            line_of(m.start())))
+
+    # --- 15. Source and sample size -----------------------------------------
     attributed = bool(ATTRIBUTION.search(clean)) or any(
         c in ("src", "source") or c.endswith("-src") or c.endswith("-source")
         for _, attrs, _, _ in parser.elements
@@ -398,9 +458,9 @@ def check(text, name="<input>", version=None):
         findings.append(Finding(
             "warn", "source-line",
             "no source or sample-size line. Non-negotiable for research work — "
-            "a warning rather than an error only because this checker cannot "
-            "tell a survey finding from a product mockup. Under --strict it "
-            "fails"))
+            "a warning by default only because this checker cannot tell a "
+            "survey finding from a product mockup. It fails under --strict, "
+            "and is an error under --profile research or editorial"))
 
     unknown = suppressed - ALL_RULES
     if unknown:
@@ -410,6 +470,14 @@ def check(text, name="<input>", version=None):
             f"rule this checker emits — a typo suppresses nothing"))
     if suppressed:
         findings = [f for f in findings if f.rule not in suppressed]
+
+    # Profile promotion runs after suppression: an explicitly suppressed rule
+    # stays suppressed, so naming a profile cannot resurrect a finding the
+    # author deliberately signed off.
+    promote = PROFILES.get(profile, set())
+    for f in findings:
+        if f.rule in promote:
+            f.level = "error"
     return findings
 
 
@@ -445,6 +513,7 @@ BAD = """<!doctype html><style>
 .y{animation:slide 60ms cubic-bezier(0.25,0.1,0.25,1) both}
 .an-ink{mask-image:url(m.png);mask-size:256px}
 .figure{font-size:7rem;font-variant-numeric:tabular-nums}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em}
 @keyframes slide{from{transform:translateX(20px)}to{transform:none}}
 </style>
 <div class="an-homogenise"><img src="ok.png"></div>
@@ -456,7 +525,8 @@ EXPECTED_BAD = {"no-pure-white", "no-pure-black", "texture-strength",
                 "roughen-hairlines", "house-easing", "jump-cut",
                 "matte-alignment", "homogenise-imagery", "fringe-on-glyphs",
                 "reduced-motion", "version-stamp", "banned-title",
-                "tabular-nums-hero", "stagger-band", "source-line"}
+                "tabular-nums-hero", "stagger-band", "source-line",
+                "sentence-case-labels"}
 
 
 def self_test():
@@ -525,14 +595,60 @@ def self_test():
     return 0 if ok else 1
 
 
+def rule_levels():
+    """Every rule this checker emits, with the severity it actually emits at.
+
+    Derived by running the known-bad fixture rather than declared in a table.
+    A hand-maintained severity table is a second copy of the code, and the
+    prose it feeds — the 🔒 marks in house-rules.md — was already wrong about
+    three rules by the time anyone checked. This cannot go stale.
+    """
+    levels = {}
+    for f in check(BAD, "BAD", version=TEST_VERSION):
+        # A rule that can fire at either level is reported at its worst.
+        if f.rule not in levels or f.level == "error":
+            levels[f.rule] = f.level
+    for rule in ALL_RULES - set(levels):
+        levels[rule] = "warn"       # fires only on inputs the fixture omits
+    return levels
+
+
+def print_rules(as_json=False):
+    levels = rule_levels()
+    promoted = {r: sorted(p for p, rules in PROFILES.items() if r in rules)
+                for r in levels}
+    if as_json:
+        print(json.dumps(
+            {r: {"level": levels[r], "error_under": promoted[r]}
+             for r in sorted(levels)}, indent=2))
+        return 0
+    print(f"{'rule':22s} {'default':8s} error under profile")
+    for rule in sorted(levels):
+        under = ", ".join(promoted[rule]) or "—"
+        print(f"{rule:22s} {levels[rule]:8s} {under}")
+    print(f"\n{sum(1 for v in levels.values() if v == 'error')} error rule(s), "
+          f"{sum(1 for v in levels.values() if v == 'warn')} warning(s). "
+          f"Only error rules may carry a 🔒 in the prose.")
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(
         description="Check generated HTML against the house rules.")
     p.add_argument("files", nargs="*")
     p.add_argument("--strict", action="store_true",
                    help="warnings fail too")
+    p.add_argument("--profile", choices=sorted(PROFILES),
+                   help="raise severity for the rules this kind of work "
+                        "cannot ship without. 'research' and 'editorial' make "
+                        "a missing source and sample-size line an error")
     p.add_argument("--self-test", action="store_true",
                    help="verify the checks still fire, then exit")
+    p.add_argument("--rules", action="store_true",
+                   help="print every rule and the severity it fires at, then "
+                        "exit. This is the source for the 🔒 marks in the prose")
+    p.add_argument("--rules-json", action="store_true",
+                   help="--rules as JSON, for CI")
     p.add_argument("--version-stamp", metavar="X.Y.Z",
                    help="version artifacts must be stamped with. Defaults to "
                         "the plugin manifest above this script; if there is "
@@ -541,8 +657,10 @@ def main(argv=None):
 
     if args.self_test:
         return self_test()
+    if args.rules or args.rules_json:
+        return print_rules(as_json=args.rules_json)
     if not args.files:
-        p.error("give at least one HTML file, or --self-test")
+        p.error("give at least one HTML file, or --self-test, or --rules")
 
     version = args.version_stamp or plugin_version()
 
@@ -553,7 +671,7 @@ def main(argv=None):
         except OSError as exc:
             print(f"{path}: cannot read — {exc}")
             return 2
-        findings = check(text, path, version=version)
+        findings = check(text, path, version=version, profile=args.profile)
         e = sum(1 for f in findings if f.level == "error")
         w = len(findings) - e
         errors += e

@@ -128,6 +128,43 @@ def is_subsequence(expected, observed):
     return all(skill in it for skill in expected)
 
 
+def run_metrics(events, elapsed):
+    """What the run cost, so a change to the skills can be priced.
+
+    Without this the set can say an edit kept the output compliant but not
+    whether it took twice as long to get there. A shorter instruction that
+    causes five more internal turns is not a saving, and only the pair of
+    numbers shows it — so turns and tokens are always reported together.
+
+    `turns` is the model's own iteration inside one non-interactive run, not
+    corrective prompts from a person. It is the closest mechanical proxy the
+    harness has for "how much rework did this take", and it is the number to
+    watch when trimming context.
+    """
+    result = next((e for e in reversed(events)
+                   if e.get("type") == "result"), {})
+    usage = result.get("usage") or {}
+
+    def tok(*keys):
+        return sum(int(usage.get(k) or 0) for k in keys)
+
+    read = tok("cache_read_input_tokens")
+    written = tok("cache_creation_input_tokens")
+    return {
+        "turns": result.get("num_turns"),
+        "input_tokens": tok("input_tokens") + read + written,
+        "uncached_input_tokens": tok("input_tokens"),
+        "cache_read_tokens": read,
+        "output_tokens": tok("output_tokens"),
+        "cost_usd": result.get("total_cost_usd"),
+        "seconds": round(elapsed, 1),
+        "tool_calls": sum(
+            1 for e in events if e.get("type") == "assistant"
+            for b in e.get("message", {}).get("content", [])
+            if b.get("type") == "tool_use"),
+    }
+
+
 def run_brief(brief, plugin, workspace, model, timeout, permission_mode):
     rundir = workspace / brief["name"]
     rundir.mkdir(parents=True)
@@ -180,6 +217,7 @@ def run_brief(brief, plugin, workspace, model, timeout, permission_mode):
                     "ANTHROPIC_API_KEY, then run the set again."}
 
     order = observed_skills(events)
+    metrics = run_metrics(events, elapsed)
     checks = []
 
     checks.append(("completed", proc.returncode == 0,
@@ -209,9 +247,14 @@ def run_brief(brief, plugin, workspace, model, timeout, permission_mode):
                    artifact.name if artifact.exists() else "no HTML written"))
 
     if artifact.exists():
-        lint = subprocess.run(
-            [sys.executable, str(LINTER), str(artifact), "--strict"],
-            capture_output=True, text=True)
+        # Strict here, not in CI: a golden brief is a controlled input, so a
+        # warning is a finding rather than noise. The profile is what tells the
+        # linter whether a missing source line is fatal — it cannot tell a
+        # survey finding from a product mockup on its own.
+        lint_cmd = [sys.executable, str(LINTER), str(artifact), "--strict"]
+        if brief.get("profile"):
+            lint_cmd += ["--profile", brief["profile"]]
+        lint = subprocess.run(lint_cmd, capture_output=True, text=True)
         (rundir / "lint.txt").write_text(lint.stdout + lint.stderr,
                                          encoding="utf-8")
         summary = next((l for l in lint.stdout.splitlines() if ":" in l),
@@ -222,8 +265,36 @@ def run_brief(brief, plugin, workspace, model, timeout, permission_mode):
         checks.append(("lint-strict", False, "nothing to lint"))
 
     return {"name": brief["name"], "checks": checks, "observed_order": order,
-            "seconds": round(elapsed, 1),
+            "seconds": round(elapsed, 1), "metrics": metrics,
             "artifact": str(artifact) if artifact.exists() else None}
+
+
+def print_cost_table(results):
+    """Turns and tokens beside the pass/fail, because trimming context is a
+    trade and this is the side of it the checks above cannot see.
+
+    Read the two columns together. Context going down while turns go up is a
+    skill file that was carrying its weight; both going down is a real saving.
+    """
+    priced = [r for r in results if r.get("metrics", {}).get("turns")]
+    if not priced:
+        return
+    print(f"\n{'brief':<24} {'turns':>6} {'tools':>6} {'in':>10} "
+          f"{'out':>8} {'secs':>7}  cost")
+    for r in priced:
+        m = r["metrics"]
+        cost = f"${m['cost_usd']:.3f}" if m.get("cost_usd") else "—"
+        print(f"{r['name']:<24} {m['turns']:>6} {m['tool_calls']:>6} "
+              f"{m['input_tokens']:>10,} {m['output_tokens']:>8,} "
+              f"{m['seconds']:>7.1f}  {cost}")
+    total_in = sum(r["metrics"]["input_tokens"] for r in priced)
+    total_out = sum(r["metrics"]["output_tokens"] for r in priced)
+    total_turns = sum(r["metrics"]["turns"] for r in priced)
+    print(f"{'TOTAL':<24} {total_turns:>6} {'':>6} {total_in:>10,} "
+          f"{total_out:>8,}")
+    print("\nCompare these against a baseline run of the same briefs before "
+          "changing the skills.\nA shorter instruction that costs more turns "
+          "is not a saving.")
 
 
 def write_rubric(data, results, workspace):
@@ -313,6 +384,7 @@ def main(argv=None):
         json.dumps({"timestamp": stamp, "plugin": str(plugin),
                     "results": results}, indent=2), encoding="utf-8")
     write_rubric(data, results, workspace)
+    print_cost_table(results)
 
     print(f"\n{len(results) - failed}/{len(results)} briefs pass the mechanical "
           f"checks.")

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="static-design" content="0.4.0">
+<!--
+  Wrong on purpose, in the two ways 07-focal-point names.
+
+  U — five blocks at near-identical chroma. Nothing is isolated by colour, so
+      nothing is the focal point: a saturated red among saturated colours is
+      one of them, not the thing the eye lands on.
+  W — the copy is parked in a corner at under a fifth of the usable canvas.
+      A type-led frame gives the headline a zone.
+-->
+<title>Five colours, no focal point</title>
+<style>
+  body{ margin:0; font-family:"Helvetica Neue"; }
+  .frame{ position:relative; width:1080px; height:1350px; background:#EFE9DD; }
+  .swatch{ position:absolute; width:196px; height:196px; }
+  .s1{ left:120px;  top:300px; background:#C9401B }
+  .s2{ left:340px;  top:300px; background:#1B6FC9 }
+  .s3{ left:560px;  top:300px; background:#1BC96F }
+  .s4{ left:780px;  top:300px; background:#C91B9B }
+  .s5{ left:340px;  top:520px; background:#C9B41B }
+  h1{ position:absolute; left:120px; top:900px; width:420px;
+      font-size:52px; line-height:1.05; color:#191713; }
+  .src{ position:absolute; left:120px; bottom:170px;
+        font-size:18px; color:#191713; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="swatch s1"></div><div class="swatch s2"></div>
+    <div class="swatch s3"></div><div class="swatch s4"></div>
+    <div class="swatch s5"></div>
+    <h1>Five colours walk into a frame.</h1>
+    <p class="src">Essential Report, July 2026. All participants, n=1,060.</p>
+  </div>
+</body>
+</html>

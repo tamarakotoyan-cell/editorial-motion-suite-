@@ -259,6 +259,22 @@ palette.
 The comparison in one reference showed the graded version reading better purely
 through contrast and cutout separation — no extra elements.
 
+For a **pre-rendered** treatment — a cutout that will be embedded as a PNG rather
+than filtered live — the static-design plugin's `assets/halftone.py` runs the
+whole pipeline repeatably: harden the alpha (threshold 128, one-pixel shave),
+contrast window over the subject only, duotone to two brand values with the
+lightest-pixel test (the highlight must remain a colour, or it fails), then an
+optional halftone screen at about 7px cell. It prints the subject box to place
+from. Same map for every asset in the composition.
+
+Routing, in one line, shared with the static system: one strong photograph is
+**Structure A** (it carries the frame); one cuttable subject plus a glyph
+vocabulary is **Structure C** (layered editorial — one halftoned cutout, flat
+glyph satellites, texture zoned); roughly ten silhouette cutouts is
+**Structure B** (dense collage). Two to seven photographs on one frame is the
+pinboard — `check-static.py` fails it (V); `check-artifact.py` does not, so hold
+the count yourself.
+
 ### Masked reveal
 
 Images arrive by being *uncovered*, not by fading. Wipe along the image's own

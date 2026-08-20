@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+  Fixture, wrong on purpose. Reconstructs examples/bad/aiherway-dark-quote.jpg.
+  Must fire: B (content well under the 60% floor), C (four persistent brand
+  elements around two pieces of content), F (decoration standing in for meaning).
+
+  The original carries a giant decorative quote glyph rather than a gradient;
+  both belong to the same failure and the gradient is what F can catch
+  mechanically, so the fixture carries both.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="static-design" content="0.2.0">
+<title>fixture — dead canvas</title>
+<style>
+  :root{ --accent:#8C6A4F; }
+  body{ margin:0; font-family:"Helvetica Neue"; }
+  .frame{
+    position:relative; width:1080px; height:1350px; background:#22251E;
+    background-image:radial-gradient(circle at 70% 20%, #33372C 0%, #22251E 60%);
+    padding:0; overflow:hidden;
+  }
+  .logo-mark{ position:absolute; left:64px; top:56px; font-size:24px;
+              letter-spacing:.18em; color:#E8E4DA; }
+  .rail-handle{ position:absolute; right:64px; top:56px; font-size:24px;
+                letter-spacing:.18em; color:#9A9A92; }
+  .footer-handle{ position:absolute; left:64px; bottom:56px; font-size:24px;
+                  letter-spacing:.18em; color:#E8E4DA; }
+  .pagination{ position:absolute; right:64px; bottom:56px; font-size:24px;
+               letter-spacing:.18em; color:#9A9A92; }
+  .glyph{ position:absolute; left:64px; top:150px; font-size:130px;
+          color:var(--accent); line-height:.6; }
+  .quote{ position:absolute; left:64px; top:250px; width:900px;
+          font-size:64px; line-height:1.15; color:#E8E4DA; margin:0; }
+  .caption{ position:absolute; left:64px; top:1120px; width:900px;
+            font-size:26px; line-height:1.4; color:#C9C6BC; margin:0; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="logo-mark">AI HER WAY</div>
+  <div class="rail-handle">ANTHROPIC · CLAUDE DESIGN</div>
+
+  <div class="glyph">&rdquo;</div>
+  <p class="quote">This isn't replacing designers. It's replacing the version of
+     you that said "next quarter."</p>
+
+  <p class="caption">AI Her Way · Claude Design · Slide 06 of 12 · June 2026</p>
+
+  <div class="footer-handle">@AI_HERWAY</div>
+  <div class="pagination">06 / 12</div>
+</div>
+</body>
+</html>

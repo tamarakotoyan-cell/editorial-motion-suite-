@@ -8,6 +8,11 @@
       "name": "editorial-motion",
       "source": "./plugins/editorial-motion",
       "description": "Motion, layout, surface and imagery craft for animated, data-led design \u2014 a router and eight skills that work as one system."
+    },
+    {
+      "name": "static-design",
+      "source": "./plugins/static-design",
+      "description": "Composition, type and imagery craft for static design \u2014 social tiles, carousels, chart cards and posters, exported as images rather than animated."
     }
   ]
 }

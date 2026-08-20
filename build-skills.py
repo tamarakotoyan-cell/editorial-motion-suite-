@@ -36,6 +36,16 @@ VENDOR = {
         (SRC / "motion-system" / "references" / "sources.md", "references/sources.md"),
     "../editorial-explainer/references/house-rules.md":
         (SRC / "editorial-explainer" / "references" / "house-rules.md", "references/house-rules.md"),
+    # The shared core. These two sit under editorial-explainer for historical
+    # reasons — they are cited from the router and belong to no single skill.
+    # Moving them to a real core/ is a build change rather than a content one;
+    # logged as deferred in decisions.md.
+    "../editorial-explainer/references/accessibility.md":
+        (SRC / "editorial-explainer" / "references" / "accessibility.md",
+         "references/accessibility.md"),
+    "../editorial-explainer/references/decisions.md":
+        (SRC / "editorial-explainer" / "references" / "decisions.md",
+         "references/decisions.md"),
 }
 
 # Citations of a whole SKILL.md can't be vendored — a 36KB skill inside another
@@ -137,8 +147,39 @@ def validate(name):
     return problems
 
 
+def restamp_examples():
+    """Point every shipped example's version stamp at the current manifest.
+
+    A version bump that does not restamp the examples leaves them failing
+    check-artifact.py's `version-stamp` rule at error severity — which is the
+    CI step that lints the shipped examples, so the build goes red for a reason
+    that has nothing to do with design. That is exactly what had happened: four
+    examples stamped 1.9.0 against a 1.11.0 manifest.
+
+    Run this as part of a version bump, before committing.
+    """
+    import json
+    manifest = ROOT / "plugins" / "editorial-motion" / ".claude-plugin" / "plugin.json"
+    version = json.loads(manifest.read_text(encoding="utf-8"))["version"]
+    stamp = re.compile(r'(name="editorial-motion"\s+content=")(\d+\.\d+\.\d+)(")')
+
+    changed = 0
+    for html in sorted((ROOT / "plugins").rglob("*.html")):
+        text = html.read_text(encoding="utf-8")
+        new, n = stamp.subn(rf"\g<1>{version}\g<3>", text)
+        if n and new != text:
+            html.write_text(new, encoding="utf-8")
+            changed += 1
+            print(f"  restamped {html.relative_to(ROOT)} -> {version}")
+    print(f"{changed} file(s) restamped to {version}"
+          if changed else f"all stamps already {version}")
+    return 0
+
+
 def main():
     check = "--check" in sys.argv
+    if "--restamp-examples" in sys.argv:
+        return restamp_examples()
     if not check:
         if DIST.exists():
             shutil.rmtree(DIST)

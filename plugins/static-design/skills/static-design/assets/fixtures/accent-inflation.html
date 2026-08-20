@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  Fixture, wrong on purpose. Reconstructs examples/bad/socceroos-canopy.jpg and
+  socceroos-top-ryde.jpg — the pair, because the failure only exists across them.
+  Must fire: G (the accent on seven element classes), H (two frames, same shape,
+  different words).
+
+  Both frames are deliberately identical in structure. That is the bug.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="static-design" content="0.2.0">
+<title>fixture — accent inflation</title>
+<style>
+  :root{ --accent:#FFD200; --ground:#0C3B25; }
+  body{ margin:0; font-family:"Helvetica Neue"; background:var(--ground); }
+  .frame{ position:relative; width:1080px; height:1350px;
+          background:var(--ground); overflow:hidden; }
+  .matchday{ position:absolute; left:96px; top:96px; font-size:28px;
+             letter-spacing:.22em; color:var(--accent); }
+  .rule{ position:absolute; left:96px; top:146px; width:888px; height:2px;
+         background:var(--accent); }
+  .chip{ position:absolute; left:96px; top:232px; padding:14px 30px;
+         background:var(--accent); color:#0C3B25; font-size:26px;
+         letter-spacing:.14em; font-weight:700; }
+  .label{ position:absolute; left:96px; top:328px; font-size:28px;
+          letter-spacing:.22em; color:#9FB3A6; }
+  .venue{ position:absolute; left:96px; top:390px; width:888px; margin:0;
+          font-size:96px; line-height:1.0; color:#FFFFFF; }
+  .venue em{ font-style:normal; color:var(--accent); }
+  .body{ position:absolute; left:96px; top:610px; width:888px; margin:0;
+         font-size:38px; line-height:1.35; color:#EAF1EC; }
+  .list{ position:absolute; left:96px; top:760px; width:888px; margin:0;
+         padding:0; list-style:none; font-size:36px; line-height:1.6;
+         color:#EAF1EC; }
+  .list li::before{ content:"● "; color:var(--accent); font-size:22px; }
+  .address{ position:absolute; left:96px; top:1010px; font-size:30px;
+            font-weight:700; letter-spacing:.04em; color:var(--accent); }
+  .foot-dot{ position:absolute; left:96px; bottom:100px; width:18px; height:18px;
+             background:var(--accent); }
+  .logo{ position:absolute; right:96px; bottom:92px; font-size:28px;
+         font-weight:700; letter-spacing:.1em; color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="matchday">MATCHDAY / FRI 26 JUNE</div>
+  <div class="rule"></div>
+  <div class="chip">CONFIRMED</div>
+  <div class="label">THE OUTDOOR ONE</div>
+  <h1 class="venue">The Canopy<br><em>Lane Cove</em></h1>
+  <p class="body">Grab a picnic rug, BYO food and drink, and settle in on the lawn.</p>
+  <ul class="list">
+    <li>Australia v Paraguay, from 12:00PM</li>
+    <li>BYO food &amp; drink</li>
+    <li>Bring a picnic rug or low chair</li>
+    <li>Free &amp; family-friendly</li>
+  </ul>
+  <div class="address">2 ROSENTHAL AVE, LANE COVE</div>
+  <div class="foot-dot"></div>
+  <div class="logo">SOCCEROOS '26</div>
+</div>
+
+<div class="frame">
+  <div class="matchday">MATCHDAY / FRI 26 JUNE</div>
+  <div class="rule"></div>
+  <div class="chip">CONFIRMED</div>
+  <div class="label">THE BIG ONE</div>
+  <h1 class="venue">Top Ryde<br><em>City Piazza</em></h1>
+  <p class="body">Free fan-zone screening of the match on the big screen, from 12:00PM.</p>
+  <ul class="list">
+    <li>Face painters, 11am – 3pm</li>
+    <li>Two foosball tables</li>
+    <li>Casual spectator seating</li>
+    <li>Family-friendly &amp; free entry</li>
+  </ul>
+  <div class="address">CNR DEVLIN ST &amp; BLAXLAND RD, RYDE</div>
+  <div class="foot-dot"></div>
+  <div class="logo">SOCCEROOS '26</div>
+</div>
+
+</body>
+</html>

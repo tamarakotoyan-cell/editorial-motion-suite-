@@ -120,6 +120,55 @@ already — see the underline note in `../motion-system/references/sources.md`. 
 mask with the grain plate for anything under ~3px; filters are for large shapes;
 a scanned mark beats both.
 
+### Ink on stock — texturing type you set yourself
+
+Everything above assumes ink you scanned. This is the other case, and it is the
+common one: a headline set in the brand's own grotesque that needs to read as
+printed rather than rendered.
+
+**It is never a different typeface.** The brand owns the face, the editorial
+weight comes from scale contrast, and an exotic display face will not survive an
+Express import or a PPTX export anyway. Texture the face you have.
+
+```html
+<filter id="tooth" x="-3%" y="-6%" width="106%" height="112%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="4" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="1.7"
+                     xChannelSelector="R" yChannelSelector="G"/>
+</filter>
+```
+
+- **Scale the displacement to the type size**, roughly `size ÷ 37` — about 1.7
+  at 63px, 2.6 at 112px. A fixed value tuned on a headline reads as a rendering
+  fault on a hero figure and as nothing at all on a caption.
+- **The ceiling is ~2.6 at display sizes.** Measured against the alternatives:
+  at 1.7 the edge erodes and the counters stay open; by 2.6 with coarser noise
+  the stems start to wobble and it stops reading as print and starts reading as
+  a low-resolution render.
+- **It replaces the print fringe on that element — never stacks with it.** One
+  surface treatment per string, same as everywhere else in this skill.
+- ⛔ **Default: do not texture type at all.** Measured against 17 reference
+  frames from NYT, Guardian and Vox — every one of them keeps its type clean at
+  full strength, and puts the texture in the **ground** and the **imagery**
+  instead. That is where texture reads as a material; on a letterform it reads
+  as fur. The instruction that used to sit here — "apply it to the hero figures
+  too" — was wrong, and produced exactly that.
+- **Texture the field, not the words.** A grained ground under clean type gives
+  the whole frame its surface; the type stays legible and the tile stops
+  looking filtered. Ground grain goes **under the marks**, over the field: a
+  full-frame overlay washes the marks and reads as a dirty gradient.
+- **Texturing type is a rare, deliberate exception**, for one string, with a
+  stated editorial reason — a headline that is *about* print, a stamped
+  overprint. If you cannot say why in one sentence, leave it clean.
+- **Add a second, finer noise as an alpha mask** for ink that didn't take —
+  speckles knocked out of the glyph. Keep it subtle enough that no counter
+  closes.
+- ⚠️ **Check at 200px.** This is where an over-scaled displacement turns to mud.
+- ⚠️ **Live SVG filters do not survive the Express import as text.** If a piece
+  is going to Express as an editable document, send the headline untextured and
+  treat it on the way out, or ship it as an image. Decide this as a standing
+  rule per output route, not per piece.
+
 ## 3. Life
 
 **Posterize time.** 12 fps as standard, 8 for a collage feel, 4 for a

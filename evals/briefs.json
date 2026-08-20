@@ -14,84 +14,161 @@
       "name": "stat-tile",
       "prompt": "We've got a finding out of the latest Essential Report — 63% of Australians think the federal government isn't doing enough on cost of living. I need a single stat tile for Instagram, square. Can you put one together?",
       "expected_output": "A square animated HTML tile carrying one number as the hero, on a paper ground, with one ambient and one accent move.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "motion-system", "analog-surface", "editorial-explainer"],
-      "must_not_load": ["premium-product-motion"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "motion-system",
+        "analog-surface",
+        "editorial-explainer"
+      ],
+      "must_not_load": [
+        "premium-product-motion"
+      ],
       "expectations": [
         "The finding, not the metric name, is the title",
         "One ambient move and at most one accent move",
         "The hero figure is not set in a serif or display face",
         "A source line is present"
-      ]
+      ],
+      "profile": "research"
     },
     {
       "id": 2,
       "name": "multi-panel-explainer",
       "prompt": "I need an explainer for a client deck on how the stage 3 tax cuts changed between the original package and the revised one. Three or four panels, walking through it. The numbers are simple: original gave $9,075 a year to the top bracket and nothing under $45k; the revised version gives $4,529 to the top and $354 to someone on $40k.",
       "expected_output": "A multi-panel animated explainer that sequences the comparison, one fact per panel, with persistent marks between panels rather than a fresh chart each time.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "motion-system", "analog-surface", "editorial-explainer"],
-      "must_not_load": ["premium-product-motion"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "motion-system",
+        "analog-surface",
+        "editorial-explainer"
+      ],
+      "must_not_load": [
+        "premium-product-motion"
+      ],
       "expectations": [
         "Panels sequence a single argument rather than repeating the same chart",
         "No dual y-axes and no value printed on every data point",
         "A source and sample-size line is present",
         "Stagger sits in the 60-90ms band"
-      ]
+      ],
+      "profile": "research"
     },
     {
       "id": 3,
       "name": "social-cut-9x16",
       "prompt": "Need a 9:16 vertical for Instagram stories out of this: support for a four-day week is 71% among under-35s and 48% among over-55s. One finding, has to work with the sound off.",
       "expected_output": "A 9:16 composition re-derived for vertical rather than a scaled 16:9 master, with platform safe areas respected and a first frame that works as a poster.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "motion-system", "editorial-explainer", "format-adaptation"],
-      "must_not_load": ["premium-product-motion"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "motion-system",
+        "editorial-explainer",
+        "format-adaptation"
+      ],
+      "must_not_load": [
+        "premium-product-motion"
+      ],
       "expectations": [
         "Type is re-derived for vertical, not scaled down from a wide master",
         "The focal point sits clear of platform chrome",
         "The first frame works as a still poster",
         "The piece reads with no audio"
-      ]
+      ],
+      "profile": "research"
     },
     {
       "id": 4,
       "name": "report-visual",
       "prompt": "Doing a visual for the Essential Report quarterly — trust in institutions over time. Six institutions, 2019 through to 2026, all trending down except the ABC which is basically flat. It sits in a PDF report so it needs to work as a still.",
       "expected_output": "A still-first multi-series chart that survives print, with the ABC's flatness as the finding rather than six equally weighted lines.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "analog-surface", "editorial-explainer"],
-      "must_not_load": ["premium-product-motion"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "analog-surface",
+        "editorial-explainer"
+      ],
+      "must_not_load": [
+        "premium-product-motion"
+      ],
       "expectations": [
         "One series is weighted as the finding; the rest recede",
         "No colour-per-category when the story is one contrast",
         "Works with no motion at all",
         "A source and sample-size line is present"
-      ]
+      ],
+      "profile": "research"
     },
     {
       "id": 5,
       "name": "product-mockup",
       "prompt": "We're pitching a client on a dashboard product next week. I want a hero visual for the front of the pitch deck — the app UI floating, something that feels expensive, a bit of camera movement.",
       "expected_output": "A lit-object composition with depth of field and a camera-style move, in the premium register rather than the data-journalism one.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "motion-system", "premium-product-motion"],
-      "must_not_load": ["editorial-explainer"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "motion-system",
+        "premium-product-motion"
+      ],
+      "must_not_load": [
+        "editorial-explainer"
+      ],
       "expectations": [
         "Depth of field and a light source that reads as physical",
         "Camera-style movement rather than element-by-element entrance",
         "The house timing kit still governs durations",
         "The ban on decorative gradients is applied with the premium carve-out, not ignored"
-      ]
+      ],
+      "profile": "product"
     },
     {
       "id": 6,
       "name": "single-number-chart",
       "prompt": "The whole story here is one number: 1 in 3 renters have gone without heating to make rent. Make me a chart.",
       "expected_output": "A stat tile rather than a chart — the correct answer is to refuse the chart form, because a one-bar bar chart is on the ban list.",
-      "expected_load_order": ["editorial-motion", "layout-composition", "motion-system", "analog-surface", "editorial-explainer"],
-      "must_not_load": ["premium-product-motion"],
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition",
+        "motion-system",
+        "analog-surface",
+        "editorial-explainer"
+      ],
+      "must_not_load": [
+        "premium-product-motion"
+      ],
       "expectations": [
         "The output is a stat tile, not a one-bar bar chart or a two-slice pie",
         "The number is the hero and is legible at 200px",
         "tabular-nums is not applied to the standalone figure",
         "A source line is present"
-      ]
+      ],
+      "profile": "research"
+    },
+    {
+      "id": 7,
+      "name": "product-ui-states",
+      "prompt": "We're building an internal tool for the research team to manage survey waves. I need the settings screen: the account details form, a way to switch a wave between draft and live, and the confirmation for deleting a wave. It also needs to handle the case where someone has no waves yet, and the moment while the list is still loading. Keyboard users have complained about the last tool we shipped.",
+      "expected_output": "A single HTML screen composed from the design system's own form, feedback and display components, covering the populated, empty, loading, error and disabled states, with visible focus throughout and a destructive action that confirms before acting.",
+      "expected_load_order": [
+        "editorial-motion",
+        "layout-composition"
+      ],
+      "must_not_load": [
+        "editorial-explainer",
+        "premium-product-motion"
+      ],
+      "profile": "product",
+      "expectations": [
+        "System components are used rather than hand-rolled buttons and inputs",
+        "Empty, loading and error states are all present, not just the happy path",
+        "Every interactive element has a visible focus state",
+        "The destructive action confirms before it acts, and Escape closes the dialog",
+        "Text meets the contrast floors in accessibility.md",
+        "No source line is expected — this is not research output",
+        "Motion is component feedback only, not the editorial timing kit"
+      ],
+      "note": "Added 2026-08-17. The set had no brief exercising components, interaction states or accessibility — the layers an audit found least covered. It is deliberately not an editorial brief: loading editorial-explainer here is a routing failure."
     }
   ]
 }

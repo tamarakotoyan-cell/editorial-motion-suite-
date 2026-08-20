@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<meta name="editorial-motion" content="1.9.0">
+<meta name="editorial-motion" content="1.13.0">
 <title>Format adaptation — one system, four compositions</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -55,10 +55,10 @@
 
 /* ---- the piece: shared bones ---- */
 .kicker{font:600 4.2cqw/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--accent)}
+  color:var(--accent)}
 .hed{font:700 8.5cqw/1.02 Georgia,'Times New Roman',serif;color:var(--ink);margin:0}
 .annot{font:italic 3.4cqw/1.35 Georgia,serif;color:var(--mute);max-width:22ch}
-.src{font:500 2.6cqw/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--mute)}
+.src{font:500 2.6cqw/1 ui-monospace,Menlo,monospace;letter-spacing:.01em;color:var(--mute)}
 .chart{display:flex;align-items:flex-end;gap:6cqw}
 .bar{display:flex;flex-direction:column;gap:1.6cqw}
 .bar i{display:block;background:var(--ink-soft);width:11cqw;
@@ -67,7 +67,7 @@
 .bar.hot i{background:var(--accent)}
 .bar b{font:700 4.6cqw/1 Georgia,serif}
 .bar.hot b{color:var(--accent)}
-.bar span{font:500 2.6cqw/1.2 ui-monospace,Menlo,monospace;letter-spacing:.08em;color:var(--mute)}
+.bar span{font:500 2.6cqw/1.2 ui-monospace,Menlo,monospace;letter-spacing:.01em;color:var(--mute)}
 @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .rise{animation:rise var(--beat) var(--ease-out) both;animation-delay:calc(var(--i,0)*var(--stagger))}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -146,13 +146,13 @@
 body{margin:0;background:#171614;color:#8A8377;
   font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
 .wrap{max-width:1280px;margin:0 auto;padding:32px 20px 80px}
-h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6E675C;
+h2{font-size:13px;letter-spacing:.01em;font-weight:700;color:#6E675C;
   margin:0 0 4px;font-weight:400}
 h2 b{color:#C6BDAB;font-weight:400}
 p.note{font-size:12px;color:#5E584E;max-width:72ch;margin:0 0 18px}
 .row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .cell{flex:0 1 auto}
-.cell .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+.cell .lbl{font-size:12px;letter-spacing:.01em;
   color:#9A8F79;margin:0 0 6px}
 .cell[data-w="16x9"] .stage{width:420px}
 .cell[data-w="4x5"] .stage{width:236px}

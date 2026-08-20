@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="static-design" content="0.3.0">
+<!--
+  Wrong on purpose. Must fire F twice over:
+
+  - the torn edge is a clip-path polygon. A tear is a cut photograph or a
+    turbulence-displaced mask; a six-vertex path reads as Canva at any size.
+  - the bar segments are flex-grow marks carrying their own padding, so the
+    browser adds the inset back after distributing and length / value stops
+    being one number.
+-->
+<title>Drawn tear and padded marks</title>
+<style>
+  body{ margin:0; font-family:"Helvetica Neue"; }
+  .frame{ position:relative; width:1080px; height:1350px; background:#E9E4DA; }
+  .frag{
+    position:absolute; left:80px; top:120px; width:600px; height:500px;
+    background:#1B1A18;
+    clip-path:polygon(0 4%, 98% 0, 100% 92%, 60% 100%, 22% 96%, 2% 88%);
+  }
+  .row{ position:absolute; left:80px; top:700px; width:920px; display:flex; gap:4px; }
+  .seg{ flex:var(--v) 1 0; min-width:0; padding:0 14px; height:96px; background:#8A8578; }
+  h1{ position:absolute; left:80px; top:880px; width:920px;
+      font-size:96px; line-height:1.02; color:#1B1A18; }
+  .src{ position:absolute; left:80px; top:1180px; font-size:18px; color:#1B1A18; }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="frag"></div>
+    <div class="row">
+      <i class="seg" style="--v:9"></i><i class="seg" style="--v:28"></i><i class="seg" style="--v:63"></i>
+    </div>
+    <h1>A tear that was drawn rather than torn.</h1>
+    <p class="src">Essential Report, July 2026. All participants, n=1,060.</p>
+  </div>
+</body>
+</html>

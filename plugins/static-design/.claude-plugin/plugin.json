@@ -1,0 +1,16 @@
+{
+  "name": "static-design",
+  "version": "0.6.0",
+  "description": "Composition, type and imagery craft for static design \u2014 social tiles, carousels, chart cards and posters, exported as images rather than animated.",
+  "author": {
+    "name": "Essential Media"
+  },
+  "keywords": [
+    "static-design",
+    "social",
+    "carousel",
+    "editorial",
+    "typography",
+    "design"
+  ]
+}

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="editorial-motion" content="1.13.0">
+<meta name="static-design" content="0.6.0">
+<title>Worked example — Essential data tile, 4:5 dark</title>
+<style>
+/* ============================================================
+   Essential Report — local data centres. 4:5 social tile, 1080x1350.
+   Dark statement ground; branding is the accent dot alone.
+
+   Copy is three lines total: headline, question, callout. No deck — the
+   question carries the setup, so the chart starts 200px higher.
+
+   Text colour follows the field it sits on, not the category: light text
+   on the dark grey field, dark ink on the accent and bone fields.
+
+   DL (CIE L*) — ground #17171A L*7
+     bone   #EDE9E2  L*92   DL ground 85 · accent 39 · grey 54
+     accent #E2491A  L*53   DL ground 46
+     grey   #5A5A5E  L*38   DL ground 31 · bone 54 · accent 15  <-- under the
+       25 floor against the accent, and unavoidable: no third fill sits 25 from
+       ground(7), accent(53) and bone(92) at once. Rescued as the system
+       prescribes, with a bone hairline; the blocks are adjacent and carry
+       their own names, so nothing depends on matching a swatch to a mark.
+   ============================================================ */
+:root{
+  --ground:#17171A; --bone:#EDE9E2; --accent:#E2491A; --grey:#5A5A5E;
+  --ink:#0E0E10; --muted:#A8A49E;
+
+  --u:8px; --pad:calc(var(--u)*11);
+  /* the profile grid crops 4:5 to a centre square, so no text sits within
+     150px of the top or bottom edge — side margins are unaffected. The
+     occupancy floor is measured against the band between these lines, not
+     against the whole frame. */
+  --safe:152px;
+  /* Major Third 1.25 from base 17 — the chart-frame ratio, where labels and
+     annotation have to coexist quietly. Base 17 is the 1.25%-of-canvas-height
+     floor on a 1350-tall canvas; the floor picks the base, not the reverse.
+     Rebuilt from base 22: at 22 the utility line and the support line landed
+     one step apart and read as one size, which is the collapse the lowered
+     floor exists to undo. Chosen over a Perfect Fourth because PF has no step
+     between 69 and 93, and the display has to land in [75, 88]: above the 4%
+     cap-height floor for a picture-led frame, and low enough that the hero
+     figure still fits the narrowest block. Hero runs 1.56x display — inside
+     the 1.2-2x band, and held high here because the figures sit inside the
+     bar blocks and compete with the fills around them. */
+  --t-min:17px; --t-sm:21.3px; --t-md:26.6px; --t-lg:33.2px;
+  --t-display:81.1px; --t-hero:126.6px;
+  --ease-out:cubic-bezier(0.16, 1, 0.30, 1);
+  --settle:1.2s; --stagger:70ms;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0E0E10;display:flex;justify-content:center;
+     font-family:Archivo,Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
+.canvas{position:relative;width:1080px;height:1350px;background:var(--ground);
+        overflow:hidden;display:flex;flex-direction:column;
+        padding:var(--safe) var(--pad)}
+.air{flex:1}
+.canvas::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:99;
+  opacity:.06;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+h1{font-size:var(--t-display);line-height:1.02;letter-spacing:-0.02em;font-weight:700;
+   color:var(--bone);filter:url(#tooth)}
+.dot-mark{display:inline-block;width:.22em;height:.22em;border-radius:50%;
+  background:var(--accent);margin-left:.07em}
+/* the question is the secondary line — there is no separate deck */
+.q{margin-top:calc(var(--u)*2);font-size:var(--t-md);line-height:1.3;font-weight:400;
+   color:var(--bone);max-width:900px}
+
+.chart{margin-top:calc(var(--u)*4)}
+.plot{position:relative}
+
+/* one scale for every mark: flex-grow divides each row in proportion to the
+   datum, gaps subtracted before distribution, so px-per-point never drifts */
+.row{display:flex;width:100%;gap:4px}
+.grp{position:relative;flex:var(--v) 1 0;min-width:0}
+.seg{flex:var(--v) 1 0;min-width:0}
+
+.annot{position:relative;height:92px}
+/* Outlined, not filled: the accent belongs to the Undecided block, and a bone
+   fill collided with the bone Oppose block behind it. A hairline chip reads as
+   an annotation rather than a fourth mark. */
+.callout{position:absolute;bottom:24px;background:transparent;color:var(--bone);
+         box-shadow:inset 0 0 0 1px var(--bone);
+         font-size:var(--t-md);font-weight:700;line-height:1;padding:13px 17px 15px;
+         white-space:nowrap}
+.annot svg{position:absolute;left:0;bottom:0;width:100%;height:22px;overflow:visible}
+
+/* each block names itself and states its own figure */
+.bar{height:428px;align-items:stretch}
+.bar .grp{display:flex;flex-direction:column;padding:calc(var(--u)*2.5)}
+.cat{font-size:var(--t-md);font-weight:700;letter-spacing:-0.01em;line-height:1}
+.num{margin-top:calc(var(--u)*2);font-size:var(--t-hero);font-weight:700;line-height:.92;
+     letter-spacing:-0.03em;filter:url(#toothBig)}
+.num .pc{font-size:.45em;letter-spacing:0}
+
+/* Scoped to .bar. Unscoped, these also filled the strip's groups, so the 3px
+   gap between two sub-segments showed the group's own colour instead of the
+   ground — the split was in the DOM and invisible on the page. */
+.bar .g-support{background:var(--grey);box-shadow:inset 0 0 0 1px var(--bone)}
+.bar .g-unsure {background:var(--accent)}
+.bar .g-oppose {background:var(--bone)}
+.g-support .cat,.g-support .num{color:var(--bone)}
+.g-unsure .cat,.g-unsure .num,.g-oppose .cat,.g-oppose .num{color:var(--ink)}
+
+/* the intensity split, drawn below the bar on the same scale */
+.strip{height:26px;margin-top:6px}
+.strip .grp{display:flex;gap:3px}
+/* One neutral for the whole strip. Repeating each block's colour here put the
+   accent on a second element class for no gain: the strip sits directly under
+   the block it decomposes, so position already ties them. It is a measuring
+   rule, not a second chart. */
+.strip .seg{background:var(--bone)}
+
+.leadwrap{position:relative;height:108px}
+.leadwrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.lab{position:absolute;top:40px;text-align:center;white-space:nowrap}
+.lab b{display:block;font-size:var(--t-md);font-weight:700;color:var(--bone);
+       line-height:1;letter-spacing:-0.01em}
+.lab span{display:block;font-size:var(--t-min);color:var(--muted);margin-top:8px;line-height:1.2}
+
+.foot{display:flex;justify-content:space-between;gap:calc(var(--u)*6);
+      font-size:var(--t-min);line-height:1.45;color:var(--muted)}
+.foot p{max-width:520px}
+.foot p:last-child{text-align:right;flex:none;max-width:none}
+
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+h1,.q,.annot,.leadwrap,.foot{animation:rise var(--settle) var(--ease-out) both}
+.q{animation-delay:calc(var(--stagger)*2)}
+.leadwrap{animation-delay:1.25s}
+.annot{animation-delay:1.5s}
+.foot{animation-delay:1.6s}
+/* edged fills are revealed, never scaled — scaleX would stretch the hairline */
+.bar .grp,.strip .grp{animation:draw var(--settle) var(--ease-out) both}
+.bar .g-support,.strip .g-support{animation-delay:.60s}
+.bar .g-unsure ,.strip .g-unsure {animation-delay:calc(.60s + var(--stagger))}
+.bar .g-oppose ,.strip .g-oppose {animation-delay:calc(.60s + var(--stagger)*2)}
+@media (prefers-reduced-motion: reduce){
+  h1,.q,.annot,.leadwrap,.foot,.bar .grp,.strip .grp{
+    animation-duration:.01ms;animation-delay:0s;animation-iteration-count:1}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- ink on stock: the brand grotesque eroded by the surface it prints on.
+       Displacement scales with type size, about size/37 — 2.3 at 84px, 3.5 at 131px. -->
+  <filter id="tooth" x="-3%" y="-6%" width="106%" height="112%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="4" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.3"
+                       xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="toothBig" x="-4%" y="-8%" width="108%" height="116%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" seed="4" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"
+                       xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <!-- finer noise knocks speckles out of the glyph: ink that didn't take -->
+    <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="9" result="n2"/>
+    <feColorMatrix in="n2" type="matrix" result="m"
+                   values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.55 1.16"/>
+    <feComposite in="d" in2="m" operator="in"/>
+  </filter>
+</svg>
+
+<div class="canvas">
+
+  <h1>More than a third<br>are undecided<span class="dot-mark"></span></h1>
+
+  <p class="q">If a new data centre were proposed in their local area:</p>
+
+  <div class="chart">
+    <div class="plot">
+      <div class="annot">
+        <span class="callout" id="callout">Undecided and opposed are level</span>
+        <svg id="spanSvg" aria-hidden="true"></svg>
+      </div>
+
+      <div class="row bar">
+        <div class="grp g-support" style="--v:28">
+          <p class="cat">Support</p>
+          <p class="num">28<span class="pc">%</span></p>
+        </div>
+        <div class="grp g-unsure" style="--v:36">
+          <p class="cat">Undecided</p>
+          <p class="num">36<span class="pc">%</span></p>
+        </div>
+        <div class="grp g-oppose" style="--v:36">
+          <p class="cat">Oppose</p>
+          <p class="num">36<span class="pc">%</span></p>
+        </div>
+      </div>
+
+      <div class="row strip">
+        <div class="grp g-support" style="--v:28">
+          <div class="seg" style="--v:7"></div><div class="seg" style="--v:21"></div></div>
+        <div class="grp g-unsure" style="--v:36">
+          <div class="seg" style="--v:27"></div><div class="seg" style="--v:9"></div></div>
+        <div class="grp g-oppose" style="--v:36">
+          <div class="seg" style="--v:12"></div><div class="seg" style="--v:24"></div></div>
+      </div>
+
+      <div class="leadwrap">
+        <svg id="leadSvg" aria-hidden="true"></svg>
+        <div class="lab"><b>7</b><span>strongly</span></div>
+        <div class="lab"><b>21</b><span>somewhat</span></div>
+        <div class="lab"><b>27</b><span>neither</span></div>
+        <div class="lab"><b>9</b><span>don’t know</span></div>
+        <div class="lab"><b>12</b><span>somewhat</span></div>
+        <div class="lab"><b>24</b><span>strongly</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="air"></div>
+
+  <div class="foot">
+    <p>Undecided combines respondents who selected neither support nor
+       oppose, and those who said they don’t know.</p>
+    <p>Essential Report, July 2026<br>All participants, n=1,060</p>
+  </div>
+
+</div>
+
+<script>
+/* Annotations are positioned from the measured marks, never hardcoded offsets. */
+(function () {
+  var plot = document.querySelector('.plot'), HAIR = '#918D88';
+  function draw() {
+    var base = plot.getBoundingClientRect();
+    var segs = [].slice.call(document.querySelectorAll('.strip .seg'));
+    var labs = [].slice.call(document.querySelectorAll('.lab'));
+    var wrap = document.querySelector('.leadwrap').getBoundingClientRect();
+    var GAP = 16, W = base.width;
+    var P = segs.map(function (seg, i) {
+      var r = seg.getBoundingClientRect();
+      var w = labs[i].getBoundingClientRect().width;
+      var cx = r.left - base.left + r.width / 2;
+      return { cx: cx, w: w, left: Math.min(Math.max(cx - w / 2, 0), W - w) };
+    });
+    /* De-collide left to right, then right to left. A label wider than its own
+       segment is normal here — the 7% segment is 60px and "strongly" is not —
+       so labels are pushed apart and the leader doglegs to follow. Without this
+       pass two labels silently overlap and the chart reads as one word. */
+    for (var i = 1; i < P.length; i++)
+      P[i].left = Math.max(P[i].left, P[i-1].left + P[i-1].w + GAP);
+    for (var j = P.length - 1; j > 0; j--) {
+      P[j].left = Math.min(P[j].left, W - P[j].w);
+      P[j-1].left = Math.min(P[j-1].left, P[j].left - P[j-1].w - GAP);
+    }
+    var d = '';
+    P.forEach(function (o, i) {
+      labs[i].style.left = Math.max(0, o.left) + 'px';
+      var lx = Math.max(0, o.left) + o.w / 2, foot = 32;
+      d += 'M' + o.cx + ' 0V' + (foot - 12) + 'L' + lx + ' ' + foot + ' ';
+    });
+    var lead = document.getElementById('leadSvg');
+    lead.setAttribute('viewBox', '0 0 ' + wrap.width + ' ' + wrap.height);
+    lead.innerHTML = '<path d="' + d + '" fill="none" stroke="' + HAIR + '" stroke-width="1"/>';
+
+    /* span rule across the two equal groups, with a tick where they meet, so
+       the halves are visibly identical rather than merely asserted */
+    var g = document.querySelectorAll('.bar .grp');
+    var u = g[1].getBoundingClientRect(), o = g[2].getBoundingClientRect();
+    var x1 = u.left - base.left, xm = (u.right + o.left) / 2 - base.left,
+        x2 = o.right - base.left;
+    var svg = document.getElementById('spanSvg');
+    svg.setAttribute('viewBox', '0 0 ' + base.width + ' 22');
+    svg.innerHTML = '<path d="M' + x1 + ' 21V4 M' + x1 + ' 4H' + x2 + ' M' + x2 +
+      ' 21V4 M' + xm + ' 13V4" fill="none" stroke="' + HAIR + '" stroke-width="1"/>';
+    var c = document.getElementById('callout');
+    c.style.left = Math.min(x1, base.width - c.offsetWidth) + 'px';
+  }
+  draw();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  setTimeout(draw, 60);
+  if (window.ResizeObserver) new ResizeObserver(draw).observe(plot);
+})();
+</script>
+</body>
+</html>

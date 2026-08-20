@@ -50,6 +50,38 @@ two things next to each other wants 16:9 or 4:3, and forcing it into 9:16 turns
 a comparison into a list. **Sequence suits height** — a build, a countdown or a
 stacked argument reads better vertical.
 
+### The occupancy floor, and the copy budget that follows from it
+
+**Content occupies at least 60% of the canvas** — the union of the bounding
+boxes of every visible element, against total canvas area.
+
+Sum the content stack *before* committing to the canvas. If the primary mark
+leaves more than about a fifth of the frame empty, there are three fixes and
+adding air is not one of them:
+
+1. **Make the mark bigger.** Usually correct, usually sufficient.
+2. **Add a subordinate element** — a margin chart, a second cut of the data.
+   Visual Capitalist puts a category breakdown in the left margin; Accurat puts
+   two supporting charts in the legend column. That is the newsroom answer to a
+   chart that does not fill its frame.
+3. **Cut copy** until what remains can be set large enough to fill.
+
+Empty canvas is only permitted when it is **loaded** — on one side, with
+something anchored against it. Emptiness distributed evenly around a floating
+block is not margin, it is an unfinished frame. The test: could you crop 20% off
+any edge and lose nothing? Then the frame is 20% too big for its content.
+
+**The copy budget for a feed-scale canvas** (9:16, 1:1, 4:5) is a headline of
+two lines or fewer, one supporting line, one short annotation, and a footer
+carrying source and base. A deck *and* a separate question stem is one layer too
+many — on a data frame the question line **is** the supporting line. 16:9 may
+take a genuine deck as well, because a slide is read at arm's length rather than
+at thumbnail size.
+
+The budget belongs here rather than in a type skill because copy volume is a
+layout input. Two lines of deck that should have been one becomes a 200px band
+of dead canvas by the time it reaches the foot of the frame.
+
 ### Letterboxing as a register signal
 
 Letterboxing is usually treated as a failure to fill the frame. Used
@@ -205,6 +237,28 @@ purity, always. If the proportional system produces 13px body text or a
 40-character line, the system is wrong for this canvas — not the reader. Break
 the ratio and keep the accessibility.
 
+**Stated as a floor, because a guardrail phrased as a caveat gets read as
+optional and skipped:**
+
+> **No text sits below 1.25% of canvas height.** On a 1080×1350 tile that is
+> ~17px; on a 1920×1080 slide, ~14px. Source lines, attributions, axis labels
+> and chip text are all above it.
+
+It was 1.6% (~22px on a feed tile) and that was too high. Every reference
+caption sits between 12 and 17px, so the floor stood above the set it was drawn
+from — and it did damage: with utility pinned at 22px and support one step above
+it, the two collapsed into a single small size and the third register
+disappeared. 1.25% restores it.
+
+A Perfect Fourth on a base of 20 puts the step below body at 15px, which is
+under the floor on every feed canvas. That is the ratio being wrong for the
+canvas, exactly as above — so set that step to the floor value and **comment why
+in the file**, or the next edit will "correct" it back onto the ratio.
+
+The floor still constrains the copy, which is the point: there is no room for a
+paragraph, so the frame holds a headline, a supporting line and an attribution.
+If it needs more, it is two frames.
+
 ---
 
 ## Type scales
@@ -263,6 +317,9 @@ grounds that it is golden.
 
 ## Self-check
 
+- Does content cover at least 60% of the canvas, with any emptiness loaded to
+  one side rather than distributed around a floating block?
+- Is there a deck *and* a question line, where the question could have done both?
 - Was a grid chosen, or did content just get centred?
 - Is the focal point on a third rather than dead centre — and if it is centred,
   was that a decision?

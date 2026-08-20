@@ -78,7 +78,7 @@ Vox's identity. **Take the first, never the second.**
 - Small multiples with identical geometry (Tufte)
 - Hand-drawn annotation over a chart (universal across NYT, FT, Reuters, Pudding)
 - Texture and grain instead of flat digital surfaces
-- A large figure with a small caps label beneath
+- A large figure with a small sentence-case label beneath
 - Emphasis by dimming everything else
 - Scroll-driven narration
 - Section structure and chapter breaks
@@ -183,6 +183,30 @@ Rules:
   *de-emphasis* (pushing a group back), never for *category*.
 - **Two categorical neutrals is the ceiling.** A third is not separable without
   reaching for hue, and a second hue breaks the accent rule.
+
+**Three fills plus an accent does not close, and that is arithmetic rather than
+judgement.** Say so, because the rule above reads as achievable and is not.
+
+Work it on a near-black tile: field `#17171A` is L\* 7, the Essential accent
+`#E2491A` is L\* 53, bone `#EDE9E2` is L\* 92. A third fill must be ≥25 from all
+three — so ≥32, *and* either ≤28 or ≥78, *and* ≤67. Both branches are empty.
+Repeat it on a warm-grey light field and the same window closes.
+
+A three-category chart is ordinary work, so name the resolutions rather than
+leaving people to fudge a hex and say nothing:
+
+1. **A hairline on the offending fill**, in the colour it fails against. The
+   sanctioned answer, and it costs nothing.
+2. **Fill versus stroke**, where one category is a remainder — it also keeps the
+   denominator visible.
+3. **Adjacency and self-labelling.** ΔL exists so a reader can match a distant
+   mark to a swatch. Where the marks touch and each carries its own name, that
+   burden is gone and a sub-floor pair is safe. A reason to relax the rule,
+   never a reason to skip checking it.
+
+**Write the measured L\* values into a comment beside the tokens, and name which
+pair is under the floor and why it is safe.** An undocumented near-miss is
+indistinguishable from an accident at the next edit.
 - **Fix the meaning and keep it.** Decide what accent, bone and grey each mean,
   and hold it across every state. A colour that changes meaning between scenes
   destroys the continuity a persistent-mark system exists to create.
@@ -228,10 +252,28 @@ Take the faces from the brand system. Assign them:
 - **Display** — the finding, the section title. Large, tight leading (~1.02),
   never letter-spaced.
 - **Body / deck** — supporting sentence. Near 65 characters per line.
-- **Utility** — axis labels, captions, chip text. Small, uppercase,
-  letter-spaced ~.08em, muted.
+- **Utility** — axis labels, captions, chip text. Small, **sentence case**,
+  muted, and normally tracked. ⛔ Never uppercase, never letter-spaced caps —
+  see the ban in `references/house-rules.md`. Separate it from body copy by
+  size, weight and colour, which is what the neutral is for.
 - **Hero figure** — the utility or body sans, set very large. ⚠️ Never a serif or
   display face on the hero figure.
+
+**"Very large" is a number: on a frame whose job is a number, the hero figure
+runs 1.2–2× the display size.** Not equal to it, and never below it.
+
+This is the difference people see in a side-by-side and cannot name. A `28%` set
+at three-quarters of the headline reads as a sentence with a chart underneath;
+the same figure set above the headline reads as data with a sentence
+introducing it. The floor is 1.2× rather than 1.5× because the reference tiles
+run about 1.1× and read stronger — the air and the texture do the work, not the
+point size. The
+reference set is emphatic — Sharratt's pull-quote percentage runs about 4× the
+body around it, and *Action Movie Badasses* puts its total at roughly 6×.
+
+Where the figure is too wide for its block, **set the unit at about half the
+digit size** (`28` at 112px, `%` at 58px) rather than shrinking the figure. It
+is a standard editorial move and it buys back roughly 20% of the width.
 
 **The editorial feel comes from scale contrast and restraint, not from borrowing
 a display serif.** Reach for a Perfect Fourth (1.333) scale via
@@ -264,10 +306,11 @@ content, never stacked above the title.
 <p class="sub">Across all age groups, sharpest among renters.</p>
 ```
 
-Uppercase letter-spaced type is still fine for axis labels, chip text and table
-column heads — the ban is specifically the overline-above-a-heading pattern.
-
-Headings themselves are **sentence case**, not title case and not caps.
+The overline ban is about *position*. Letter-spaced caps are banned separately
+and wherever they appear — axis labels, chip text and table column heads
+included. The two rules meet at the same place: **labels and headings alike are
+sentence case.** Caps survive only as a large display or stamp treatment with
+negative tracking, which belongs to **type-treatment**, not to a label.
 
 ## Texture
 
@@ -355,6 +398,31 @@ look about right and type the numbers on afterwards.
 <div class="bar" style="--v: 62"></div>
 <style>.bar { width: calc(var(--v) * 1% * var(--plot-scale)); }</style>
 ```
+
+⚠️ **That snippet is right for a flat series and silently wrong for a grouped
+one.** A percentage resolves against the *parent*, not the plot. Put a 7 and a
+21 inside a group that is itself 28% of the row and each sub-segment sizes
+against the group: the pair divides correctly relative to each other and lands
+at about a third of its true length against every other mark on the frame.
+
+It looks plausible, which is why it survives review. Caught twice on the same
+chart — once in a hand-built artifact, once in a Canva rebuild of it.
+
+Use flex-grow for anything that nests. Growth distributes against the row, gaps
+are subtracted before distribution, and the scale is correct by construction:
+
+```css
+.row { display:flex; gap:4px }
+.grp { display:flex; gap:3px; flex:var(--v) 1 0; min-width:0 }   /* 28 | 36 | 36 */
+.seg { flex:var(--v) 1 0; min-width:0 }                          /* 7 | 21 …     */
+```
+
+`min-width:0` is load-bearing: without it a flex item refuses to shrink below
+its content width, so a long label inside a narrow segment quietly widens the
+mark and breaks the scale.
+
+**Verify on the rendered file, not the source.** Pixel width ÷ value is the same
+number for every mark, or it isn't a chart.
 
 This is not a pedantic check. It is the failure mode of the reference material
 itself: a measured Vox-style tutorial
@@ -753,6 +821,60 @@ skill.
 Label directly on the mark; no legends. On a time axis, label only the two
 endpoints. Every additional tick is noise.
 
+### Direct labelling, when the mark is too narrow to hold its label
+
+"No legends" is the rule; this is the mechanism, and the gap between them is
+where generated work goes wrong. The hard case is not a line chart with room
+beside it — it is a segmented bar where one segment is 7% of the plot, about
+60px, and its label is the word "strongly", which is not.
+
+Three placements, in order of preference:
+
+1. **Inside the mark.** The block carries its own name and figure. Best where
+   the mark is large: it removes a row from the layout and nothing can drift out
+   of register.
+2. **A hairline leader from the mark to a label below it.** For sub-segments too
+   narrow to hold type. The leader drops from the segment's centre, doglegs
+   where the label had to shift to stay inside the frame, and lands on the
+   label's centre. This is the device the reference set uses everywhere —
+   Nightingale's dotted connectors between the two roses, Accurat's per-city
+   leaders, the leaders on any labelled donut.
+3. **A chip on the mark**, filled with the series colour. For line series.
+
+⛔ **A stacked list of value–label pairs under a chart is a legend wearing a
+disguise.** `7 strongly / 21 somewhat / 27 neither` set as a block beneath the
+marks is the same failure as a swatch key: the reader maps left-to-right marks
+onto top-to-bottom text and holds the mapping while reading. It reads as tidy,
+which is why it survives review — the failure only shows when someone tries to
+answer a question from the frame.
+
+```js
+// place from the measured mark, then clamp so the label stays in frame
+const base = plot.getBoundingClientRect();
+const s    = seg.getBoundingClientRect();
+const cx   = s.left - base.left + s.width / 2;
+const left = Math.min(Math.max(cx - lw / 2, 0), base.width - lw);
+```
+
+Re-run on resize, and once more after `document.fonts.ready` so webfont metrics
+have settled.
+
+### Two more annotation devices
+
+The wobbly circle below is for *look here*. Two others carry jobs it cannot:
+
+- **A span rule**, for *these are equal* or *these belong together*. A hairline
+  across the marks it covers, with a tick at each end and one where the halves
+  meet — so the reader *sees* the halves are identical instead of being told.
+  This is the right device for a tie, and a circle is not.
+- **A callout chip.** A hard-edged accent block with knockout type, anchored to
+  the left edge of the span it explains. Set it at **24px or above** so white on
+  a mid-chroma accent clears the WCAG large-text threshold; the same colour pair
+  fails below that size.
+
+Both are positioned from measured marks, never offsets — same rule as the
+annotation guidance below.
+
 **Hand-drawn annotation.** The strongest single device, and general newsroom
 craft rather than anyone's trade dress. Circle the important part with a
 deliberately irregular path in the accent, with a short callout above.
@@ -884,7 +1006,7 @@ to the frame rather than looking pasted in.
 **Cutout with offset echo.** A subject cut from its background with a flat
 accent-coloured copy of its silhouette offset behind it. Depth without shadows.
 
-**Large figure over image.** A big number with a small caps label beneath, over a
+**Large figure over image.** A big number with a small sentence-case label beneath, over a
 dimmed photograph. Count it up on entrance — and only ever the hero figure.
 
 ---
@@ -905,6 +1027,13 @@ dimmed photograph. Count it up on entrance — and only ever the hero figure.
 - A number typed on before the quantity that proves it has been drawn.
 - **Marks that don't encode their values** — a bar whose length was chosen by
   eye, a series with no constant px-per-unit, an axis the geometry ignores.
+- **Nested marks sized with percentages**, so sub-segments resolve against their
+  group instead of the plot.
+- **A value–label list under a chart**, standing in for direct labelling.
+- **A hero figure at or below the display size** on a frame whose job is a
+  number.
+- **A deck and a separate question line** on a feed-scale canvas, where the
+  question could have carried both.
 - **A headline still typing itself while the chart underneath is already
   growing.** The frame carries one thought; give it one entrance at a time.
   Headline lands → beat → data draws → values arrive.

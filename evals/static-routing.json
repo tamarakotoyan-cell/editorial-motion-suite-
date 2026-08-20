@@ -1,0 +1,119 @@
+{
+  "skill_name": "static-design",
+  "plugin": "plugins/static-design",
+  "note": "Register-routing briefs for the static-design plugin (the B-iii eval from the 19 Aug 2026 brief). Each brief states what assets were supplied; the session must name the picture structure in its five-line plan before designing. The prompts carry no design direction — choosing the structure is what 04-graphics-imagery's routing table is for. Expected values: A, B, C, TYPE (type-led), DATA (data-led). Where two are acceptable, list both.",
+  "source": "plugins/static-design/skills/static-type-graphics/references/04-graphics-imagery.md — Routing",
+  "evals": [
+    {
+      "id": 1,
+      "name": "one-photo-evidence",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Supplied: one full-frame photograph of a woman lit by her phone screen, dark studio, no cutout.",
+      "assets": {
+        "photographs": 1,
+        "cutouts": 0,
+        "glyphs": 0
+      },
+      "expected_structure": [
+        "A"
+      ],
+      "wrong_and_why": "C would crop through a subject that cannot be cut; type-led throws the evidence away."
+    },
+    {
+      "id": 2,
+      "name": "one-cutout-plus-glyphs",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Supplied: one silhouette-cut, halftoned PNG of the Prime Minister at a lectern, and a set of flat single-colour glyphs — a bell, a speech bubble, a play triangle.",
+      "assets": {
+        "photographs": 0,
+        "cutouts": 1,
+        "glyphs": 3
+      },
+      "expected_structure": [
+        "C"
+      ],
+      "wrong_and_why": "A blows the cutout up full-bleed with no scene and dims it under the type; B buries the one subject under invented density."
+    },
+    {
+      "id": 3,
+      "name": "ten-cutouts",
+      "prompt": "A 4:5 cover for a report on trust in institutions. Supplied: eleven silhouette-cut photographic elements in one register — a gavel, a ballot box, a microphone, three portraits, a building, a hand, a phone, a newspaper, a flag — all keyed with alpha.",
+      "assets": {
+        "photographs": 0,
+        "cutouts": 11,
+        "glyphs": 0
+      },
+      "expected_structure": [
+        "B"
+      ],
+      "wrong_and_why": "A or C leaves nine assets unused or stacks eleven satellites where six was the ceiling — the sticker sheet."
+    },
+    {
+      "id": 4,
+      "name": "four-photos-pinboard",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Supplied: four rectangular photographs — a phone in a hand, a server room, a woman at a laptop, a street at night. None is cut out.",
+      "assets": {
+        "photographs": 4,
+        "cutouts": 0,
+        "glyphs": 0
+      },
+      "expected_structure": [
+        "A"
+      ],
+      "must_not_be": [
+        "B"
+      ],
+      "wrong_and_why": "Four photographs arranged on a field is the pinboard (06-V). Pick the one strong photograph and build A; the linter fails a four-photo frame."
+    },
+    {
+      "id": 5,
+      "name": "no-assets-one-number",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Nothing supplied.",
+      "assets": {
+        "photographs": 0,
+        "cutouts": 0,
+        "glyphs": 0
+      },
+      "expected_structure": [
+        "TYPE",
+        "DATA"
+      ],
+      "wrong_and_why": "Any picture structure means a stock photograph standing in for evidence or a cutout nobody cut. One number is a stat tile, not a chart."
+    },
+    {
+      "id": 6,
+      "name": "cutout-no-glyphs",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Supplied: one silhouette-cut PNG of a person holding a phone. No glyphs, no second asset, no window object named.",
+      "assets": {
+        "photographs": 0,
+        "cutouts": 1,
+        "glyphs": 0
+      },
+      "expected_structure": [
+        "C",
+        "TYPE",
+        "DATA"
+      ],
+      "wrong_and_why": "A cutout is not a full-frame photograph, so A is out — blown up it is a sticker with nothing behind it. C is legal only if the session draws a glyph vocabulary the story owns (three to six flat glyphs); otherwise type- or data-led with the cutout as the single foreign-register element (04's exception). Live run 19 Aug 2026: the plugin chose data-led with the halftoned silhouette breaking the right edge — correct, and the original expectation (C/A) was the eval's error, since fixed with the routing table.",
+      "must_not_be": [
+        "A",
+        "B"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "two-cutouts-subject-and-mass",
+      "prompt": "A 4:5 tile: 75% of Australians want the algorithm regulated (Essential Report, July 2026, all participants, n=1,060). Supplied: one halftoned cutout of the Prime Minister and one duotoned cutout of Parliament House, both keyed, same duotone map; plus a bell and a speech-bubble glyph.",
+      "assets": {
+        "photographs": 0,
+        "cutouts": 2,
+        "glyphs": 2
+      },
+      "expected_structure": [
+        "C"
+      ],
+      "must_not_be": [
+        "B"
+      ],
+      "wrong_and_why": "Two photographs is not B. C's ground-mass build seats the subject with the second mass (08); read as two subjects it is a two-cutout pinboard."
+    }
+  ]
+}

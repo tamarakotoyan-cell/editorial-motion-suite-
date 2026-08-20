@@ -85,6 +85,74 @@ jobs:
           python3 plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py \
             --self-test
 
+      # A 🔒 in the prose is a promise that the linter fails the artifact. Three
+      # were false before this check existed — one naming a rule the linter
+      # never implemented, two on rules that only warn. A false lock is worse
+      # than no mark: it tells the reader to stop holding the rule in mind.
+      # --rules is derived from the known-bad fixture, so it cannot drift from
+      # the code; this asserts the prose cannot drift from it either.
+      - name: Lock marks in house-rules.md are backed by the linter
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+          from pathlib import Path
+
+          skills = Path("plugins/editorial-motion/skills")
+          linter = skills / "analog-surface/assets/check-artifact.py"
+          rules = json.loads(subprocess.run(
+              [sys.executable, str(linter), "--rules-json"],
+              capture_output=True, text=True, check=True).stdout)
+
+          errors = {r for r, v in rules.items() if v["level"] == "error"}
+          promotable = {r for r, v in rules.items() if v["error_under"]}
+          ceiling = errors | promotable
+
+          doc = skills / "editorial-explainer/references/house-rules.md"
+          text = doc.read_text(encoding="utf-8")
+
+          # The doc states rules in prose, so a lock cannot be mapped back to a
+          # rule id automatically. What is assertable is the invariant that was
+          # actually violated: no more locks than there are rules able to reach
+          # error severity.
+          #
+          # Count only marks that open a rule entry — a list item, or a
+          # paragraph starting with the mark. The preamble explains the
+          # convention and necessarily mentions both symbols in prose; counting
+          # those made the ceiling look breached when it was not.
+          entry = lambda sym: len(re.findall(rf"^\s*(?:[-*]\s*)?{sym}", text, re.M))
+          locks, soft = entry("\U0001F512"), entry("\U0001F513")
+
+          if locks > len(ceiling):
+              sys.exit(f"::error::house-rules.md marks {locks} rules with a lock "
+                       f"but only {len(ceiling)} rules can reach error severity "
+                       f"({sorted(ceiling)}). Reconcile against --rules.")
+          if "--rules" not in text:
+              sys.exit("::error::house-rules.md no longer tells the reader how "
+                       "to regenerate the marks. Keep the --rules instruction.")
+          print(f"{locks} locked rules, {soft} warn-marked; {len(errors)} error "
+                f"rules, {len(promotable)} promotable — within ceiling")
+          PY
+
+      # The stamp is read from the manifest at write time. A literal version in
+      # prose goes stale while the linter goes on failing a stale stamp as an
+      # error, so artifacts fail a check that has nothing to do with design.
+      # Three numbers disagreed before this check existed: 1.11.0, 1.9.0, 1.8.0.
+      - name: Router carries no hard-coded version stamp
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          from pathlib import Path
+
+          router = Path("plugins/editorial-motion/skills/editorial-motion/SKILL.md")
+          text = router.read_text(encoding="utf-8")
+          bad = re.findall(r'content="(\d+\.\d+\.\d+)"', text)
+          if bad:
+              sys.exit(f'::error::{router} hard-codes version {bad[0]} in a '
+                       f'stamp example. Use content="X.Y.Z" — the real version '
+                       f'is read from .claude-plugin/plugin.json at write time.')
+          print("router stamp example carries no literal version")
+          PY
+
       # The briefs themselves cost tokens and minutes, so a real run belongs in
       # the version-bump process, run by a person. What CI can do for free is
       # keep the set honest: every skill a brief names still exists, and no

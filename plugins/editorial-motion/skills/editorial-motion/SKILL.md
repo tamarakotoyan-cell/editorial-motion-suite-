@@ -42,13 +42,31 @@ layout-composition → motion-system → analog-surface → editorial-explainer.
 
 ## Precedence
 
-Where two sources disagree, the higher one wins:
+Where two sources disagree, the higher one wins. This chain is the whole of it;
+if you find a second precedence order stated anywhere else, it is stale.
 
-1. **The client's brand.** Colour and typeface come from them. Work is produced
-   for many clients; Essential is simply the case where the client is Essential.
-2. **The house ban list** — `../editorial-explainer/references/house-rules.md`.
+1. **The approved client brand.** Colour and typeface come from them. Work is
+   produced for many clients; Essential is simply the case where the client is
+   Essential.
+2. **Accessibility** — `../editorial-explainer/references/accessibility.md`.
+   Contrast, focus, keyboard, reduced motion. It outranks every aesthetic rule
+   below it, including the ones stated as absolutes. Where an approved brand
+   colour cannot meet a floor, escalate; do not silently substitute, and do not
+   silently ship the failure.
+3. **Documented design decisions** —
+   `../editorial-explainer/references/decisions.md`. A settled decision beats a
+   derived summary that disagrees with it. Check here before assuming a
+   conflict is a mistake, and check the `open` list before guessing.
+4. **The house ban list** — `../editorial-explainer/references/house-rules.md`.
    It overrides every style skill, including the reference material they cite.
-3. **The skill files**, in the load order above.
+   Entries marked 🔒 fail the linter; 🔓 warn.
+5. **The skill files**, in the load order above.
+6. **General aesthetic preference**, which is what is left once the five above
+   have been satisfied — and is never a reason to override any of them.
+
+**Values live in one place.** Colours, sizes and spacing come from the brand's
+token files. No skill or reference in this plugin restates a token value; where
+one used to, it had drifted. Cite the token name, read the number.
 
 ## Stamp the output
 
@@ -56,14 +74,21 @@ Every generated artifact carries the version of the system that made it, in the
 head:
 
 ```html
-<meta name="editorial-motion" content="1.8.0">
+<meta name="editorial-motion" content="X.Y.Z">
 ```
 
-Take the number from the plugin manifest, `.claude-plugin/plugin.json`; if these
-skills were installed one at a time and there is no manifest, use the version
-they were published under. Without a stamp an output cannot be attributed to a
-version, and no change to these skills can be shown to have helped or hurt. The
-linter treats a missing, malformed or stale stamp as an error.
+**Read `X.Y.Z` from the plugin manifest, `.claude-plugin/plugin.json`, at the
+moment you write the file.** Never copy a version number out of prose,
+including out of this line — the example here deliberately carries no real
+version. It used to, and the number in it went stale while the linter went on
+failing a stale stamp as an *error*, so artifacts failed a check that had
+nothing to do with design. CI now asserts this example contains no literal
+version.
+
+If these skills were installed one at a time and there is no manifest, use the
+version they were published under. Without a stamp an output cannot be
+attributed to a version, and no change to these skills can be shown to have
+helped or hurt.
 
 ## Before delivering
 
@@ -71,8 +96,14 @@ Lint the generated HTML with `../analog-surface/assets/check-artifact.py` and
 fix what it reports. This is a required step, not a suggestion:
 
 ```
-python3 check-artifact.py artifact.html
+python3 check-artifact.py artifact.html --profile research
 ```
+
+Name the profile. `research` and `editorial` make a missing source and
+sample-size line an **error** rather than a warning — the checker cannot tell a
+survey finding from a product mockup on its own, so it defers to you. Use
+`product` or `static` for work where attribution genuinely does not apply.
+`--rules` prints every rule and the severity it fires at.
 
 It catches the mechanical failures prose gets wrong under load — pure white or
 black grounds, imagery outside a homogenise wrapper, a missing
