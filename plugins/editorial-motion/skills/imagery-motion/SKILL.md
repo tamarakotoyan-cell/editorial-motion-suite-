@@ -260,7 +260,7 @@ The comparison in one reference showed the graded version reading better purely
 through contrast and cutout separation — no extra elements.
 
 For a **pre-rendered** treatment — a cutout that will be embedded as a PNG rather
-than filtered live — the static-design plugin's `assets/halftone.py` runs the
+than filtered live — the static-design plugin's `halftone.py` runs the
 whole pipeline repeatably: harden the alpha (threshold 128, one-pixel shave),
 contrast window over the subject only, duotone to two brand values with the
 lightest-pixel test (the highlight must remain a colour, or it fails), then an

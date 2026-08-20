@@ -9,6 +9,19 @@ Newest first. Dates are the release date, ISO.
 
 ---
 
+## 1.13.1
+
+One dangling citation, found the moment the build validator started validating.
+
+- **`imagery-motion` cited `assets/halftone.py`**, which is not in that skill —
+  it belongs to the static-design plugin, as the sentence around it already
+  said. Path-shaped citations are checked against the skill they sit in, so this
+  read as a missing file; it is now `halftone.py`, unpath-shaped, with the
+  owning plugin still named in the prose. Nothing about the instruction changed.
+- Found by `build-skills.py --check`, which until this round returned success
+  without running the validator at all. See the repo CHANGELOG note in
+  static-design 0.6.1 for the wider CI gap.
+
 ## 1.13.0
 
 House rule, from client feedback on an Essential Report piece: the small
