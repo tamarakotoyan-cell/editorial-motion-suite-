@@ -25,26 +25,34 @@ jobs:
       # The manifest version is what artifacts get stamped with and what eval
       # results are attributed to. A release the changelog says nothing about
       # is a release nobody can reason about six months later.
-      - name: Manifest version matches the newest changelog entry
+      # Both plugins. This covered editorial-motion only until 20 Aug 2026, so
+      # static-design could ship a version its changelog said nothing about.
+      - name: Manifest versions match the newest changelog entries
         run: |
           python3 - <<'PY'
           import json, re, sys
           from pathlib import Path
 
-          plugin = Path("plugins/editorial-motion")
-          version = json.loads(
-              (plugin / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
-          )["version"]
-          headings = re.findall(
-              r"^## +(\d+\.\d+\.\d+)\b",
-              (plugin / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+          failed = False
+          for name in ("editorial-motion", "static-design"):
+              plugin = Path("plugins") / name
+              version = json.loads(
+                  (plugin / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+              )["version"]
+              headings = re.findall(
+                  r"^## +(\d+\.\d+\.\d+)\b",
+                  (plugin / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
 
-          if not headings:
-              sys.exit("::error::CHANGELOG.md has no '## X.Y.Z' heading")
-          if headings[0] != version:
-              sys.exit(f"::error::plugin.json is {version} but the newest "
-                       f"CHANGELOG entry is {headings[0]}")
-          print(f"version {version} agrees with the changelog")
+              if not headings:
+                  print(f"::error::{name}/CHANGELOG.md has no '## X.Y.Z' heading")
+                  failed = True
+              elif headings[0] != version:
+                  print(f"::error::{name} plugin.json is {version} but the newest "
+                        f"CHANGELOG entry is {headings[0]}")
+                  failed = True
+              else:
+                  print(f"{name} {version} agrees with the changelog")
+          sys.exit(1 if failed else 0)
           PY
 
       # motion.css owns the house curve set. check-artifact.py keeps a second
@@ -94,7 +102,9 @@ jobs:
       - name: Lock marks in house-rules.md are backed by the linter
         run: |
           python3 - <<'PY'
-          import json, subprocess, sys
+          # `re` was missing here: the step used re.findall and died on
+          # NameError before it could assert anything. Found 20 Aug 2026.
+          import json, re, subprocess, sys
           from pathlib import Path
 
           skills = Path("plugins/editorial-motion/skills")
@@ -174,6 +184,47 @@ jobs:
           LINTER=plugins/editorial-motion/skills/analog-surface/assets/check-artifact.py
           find plugins -name 'example.html' -print0 \
             | xargs -0 -r python3 "$LINTER"
+
+      # --- static-design ----------------------------------------------------
+      # The static plugin had no CI at all until 20 Aug 2026: no path
+      # validation, no linter self-test, no example lint. All three existed for
+      # editorial-motion, and every one of them has caught something.
+
+      # sync-static-design.py --check cannot run here: the master lives outside
+      # this repo, in the pilot folder, so a CI checkout does not have it.
+      # --validate needs only the plugin tree, and it catches the failure that
+      # actually ships — a skill installed on its own citing a file not in it.
+      - name: static-design — every cited path resolves inside its own skill
+        run: python3 sync-static-design.py --validate
+
+      # check-static.py renders the fixtures in headless Chrome, so this step
+      # is only meaningful with a browser present. The self-test refuses to run
+      # without one rather than reporting a quiet pass on checks it skipped, so
+      # a runner image that drops Chrome fails here loudly. Asserted first
+      # anyway, for an error message that names the cause.
+      - name: static-design — Chrome is present for the render tier
+        run: |
+          command -v google-chrome >/dev/null 2>&1 \
+            || test -x /usr/bin/google-chrome \
+            || { echo "::error::no google-chrome on the runner — check-static.py's \
+          render tier (checks B, C, E, G, H, I, U, V, W) cannot run"; exit 1; }
+          google-chrome --version
+
+      - name: static-design — linter self-test, every check still fires
+        run: |
+          python3 plugins/static-design/skills/static-design/assets/check-static.py \
+            --self-test
+
+      - name: static-design — halftone pipeline self-test
+        run: |
+          python3 plugins/static-design/skills/static-design/assets/halftone.py --self-test
+
+      # The worked example is the system's own demonstration. If it breaks the
+      # house rules, either the rules are wrong or the example is.
+      - name: static-design — shipped example passes the house rules
+        run: |
+          python3 plugins/static-design/skills/static-design/assets/check-static.py \
+            plugins/static-design/skills/static-design/assets/example-social-tile.html
 
       - name: Build output is free of caches and Finder droppings
         run: |

@@ -11,9 +11,9 @@ rewrites the paths, then validates that no referenced path is missing. The
 plugin stays the single source of truth; dist/ is generated and disposable.
 
     python3 build-skills.py            # build + validate
-    python3 build-skills.py --check    # validate only, no writes
+    python3 build-skills.py --check    # build into a temp dir + validate; no repo writes
 """
-import re, shutil, sys, zipfile
+import re, shutil, sys, tempfile, zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -82,19 +82,17 @@ def vendor_file(origin, dest):
                     origin.read_text(encoding="utf-8"), encoding="utf-8")
 
 
-def build_skill(name, check=False):
+def build_skill(name):
     src, out = SRC / name, DIST / name
-    if not check:
-        if out.exists():
-            shutil.rmtree(out)
-        # ignore Finder droppings and build caches — a .DS_Store shipped inside
-        # analog-surface.zip before this filter existed, and __pycache__ shipped
-        # three .pyc files into it after the asset scripts were run in place
-        shutil.copytree(src, out, ignore=shutil.ignore_patterns(
-            ".DS_Store", "__pycache__", "*.pyc", "*.pyo"))
+    if out.exists():
+        shutil.rmtree(out)
+    # ignore Finder droppings and build caches — a .DS_Store shipped inside
+    # analog-surface.zip before this filter existed, and __pycache__ shipped
+    # three .pyc files into it after the asset scripts were run in place
+    shutil.copytree(src, out, ignore=shutil.ignore_patterns(
+        ".DS_Store", "__pycache__", "*.pyc", "*.pyo"))
 
-    target = src if check else out
-    skill_md = target / "SKILL.md"
+    skill_md = out / "SKILL.md"
     text = skill_md.read_text(encoding="utf-8")
     vendored = []
 
@@ -102,24 +100,21 @@ def build_skill(name, check=False):
         if path_text not in text:
             continue
         vendored.append(local)
-        if not check:
-            vendor_file(origin, out / local)
-            text = text.replace(path_text, local)
+        vendor_file(origin, out / local)
+        text = text.replace(path_text, local)
         for dep_origin, dep_local in VENDOR_DEPS.get(local, []):
             # The skill may already own the file — motion-system owns motion.css
             # — in which case there is nothing to bring in.
             if (SRC / name / dep_local).exists():
                 continue
             vendored.append(dep_local)
-            if not check:
-                vendor_file(dep_origin, out / dep_local)
+            vendor_file(dep_origin, out / dep_local)
 
     for old, new in PROSE.items():
-        if old in text and not check:
+        if old in text:
             text = text.replace(old, new)
 
-    if not check:
-        skill_md.write_text(text, encoding="utf-8")
+    skill_md.write_text(text, encoding="utf-8")
 
     return vendored
 
@@ -157,41 +152,75 @@ def restamp_examples():
     examples stamped 1.9.0 against a 1.11.0 manifest.
 
     Run this as part of a version bump, before committing.
+
+    Keyed on the stamp name, not on where the file sits: editorial-explainer's
+    worked example carries a `static-design` stamp, and it belongs to the static
+    plugin's version wherever it lives. Both plugins are handled — the static
+    side was restamped by hand through 0.6.1 because this only knew about one.
     """
     import json
-    manifest = ROOT / "plugins" / "editorial-motion" / ".claude-plugin" / "plugin.json"
-    version = json.loads(manifest.read_text(encoding="utf-8"))["version"]
-    stamp = re.compile(r'(name="editorial-motion"\s+content=")(\d+\.\d+\.\d+)(")')
 
     changed = 0
-    for html in sorted((ROOT / "plugins").rglob("*.html")):
-        text = html.read_text(encoding="utf-8")
-        new, n = stamp.subn(rf"\g<1>{version}\g<3>", text)
-        if n and new != text:
-            html.write_text(new, encoding="utf-8")
-            changed += 1
-            print(f"  restamped {html.relative_to(ROOT)} -> {version}")
-    print(f"{changed} file(s) restamped to {version}"
-          if changed else f"all stamps already {version}")
+    for plugin in ("editorial-motion", "static-design"):
+        manifest = ROOT / "plugins" / plugin / ".claude-plugin" / "plugin.json"
+        if not manifest.is_file():
+            print(f"  no manifest for {plugin}, skipped")
+            continue
+        version = json.loads(manifest.read_text(encoding="utf-8"))["version"]
+        stamp = re.compile(rf'(name="{re.escape(plugin)}"\s+content=")(\d+\.\d+\.\d+)(")')
+
+        hits = 0
+        for html in sorted((ROOT / "plugins").rglob("*.html")):
+            text = html.read_text(encoding="utf-8")
+            new, n = stamp.subn(rf"\g<1>{version}\g<3>", text)
+            if not n:
+                continue
+            hits += 1
+            if new != text:
+                html.write_text(new, encoding="utf-8")
+                changed += 1
+                print(f"  restamped {html.relative_to(ROOT)} -> {version}")
+        print(f"{plugin}: {hits} stamped file(s), now all {version}")
+
+    print(f"{changed} file(s) rewritten" if changed else "all stamps already current")
     return 0
 
 
 def main():
+    # --check used to skip validate() entirely — `if check: continue` sat above
+    # the call — so the CI step named "every cited path resolves inside its own
+    # skill" ran a build that wrote nothing, validated nothing, and exited 0. It
+    # had never caught anything. --check now performs the real build into a
+    # throwaway directory and validates that, so the only difference from a full
+    # run is where the output lands and that no zips are written.
+    global DIST
     check = "--check" in sys.argv
     if "--restamp-examples" in sys.argv:
         return restamp_examples()
-    if not check:
+
+    scratch = tempfile.mkdtemp(prefix="skills-check-") if check else None
+    if check:
+        DIST = Path(scratch)
+    else:
         if DIST.exists():
             shutil.rmtree(DIST)
         DIST.mkdir()
 
+    try:
+        return _build(check)
+    finally:
+        if scratch:
+            shutil.rmtree(scratch, ignore_errors=True)
+
+
+def _build(check):
     all_problems, rows = [], []
     for name in SKILLS:
-        vendored = build_skill(name, check=check)
-        if check:
-            continue
+        vendored = build_skill(name)
         problems = validate(name)
         all_problems += problems
+        if check:
+            continue
         files = sorted(p for p in (DIST / name).rglob("*") if p.is_file())
         size = sum(p.stat().st_size for p in files)
         zp = DIST / f"{name}.zip"
@@ -203,7 +232,14 @@ def main():
                      ",".join(v.split("/")[-1] for v in vendored) or "—"))
 
     if check:
-        print("check mode: no writes")
+        if all_problems:
+            print("PROBLEMS:")
+            for problem in all_problems:
+                print("  ✘", problem)
+            return 1
+        print(f"{len(SKILLS)} skill(s) built into a temp dir and validated; "
+              f"no writes to the repo.")
+        print("All referenced paths resolve inside their own skill.")
         return 0
 
     w = max(len(r[0]) for r in rows)
