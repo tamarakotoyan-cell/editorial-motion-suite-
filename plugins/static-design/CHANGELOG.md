@@ -1,5 +1,86 @@
 # Changelog
 
+## 0.6.1
+
+Structure C's four open rules settled, and the documentation caught up with the
+decisions already made. No check changed: every threshold the linter enforces was
+ratified at the value it already held.
+
+### Decided — Tamara, 20 August 2026
+- **The ground mass is accepted as written.** `08`'s re-reading of `04`'s
+  "exactly one photographic element" as "exactly one photographic *subject*"
+  stands, fenced by the five tests that stop the mass becoming a second subject.
+  `04`'s exception was always about register contrast — one screened thing on the
+  frame — rather than arithmetic. `albo-75-tile` remains the exemplar.
+- **Texture zoning is accepted per zone.** One texture layer *per zone*, the
+  ground still carrying exactly one. `03` and `brand.md` keep the rule unqualified
+  on purpose, so "one texture" stays the default for every register but this one;
+  C is the exception and `08` is where it lives.
+- **The satellite carve-out is accepted.** Glyph satellites are objects in the
+  scene, not labels for ideas. Its four failure tests are sharper than the ban
+  they carve out of. `04`'s icon ban stands unamended for everything that is not
+  a satellite by those tests.
+- **Check V keeps 3–7 at error severity.** The band already caught this system's
+  own failed collage, which had passed every other check.
+- All four `[proposal]` markers are struck from `08`; the file now states rules,
+  and names each relaxation at the point of use. The scale ladder was settled on
+  19 Aug, when the proof tile was fixed rather than the ladder relaxed.
+
+### Fixed
+- **`06-V`'s headline banned what the system prescribes.** It read "**Two** to
+  seven photographic elements on one frame", while `PINBOARD_MIN` is 3 and
+  Structure C's ground-mass build puts exactly two on a frame by design — the
+  halftoned subject and the mass that seats it. The prose has been corrected to
+  three, with the reason stated, and the same off-by-one fixed in the Design
+  pack's ban list. The linter was right; only the prose was wrong.
+- **`brand.md`'s fail-a-build list said "nothing below 1.6%"** against the text
+  floor settled at **1.25%** in 0.4.0. The one-page summary had been contradicting
+  the principle it summarises for two releases.
+- **Both version-stamp examples carried a literal** — `brand.md` at `0.3.0` and
+  `static-design/SKILL.md` at `0.1.0`, against a 0.6.0 manifest. A literal in prose
+  goes stale while the linter goes on warning about a stale stamp, so the artifact
+  fails a check that has nothing to do with design. Both now read `content="X.Y.Z"`
+  and say to read the number from the manifest at write time. This is the same
+  defect editorial-motion fixed in its router, and gated in CI.
+- **`SKILL.md` claimed the linter errors on a stale stamp.** It warns. Missing and
+  malformed are the errors. `static_checks()` is the authority; the prose now
+  matches it.
+
+### Fixed — the tooling that was supposed to be catching this
+- **The self-test could pass having tested almost nothing.** `self_test()` took a
+  `chrome_path` argument and never passed it to `check()`, so `--chrome` was
+  silently ignored. With no browser at all the render tier is skipped, and while
+  the six wrong-on-purpose fixtures then fail loudly, `layered-c` — the fixture
+  that is *right* on purpose — reported **OK having proved nothing**: the checks
+  it must stay quiet on were never run. Both fixed. The self-test now honours
+  `--chrome` and refuses to run at all without a browser, rather than reporting a
+  quiet pass on checks it skipped. This is the same false-clean this linter
+  already shipped once, when a backtracking regex made it hang without reporting.
+- **`sync-static-design.py` rewrote citations skill-blind.** Every mention of
+  `check-static.py` and `halftone.py` became `assets/NAME` — correct inside
+  `static-design`, which owns `assets/`, and dangling inside `static-composition`
+  and `static-type-graphics`, which do not. Four vendored files and one native
+  SKILL.md carried a path that resolves nowhere on any surface installing a skill
+  on its own, which is the whole reason the vendoring exists. The rewrite is now
+  skill-aware: the owner gets a path, everyone else gets prose naming the owner.
+- **`sync-static-design.py --validate`** — new, and CI-safe. `--check` needs the
+  master, which lives outside the repo and is absent on a CI checkout;
+  `--validate` reads only the plugin tree and asserts every cited path resolves
+  inside its own skill, plus SKILL.md frontmatter.
+- **static-design had no CI at all.** Four steps added: path validation, the
+  linter self-test, the halftone self-test and the shipped-example lint — all
+  four of which existed for editorial-motion. The version/CHANGELOG gate now
+  covers both plugins rather than only the motion one.
+
+### Changed
+- **The ship checklist no longer ends in an instruction half the surfaces cannot
+  follow.** Step 5 was `python3 check-static.py artifact.html`; there is no Python
+  on Claude Design or in chat. It now splits: run the linter where there is one,
+  and where there is not, work down the ban list, state the number for each
+  mechanical rule, and print the result beside the design.
+- **`06-anti-patterns` says what 🔒 means without a linter** — not *handled*, but
+  *mechanical, so check it first and state the number*.
+
 ## 0.6.0
 
 The third picture structure, and the routing that makes the choice mechanical.

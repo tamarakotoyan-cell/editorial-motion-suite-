@@ -116,7 +116,7 @@ Full list and reasoning in `principles/06-anti-patterns.md`. In one page:
 - **No containers**: no cards, panels, borders, shadows, glows, or radius above 10px.
 - **Two type families**, three registers, every size on one ratio.
 - Headline cap-height **8–12%** of canvas height on a type-led frame, **≥4%** where a
-  picture carries the canvas; nothing below **1.6%**.
+  picture carries the canvas; nothing below **1.25%**.
 - Nothing runs past a frame edge, and no two text blocks overlap.
 - **No text within 150px of the top or bottom edge** — the profile grid crops 4:5 to a
   centre square and carousel dots overlay the foot. Bleed art may cross it; text may not.
@@ -161,10 +161,19 @@ Clarity above all. Precise, jargon-free, conversational but not too informal.
 3. Would this be interchangeable with the last piece after a content swap? **"Yes" is the
    failure.**
 4. Remove the one element doing the least. Something always comes out.
-5. Run the linter: `python3 check-static.py artifact.html`. Errors are not advisory.
+5. Verify against the ban list above — every line, honestly, against the actual output.
+   **Where the surface has a linter** (Claude Code, Cowork: `python3 check-static.py
+   artifact.html`), run it; errors are not advisory. **Where it does not** (Claude Design,
+   chat), the check is read rather than run: work down the ban list, state the number for
+   each mechanical rule, and print the result beside the design. A design that ships with
+   neither the linter's output nor a printed check is not finished.
 
 Every generated artifact carries the system version in the head:
 
 ```html
-<meta name="static-design" content="0.3.0">
+<meta name="static-design" content="X.Y.Z">
 ```
+
+Read the number from the plugin manifest at write time — never copy the literal from this
+example. A version written into prose goes stale while the linter goes on failing a stale
+stamp, so the artifact fails a check that has nothing to do with design.

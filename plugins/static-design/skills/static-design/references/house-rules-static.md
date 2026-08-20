@@ -11,6 +11,11 @@ Entries marked 🔒 are enforced by `assets/check-static.py`. The rest depend on
 migrating more of them into the linter is the direction of travel: a rule that fails a build
 beats a rule in a paragraph.
 
+On a surface with no linter — Claude Design, chat — 🔒 does not mean *handled*, it means
+*this one is mechanical, so check it first and state the number*. Occupancy, the safe zones,
+the type floor, contrast and the element count are all readable off the design without
+running anything.
+
 ---
 
 ## The diagnosis, before the list
@@ -351,8 +356,12 @@ cannot sample a photograph and it is blind to four of the five carriers, so it i
 
 ## V — The pinboard 🔒
 
-**Two to seven photographic elements on one frame — too many for A or C, far too few for
+**Three to seven photographic elements on one frame — too many for A or C, far too few for
 B — arranged on a field.**
+
+Three, not two: Structure C's ground-mass build puts exactly two on a frame — the halftoned
+subject and the smooth-duotoned mass that seats it — and that is prescribed, not banned
+(`08-layered-editorial`). The check counts from three for that reason.
 
 *Seen in:* this system's own `collage.html` / `collage-v2.html` — four rectangular photo
 crops behind ragged masks: 1.6× scale disparity where the references run 5×, no overlap, no

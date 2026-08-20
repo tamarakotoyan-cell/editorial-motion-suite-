@@ -81,12 +81,13 @@ python3 assets/halftone.py mass.png --out mass-duotone.png --mode duotone --shad
 Every generated artifact carries the version of the system that made it, in the head:
 
 ```html
-<meta name="static-design" content="0.1.0">
+<meta name="static-design" content="X.Y.Z">
 ```
 
 Take the number from the plugin manifest, `.claude-plugin/plugin.json`. Without a stamp an
 output cannot be attributed to a version, and no change to these skills can be shown to
-have helped or hurt. The linter treats a missing, malformed or stale stamp as an error.
+have helped or hurt. The linter treats a missing or malformed stamp as an error, and a stale one — a
+well-formed number that is not the manifest's — as a warning.
 
 ## Before delivering
 

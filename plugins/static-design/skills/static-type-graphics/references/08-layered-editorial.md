@@ -14,9 +14,12 @@ Derived from the Canva-assembled algorithm tile (19 Aug 2026), read against
 the 19 Aug 2026 proof tile (albo-75-tile.html, pilot folder) — the ground-mass build. Routing between A, B and C is
 in `04-graphics-imagery`; this file is the build grammar once C has been chosen.
 
-Paragraphs marked **[proposal]** are rules this register needs that the master did not
-already carry. They are stated so they can be accepted, edited or struck; nothing else in
-the master was loosened to make room for them.
+This register needed four rules the master did not already carry. All four were put to
+Tamara and **settled on 20 August 2026**: the ground mass, the per-zone reading of texture,
+the satellite carve-out from the icon ban, and the scale ladder — the last already decided
+on 19 August, when the proof tile was fixed rather than the ladder relaxed. They are stated
+below as rules, not proposals. Where one of them relaxes a rule stated elsewhere in the
+master, the relaxation is named at the point of use rather than hidden.
 
 ---
 
@@ -33,25 +36,33 @@ already sanctions, and the finding is that **combined, they are a repeatable str
 - **The worked surface** (`03`): the ground is paper, not pixels — and the loud texture is
   quarantined inside the window, not sprayed across the frame.
 
-Where the claim "nothing new" **does not hold**, and it is said here rather than hidden:
+Where the claim "nothing new" **does not hold**, and it is said here rather than hidden.
+All three were settled 20 Aug 2026:
 
 1. **The ground-mass variant carries two photographic assets.** `04`'s exception is
    arithmetic — *exactly one element* — and the Parliament tile has a subject and a mass.
    The rule below re-reads "one photographic *element*" as "one photographic *subject*",
-   with tests that keep the mass from becoming a second subject. That is a relaxation of
-   `04` and it is a **[proposal]**. If it is refused, the ground-mass variant is out and
-   the proof tile is rebuilt as a window build.
+   with five tests that keep the mass from becoming a second subject. **Settled: accepted
+   as written.** The reasoning is that `04`'s exception was always about register contrast
+   — one screened thing on the frame — rather than about arithmetic, and the five tests
+   are what hold that line.
 2. **Texture zoning re-reads "one texture layer".** `03` and `brand.md` say one texture
    layer, grain at 4–6%. This register runs paper tooth on the ground, a loud field inside
    the window and a dot screen on the subject — three textures, each in its own zone. The
    reading is *one texture layer per zone, and the ground itself still carries exactly
-   one*. Also a **[proposal]**.
+   one*. **Settled: accepted.** The original rule was written against texture sprayed
+   across a whole frame, which is the failure it defends against; zoning is the opposite
+   move, and it is what keeps the type block on clean ground. **`03` and `brand.md` still
+   state the rule unqualified** — deliberately, so the default stays "one texture" for
+   every register but this one. C is the exception and this file is where it lives.
 3. **Glyph satellites sit close to the icon ban.** `04` bans pictograms standing in for
    concepts, and `06-F` bans concept icon sets. The satellites here are objects in the
    scene, not labels for ideas — the distinction `imagery-motion` already draws for the
-   motion side (*icons banned as data marks; fine as props*). The carve-out and its tests
-   are below, as a **[proposal]**. Without it, C is banned by the ban list's own
-   precedence, and the ban list wins.
+   motion side (*icons banned as data marks; fine as props*). **Settled: the carve-out is
+   accepted**, on the reasoning that its four failure tests are sharper than the ban they
+   carve out of — they catch the sticker sheet and the pictogram list, which is what the
+   icon ban was defending against. `04`'s ban stands unamended for everything that is not
+   a satellite by those tests.
 
 ## Preconditions — decidable before design starts
 
@@ -79,7 +90,7 @@ composition to a place. The proof tile: the halftoned PM behind a duotoned Parli
 that bleeds both side edges. In this build the loud texture **is the subject's own
 halftone** — nothing else on the frame is screened.
 
-**[proposal] The mass is ground, not subject.** It may exist only if all of these hold:
+**The mass is ground, not subject.** It may exist only if all of these hold:
 
 - one mass, never two;
 - it goes through the same pipeline and the same duotone map as the subject, but is
@@ -114,7 +125,7 @@ is a two-cutout pinboard.
 it. That is what seats it in a scene rather than stickering it on. A subject nothing
 touches reads as pasted, however good the cutout.
 
-**[proposal] Scale ladder:** largest satellite ≥3× the smallest; no two satellites within
+**Scale ladder:** largest satellite ≥3× the smallest; no two satellites within
 20% of each other's size. Uniform satellites are the sticker-sheet failure from `04`.
 
 ## Texture is zoned, never stacked
@@ -137,7 +148,7 @@ enters the window.
 
 ## Satellites are objects, not icons
 
-**[proposal]** A satellite is a thing in the scene the subject is in — the phone, the
+A satellite is a thing in the scene the subject is in — the phone, the
 bell, the bubble, the ballot box, the microphone. It earns its place the way a prop does,
 by being handled: overlapped, occluded, scaled against its neighbours. It fails into the
 icon ban the moment it behaves like a label:
@@ -195,7 +206,7 @@ The house ban list (`06-anti-patterns`) wins over everything here. In addition:
 
 ## Build recipes (CSS, for the HTML surfaces)
 
-- **Halftone subject:** the repeatable path is the plugin's `assets/halftone.py` (static-design,
+- **Halftone subject:** the repeatable path is the plugin's the static-design skill's `halftone.py` (static-design,
   `assets/`): harden alpha → contrast window → duotone to the brand map → dot screen, with
   the lightest-pixel test run and the subject box printed for placement. In CSS alone:
   greyscale + contrast-lift on the cutout, then a dot screen —
@@ -248,7 +259,7 @@ lectern → bubble and play triangle (front) → type on clean ground. Three sat
 176 / 132 / 56px: a 3.14× ladder, no pair within 20%. One duotone map across both assets, shadow
 `#1E1E4A` to highlight `#E2491A`; the treated subject's lightest pixel measures
 `(255, 80, 19)` — a colour, so the duotone happened. Contrast: ink on ground 6.73:1, muted
-source line 5.16:1, navy glyphs ΔL 78 against the ground. Under `assets/check-static.py` 0.6.0 the
+source line 5.16:1, navy glyphs ΔL 78 against the ground. Under the static-design skill's `check-static.py` 0.6.0 the
 frame is clean once the ghost carries `aria-hidden`; the only remaining note is the
 chroma-isolation warning, which the check itself says it cannot resolve on a register-
 carried focal point.

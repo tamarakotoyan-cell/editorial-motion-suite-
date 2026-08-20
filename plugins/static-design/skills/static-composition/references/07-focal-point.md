@@ -89,7 +89,7 @@ Measured as the union of the text bounding boxes against the usable canvas:
 
 ## What the linter can and cannot see
 
-`assets/check-static.py` checks **U** (chroma isolation) and **W** (type-zone share). Both are
+the static-design skill's `check-static.py` checks **U** (chroma isolation) and **W** (type-zone share). Both are
 partial by construction:
 
 - **U reads CSS colour only.** It cannot sample a photograph, so a frame whose focal point

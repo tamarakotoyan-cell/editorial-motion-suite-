@@ -123,7 +123,7 @@ needs exactly one.
 
 **Every raster goes through the pipeline** — harden the alpha, contrast window, duotone to
 one brand map (the highlight stays a colour), halftone the subject — and the repeatable
-way to do that is the static-design skill's `assets/halftone.py`, which also prints the
+way to do that is the static-design skill's `halftone.py`, which also prints the
 subject box to place from and fails if the duotone came out grey.
 
 ## Charts and figures

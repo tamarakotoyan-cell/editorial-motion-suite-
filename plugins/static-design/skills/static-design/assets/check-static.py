@@ -1442,7 +1442,21 @@ def self_test(chrome_path=None):
         return 1
 
     paths = [str(fixtures / n) for n in list(expect) + list(quiet)]
-    reports = check(paths, as_set=True)
+    reports = check(paths, as_set=True, chrome_path=chrome_path)
+
+    # Refuse to half-run. The render tier carries B, C, E, G, H, I, U, V and W,
+    # so with no browser the `expect` fixtures fail loudly — but `layered-c`,
+    # the fixture that is right on purpose, reports OK having proved nothing:
+    # the checks it must stay quiet on were never run. A quiet result from a
+    # check that did not execute is the same false clean this linter already
+    # shipped once, when a backtracking regex made it hang without reporting.
+    if any("render" in r.codes() for r in reports.values()):
+        note = next((m for r in reports.values() for _, code, m in r.items
+                     if code == "render"), "render tier unavailable")
+        print(f"FAIL  cannot self-test without a browser — {note}. "
+              f"Install Chrome or Chromium, or pass --chrome /path/to/chrome.")
+        return 1
+
     ok = True
     for name, wanted in expect.items():
         got = reports[str(fixtures / name)].codes()
